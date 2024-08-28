@@ -22,7 +22,7 @@ export default function Page() {
         </div>
       </div>
       <div className="h-full bg-blue-600 hidden lg:flex items-center justify-center">
-        <Image src="/logo.png" alt="logo" height={100} width={100} />
+        <Image src="/logo.svg" alt="logo" height={100} width={100} />
       </div>
     </div>
   );

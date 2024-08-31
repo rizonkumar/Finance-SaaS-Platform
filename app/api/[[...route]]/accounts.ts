@@ -25,6 +25,11 @@ const app = new Hono()
 
     return c.json({ data });
   })
+
+  .get("/:id", zValidator("param", z.object({ id: z.string().optional() })), clerkMiddleware(), async (c) => {
+
+  })
+
   .post(
     "/",
     clerkMiddleware(),
@@ -49,6 +54,7 @@ const app = new Hono()
       return c.json({ data });
     },
   )
+  
   .post(
     "/bulk-delete",
     clerkMiddleware(),

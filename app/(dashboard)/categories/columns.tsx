@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Actions } from "./actions";
 
 export type ResponseType = InferResponseType<
-  typeof client.api.categories.$get,
+  typeof client.api.accounts.$get,
   200
 >["data"][0];
 

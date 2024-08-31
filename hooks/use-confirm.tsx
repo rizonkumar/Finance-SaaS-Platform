@@ -34,6 +34,7 @@ export const useConfirm = (
 
   const handleCancel = () => {
     promise?.resolve(false);
+    handleClose();
   };
 
   const ConfirmationDialog = () => (

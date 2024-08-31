@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-import { AccountForm } from "@/features/components/account-form";
-import { useGetAccount } from "@/features/accounts/api/use-get-account";
-import { useEditAccount } from "@/features/accounts/api/use-edit-account";
-import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
-
 import { useConfirm } from "@/hooks/use-confirm";
 
 import {
@@ -19,6 +14,10 @@ import { insertAccountSchema } from "@/db/schema";
 
 import { Loader2 } from "lucide-react";
 import { useOpenAccount } from "../hooks/use-open-account";
+import { useGetAccount } from "../api/use-get-account";
+import { useEditAccount } from "../api/use-edit-account";
+import { useDeleteAccount } from "../api/use-delete-account";
+import { AccountForm } from "./account-form";
 
 const formSchema = insertAccountSchema.pick({
   name: true,
@@ -31,7 +30,7 @@ export const EditAccountSheet = () => {
 
   const [ConfirmDialog, confirm] = useConfirm(
     "Are you sure?",
-    "You are about to delete this transaction."
+    "You are about to delete this account."
   );
 
   const accountQuery = useGetAccount(id);

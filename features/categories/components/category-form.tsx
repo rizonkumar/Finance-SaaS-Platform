@@ -13,9 +13,9 @@ import {
   FormItem,
 } from "@/components/ui/form";
 
-import { insertAccountSchema } from "@/db/schema";
+import { insertCategorySchema } from "@/db/schema";
 
-const formSchema = insertAccountSchema.pick({
+const formSchema = insertCategorySchema.pick({
   name: true,
 });
 
@@ -28,7 +28,7 @@ type Props = {
   onDelete?: () => void;
   disabled?: boolean;
 };
-export const AccountForm = ({
+export const CategoryForm = ({
   id,
   defaultValues,
   onSubmit,
@@ -63,7 +63,7 @@ export const AccountForm = ({
               <FormControl>
                 <Input
                   disabled={disabled}
-                  placeholder="e.g. Bank, Credit Card, Cash"
+                  placeholder="e.g. Food, Travel, Rent, etc."
                   {...field}
                 />
               </FormControl>
@@ -71,7 +71,7 @@ export const AccountForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled}>
-          {id ? "Save Changes" : "Create Account"}
+          {id ? "Save Changes" : "Create Category"}
         </Button>
         {!!id && (
           <Button
@@ -82,7 +82,7 @@ export const AccountForm = ({
             variant="outline"
           >
             <Trash className="size-4 mr-2" />
-            Delete Account
+            Delete Category
           </Button>
         )}
       </form>

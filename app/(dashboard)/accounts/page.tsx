@@ -2,8 +2,8 @@
 import { Loader2, Plus } from "lucide-react";
 
 import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
-import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete";
-import { useNewAccount } from "@/features/accounts/hooks/use-new-category";
+import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete-accounts";
+import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,9 +49,9 @@ const AccountPage = () => {
         </CardHeader>
         <CardContent>
           <DataTable
+            filterKey="name"
             columns={columns}
             data={accounts}
-            filterKey="email"
             onDelete={(row) => {
               const ids = row.map((r) => r?.original?.id);
               deleteAccounts.mutate({ ids });

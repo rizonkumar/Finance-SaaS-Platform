@@ -12,7 +12,7 @@ import {
 
 export const useConfirm = (
   title: string,
-  message: string,
+  message: string
 ): [() => JSX.Element, () => Promise<unknown>] => {
   const [promise, setPromise] = useState<{
     resolve: (value: boolean) => void;
@@ -43,7 +43,7 @@ export const useConfirm = (
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{message}</DialogDescription>
         </DialogHeader>
-        <DialogFooter className="pt-2 ">
+        <DialogFooter className="pt-2">
           <Button onClick={handleCancel}>Cancel</Button>
           <Button onClick={handleConfirm}>Confirm</Button>
         </DialogFooter>

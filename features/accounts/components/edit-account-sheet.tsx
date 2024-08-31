@@ -18,7 +18,7 @@ import {
 import { insertAccountSchema } from "@/db/schema";
 
 import { Loader2 } from "lucide-react";
-import { useOpenAccount } from "../accounts/hooks/use-open-account";
+import { useOpenAccount } from "../hooks/use-open-account";
 
 const formSchema = insertAccountSchema.pick({
   name: true,

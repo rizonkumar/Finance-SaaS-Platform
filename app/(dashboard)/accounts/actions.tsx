@@ -10,9 +10,9 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
-import { useOpenAccount } from "@/features/hooks/use-open-account";
-import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
+import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 
 type Props = {
   id: string;

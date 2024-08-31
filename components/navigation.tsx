@@ -1,12 +1,13 @@
 "use client";
+
+import { useState } from "react";
+import { Menu } from "lucide-react";
 import { useMedia } from "react-use";
 import { usePathname, useRouter } from "next/navigation";
 
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { NavButton } from "@/components/nav-button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { MenuIcon } from "lucide-react";
 
 const routes = [
   {
@@ -51,7 +52,7 @@ export const Navigation = () => {
             size="sm"
             className="font-normal bg-white/10 hover:bg-white/20 hover:text-white border-none focus-visible:ring-offset-0 focus-visible:ring-transparent outline-none text-white focus:bg-white/30 transition"
           >
-            <MenuIcon className="size-4" />
+            <Menu className="size-4" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="px-2">

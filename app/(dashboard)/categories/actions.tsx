@@ -1,18 +1,18 @@
 "use client";
 
-import { Trash2, Edit, MoreHorizontal } from "lucide-react";
+import { Edit, MoreHorizontal, Trash } from "lucide-react";
 
+import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
+import { useDeleteCategory } from "@/features/categories/api/use-delete-category";
+
+import { useConfirm } from "@/hooks/use-confirm";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { useConfirm } from "@/hooks/use-confirm";
-import { useDeleteCategory } from "@/features/categories/api/use-delete-category";
-import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
 
 type Props = {
   id: string;
@@ -56,7 +56,7 @@ export const Actions = ({ id }: Props) => {
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
           >
-            <Trash2 className="size-4 mr-2" />
+            <Trash className="size-4 mr-2" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>

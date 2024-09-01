@@ -1,11 +1,11 @@
 import { format } from "date-fns";
-import { 
-  Tooltip, 
-  XAxis, 
-  AreaChart, 
-  Area, 
-  ResponsiveContainer, 
-  CartesianGrid
+import {
+  Tooltip,
+  XAxis,
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+  CartesianGrid,
 } from "recharts";
 
 import { CustomTooltip } from "@/components/custom-tooltip";

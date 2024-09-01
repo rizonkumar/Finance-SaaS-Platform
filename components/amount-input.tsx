@@ -2,7 +2,7 @@ import CurrencyInput from "react-currency-input-field";
 import { Info, MinusCircle, PlusCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -38,13 +38,13 @@ export const AmountInput = ({
       <TooltipProvider>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={onReverseValue}
               className={cn(
                 "bg-slate-400 hover:bg-slate-500 absolute top-1.5 left-1.5 rounded-md p-2 flex items-center justify-center transition",
                 isIncome && "bg-emerald-500 hover:bg-emerald-600",
-                isExpense && "bg-rose-500 hover:bg-rose-600",
+                isExpense && "bg-rose-500 hover:bg-rose-600"
               )}
             >
               {!parsedValue && <Info className="size-3 text-white" />}

@@ -1,9 +1,9 @@
-import React from "react";
 import { Header } from "@/components/header";
 
 type Props = {
-  children?: React.ReactNode;
+  children: React.ReactNode;
 };
+
 const DashboardLayout = ({ children }: Props) => {
   return (
     <>

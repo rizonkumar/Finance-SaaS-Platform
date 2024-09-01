@@ -1,7 +1,6 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import React from "react";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -25,7 +24,7 @@ function getQueryClient() {
 }
 
 type Props = {
-  children?: React.ReactNode;
+  children: React.ReactNode;
 };
 
 export function QueryProvider({ children }: Props) {

@@ -43,9 +43,10 @@ export const EditTransactionSheet = () => {
 
   const categoryQuery = useGetCategories();
   const categoryMutation = useCreateCategory();
-  const onCreateCategory = (name: string) => categoryMutation.mutate({
-    name
-  });
+  const onCreateCategory = (name: string) =>
+    categoryMutation.mutate({
+      name,
+    });
   const categoryOptions = (categoryQuery.data ?? []).map((category) => ({
     label: category.name,
     value: category.id,
@@ -53,9 +54,10 @@ export const EditTransactionSheet = () => {
 
   const accountQuery = useGetAccounts();
   const accountMutation = useCreateAccount();
-  const onCreateAccount = (name: string) => accountMutation.mutate({
-    name
-  });
+  const onCreateAccount = (name: string) =>
+    accountMutation.mutate({
+      name,
+    });
   const accountOptions = (accountQuery.data ?? []).map((account) => ({
     label: account.name,
     value: account.id,
@@ -68,7 +70,7 @@ export const EditTransactionSheet = () => {
     categoryMutation.isPending ||
     accountMutation.isPending;
 
-  const isLoading = 
+  const isLoading =
     transactionQuery.isLoading ||
     categoryQuery.isLoading ||
     accountQuery.isLoading;
@@ -88,28 +90,30 @@ export const EditTransactionSheet = () => {
       deleteMutation.mutate(undefined, {
         onSuccess: () => {
           onClose();
-        }
+        },
       });
     }
   };
 
-  const defaultValues = transactionQuery.data ? {
-    accountId: transactionQuery.data.accountId,
-    categoryId: transactionQuery.data.categoryId,
-    amount: transactionQuery.data.amount.toString(),
-    date: transactionQuery.data.date 
-      ? new Date(transactionQuery.data.date)
-      : new Date(),
-    payee: transactionQuery.data.payee,
-    notes: transactionQuery.data.notes,
-  } : {
-    accountId: "",
-    categoryId: "",
-    amount: "",
-    date: new Date(),
-    payee: "",
-    notes: "",
-  };
+  const defaultValues = transactionQuery.data
+    ? {
+        accountId: transactionQuery.data.accountId,
+        categoryId: transactionQuery.data.categoryId,
+        amount: transactionQuery.data.amount.toString(),
+        date: transactionQuery.data.date
+          ? new Date(transactionQuery.data.date)
+          : new Date(),
+        payee: transactionQuery.data.payee,
+        notes: transactionQuery.data.notes,
+      }
+    : {
+        accountId: "",
+        categoryId: "",
+        amount: "",
+        date: new Date(),
+        payee: "",
+        notes: "",
+      };
 
   return (
     <>
@@ -117,32 +121,26 @@ export const EditTransactionSheet = () => {
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent className="space-y-4">
           <SheetHeader>
-            <SheetTitle>
-              Edit Transaction
-            </SheetTitle>
-            <SheetDescription>
-              Edit an existing transaction
-            </SheetDescription>
+            <SheetTitle>Edit Transaction</SheetTitle>
+            <SheetDescription>Edit an existing transaction</SheetDescription>
           </SheetHeader>
-          {isLoading
-            ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="size-4 text-muted-foreground animate-spin" />
-              </div>
-            ) : (
-              <TransactionForm
-                id={id}
-                defaultValues={defaultValues}
-                onSubmit={onSubmit}
-                onDelete={onDelete}
-                disabled={isPending}
-                categoryOptions={categoryOptions}
-                onCreateCategory={onCreateCategory}
-                accountOptions={accountOptions}
-                onCreateAccount={onCreateAccount}
-              />
-            )
-          }
+          {isLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="size-4 text-muted-foreground animate-spin" />
+            </div>
+          ) : (
+            <TransactionForm
+              id={id}
+              defaultValues={defaultValues}
+              onSubmit={onSubmit}
+              onDelete={onDelete}
+              disabled={isPending}
+              categoryOptions={categoryOptions}
+              onCreateCategory={onCreateCategory}
+              accountOptions={accountOptions}
+              onCreateAccount={onCreateAccount}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </>

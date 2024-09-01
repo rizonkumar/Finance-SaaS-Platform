@@ -3,17 +3,17 @@ import { Trash } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { insertAccountSchema } from "@/db/schema";
 import {
   Form,
-  FormField,
   FormControl,
-  FormLabel,
+  FormField,
   FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
-
-import { insertAccountSchema } from "@/db/schema";
 
 const formSchema = insertAccountSchema.pick({
   name: true,
@@ -28,6 +28,7 @@ type Props = {
   onDelete?: () => void;
   disabled?: boolean;
 };
+
 export const AccountForm = ({
   id,
   defaultValues,
@@ -63,7 +64,7 @@ export const AccountForm = ({
               <FormControl>
                 <Input
                   disabled={disabled}
-                  placeholder="e.g. Bank, Credit Card, Cash"
+                  placeholder="e.g. Cash, Bank, Credit Card"
                   {...field}
                 />
               </FormControl>
@@ -71,7 +72,7 @@ export const AccountForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled}>
-          {id ? "Save Changes" : "Create Account"}
+          {id ? "Save changes" : "Create account"}
         </Button>
         {!!id && (
           <Button
@@ -82,7 +83,7 @@ export const AccountForm = ({
             variant="outline"
           >
             <Trash className="size-4 mr-2" />
-            Delete Account
+            Delete account
           </Button>
         )}
       </form>

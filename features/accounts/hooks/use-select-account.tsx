@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useCreateAccount } from "@/features/accounts/api/use-create-account";
 
-// import { Select } from "@/components/select";
+import { Select } from "@/components/select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -62,13 +62,13 @@ export const useSelectAccount = (): [
             Please select an account to continue.
           </DialogDescription>
         </DialogHeader>
-        {/* <Select
+        <Select
           placeholder="Select an account"
           options={accountOptions}
           onCreate={onCreateAccount}
           onChange={(value) => (selectValue.current = value)}
           disabled={accountQuery.isLoading || accountMutation.isPending}
-        /> */}
+        />
         <DialogFooter className="pt-2">
           <Button onClick={handleCancel} variant="outline">
             Cancel

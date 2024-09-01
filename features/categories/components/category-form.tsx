@@ -3,17 +3,17 @@ import { Trash } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { insertCategorySchema } from "@/db/schema";
 import {
   Form,
-  FormField,
   FormControl,
-  FormLabel,
+  FormField,
   FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
-
-import { insertCategorySchema } from "@/db/schema";
 
 const formSchema = insertCategorySchema.pick({
   name: true,
@@ -28,6 +28,7 @@ type Props = {
   onDelete?: () => void;
   disabled?: boolean;
 };
+
 export const CategoryForm = ({
   id,
   defaultValues,
@@ -63,7 +64,7 @@ export const CategoryForm = ({
               <FormControl>
                 <Input
                   disabled={disabled}
-                  placeholder="e.g. Food, Travel, Rent, etc."
+                  placeholder="e.g. Food, Travel, etc."
                   {...field}
                 />
               </FormControl>
@@ -71,7 +72,7 @@ export const CategoryForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled}>
-          {id ? "Save Changes" : "Create Category"}
+          {id ? "Save changes" : "Create category"}
         </Button>
         {!!id && (
           <Button
@@ -82,7 +83,7 @@ export const CategoryForm = ({
             variant="outline"
           >
             <Trash className="size-4 mr-2" />
-            Delete Category
+            Delete category
           </Button>
         )}
       </form>

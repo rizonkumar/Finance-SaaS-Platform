@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import { CategoryForm } from "@/features/categories/components/category-form";
+import { useNewCategory } from "@/features/categories/hooks/use-new-category";
+import { useCreateCategory } from "@/features/categories/api/use-create-category";
+
+import { insertCategorySchema } from "@/db/schema";
 import {
   Sheet,
   SheetContent,
@@ -7,10 +12,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { insertCategorySchema } from "@/db/schema";
-import { CategoryForm } from "@/features/categories/components/category-form";
-import { useNewCategory } from "@/features/categories/hooks/use-new-category";
-import { useCreateCategory } from "@/features/categories/api/use-create-category";
 
 const formSchema = insertCategorySchema.pick({
   name: true,
@@ -43,7 +44,9 @@ export const NewCategorySheet = () => {
         <CategoryForm
           onSubmit={onSubmit}
           disabled={mutation.isPending}
-          defaultValues={{ name: "" }}
+          defaultValues={{
+            name: "",
+          }}
         />
       </SheetContent>
     </Sheet>

@@ -1,7 +1,14 @@
 import { z } from "zod";
+import { Loader2 } from "lucide-react";
+
+import { useGetAccount } from "@/features/accounts/api/use-get-account";
+import { AccountForm } from "@/features/accounts/components/account-form";
+import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
+import { useEditAccount } from "@/features/accounts/api/use-edit-account";
+import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
 
 import { useConfirm } from "@/hooks/use-confirm";
-
+import { insertAccountSchema } from "@/db/schema";
 import {
   Sheet,
   SheetContent,
@@ -9,15 +16,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-
-import { insertAccountSchema } from "@/db/schema";
-
-import { Loader2 } from "lucide-react";
-import { useOpenAccount } from "../hooks/use-open-account";
-import { useGetAccount } from "../api/use-get-account";
-import { useEditAccount } from "../api/use-edit-account";
-import { useDeleteAccount } from "../api/use-delete-account";
-import { AccountForm } from "./account-form";
 
 const formSchema = insertAccountSchema.pick({
   name: true,
@@ -27,6 +25,11 @@ type FormValues = z.input<typeof formSchema>;
 
 export const EditAccountSheet = () => {
   const { isOpen, onClose, id } = useOpenAccount();
+
+  console.log({
+    isOpen,
+    id,
+  });
 
   const [ConfirmDialog, confirm] = useConfirm(
     "Are you sure?",
@@ -38,6 +41,7 @@ export const EditAccountSheet = () => {
   const deleteMutation = useDeleteAccount(id);
 
   const isPending = editMutation.isPending || deleteMutation.isPending;
+
   const isLoading = accountQuery.isLoading;
 
   const onSubmit = (values: FormValues) => {
@@ -64,7 +68,9 @@ export const EditAccountSheet = () => {
     ? {
         name: accountQuery.data.name,
       }
-    : { name: "" };
+    : {
+        name: "",
+      };
 
   return (
     <>
@@ -73,11 +79,11 @@ export const EditAccountSheet = () => {
         <SheetContent className="space-y-4">
           <SheetHeader>
             <SheetTitle>Edit Account</SheetTitle>
-            <SheetDescription>Edit an exisitng account</SheetDescription>
+            <SheetDescription>Edit an existing account</SheetDescription>
           </SheetHeader>
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="size-4 text-muted-foreground" />
+              <Loader2 className="size-4 text-muted-foreground animate-spin" />
             </div>
           ) : (
             <AccountForm

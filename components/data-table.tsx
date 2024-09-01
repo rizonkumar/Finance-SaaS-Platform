@@ -1,18 +1,19 @@
-"use client";
-import * as React from "react";
+"use client"
+
+import * as React from "react"
+import { Trash } from "lucide-react";
 import {
   ColumnDef,
-  flexRender,
   ColumnFiltersState,
+  Row,
   SortingState,
-  useReactTable,
+  flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  getFilteredRowModel,
-  Row,
-  RowData,
-} from "@tanstack/react-table";
+  useReactTable,
+} from "@tanstack/react-table"
 
 import {
   Table,
@@ -21,17 +22,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
 import { useConfirm } from "@/hooks/use-confirm";
-import { Trash } from "lucide-react";
+import { Button } from "@/components/ui/button"
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  filterKey: string;
-  onDelete: (rows: Row<RowData>[]) => void;
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
+  filterKey: string
+  onDelete: (rows: Row<TData>[]) => void;
   disabled?: boolean;
 }
 
@@ -42,26 +42,27 @@ export function DataTable<TData, TValue>({
   onDelete,
   disabled,
 }: DataTableProps<TData, TValue>) {
-
   const [ConfirmDialog, confirm] = useConfirm(
-    "Are you sure ?",
+    "Are you sure?",
     "You are about to perform a bulk delete."
-  )
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
   );
-  const [rowSelection, setRowSelection] = React.useState({});
+
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  )
+  const [rowSelection, setRowSelection] = React.useState({})
+
   const table = useReactTable({
     data,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
@@ -71,7 +72,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <ConfirmDialog /> 
+      <ConfirmDialog />
       <div className="flex items-center py-4">
         <Input
           placeholder={`Filter ${filterKey}...`}
@@ -90,8 +91,8 @@ export function DataTable<TData, TValue>({
             onClick={async () => {
               const ok = await confirm();
 
-              if(ok) {
-                onDelete(table.getFilteredSelectedRowModel().rows);
+              if (ok) {
+                onDelete(table.getFilteredSelectedRowModel().rows)
                 table.resetRowSelection();
               }
             }}
@@ -113,10 +114,10 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
-                  );
+                  )
                 })}
               </TableRow>
             ))}
@@ -130,20 +131,14 @@ export function DataTable<TData, TValue>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -156,7 +151,6 @@ export function DataTable<TData, TValue>({
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-
         <Button
           variant="outline"
           size="sm"
@@ -175,5 +169,5 @@ export function DataTable<TData, TValue>({
         </Button>
       </div>
     </div>
-  );
+  )
 }

@@ -7,7 +7,11 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { NavButton } from "@/components/nav-button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const routes = [
   {
@@ -26,16 +30,17 @@ const routes = [
     href: "/categories",
     label: "Categories",
   },
-  // {
-  //   href: "/settings",
-  //   label: "Settings",
-  // },
+  {
+    href: "/settings",
+    label: "Settings",
+  },
 ];
 
 export const Navigation = () => {
-  const pathname = usePathname();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+
+  const router = useRouter();
+  const pathname = usePathname();
   const isMobile = useMedia("(max-width: 1024px)", false);
 
   const onClick = (href: string) => {
@@ -57,9 +62,9 @@ export const Navigation = () => {
         </SheetTrigger>
         <SheetContent side="left" className="px-2">
           <nav className="flex flex-col gap-y-2 pt-6">
-            {routes.map((route, index) => (
+            {routes.map((route) => (
               <Button
-                key={index}
+                key={route.href}
                 variant={route.href === pathname ? "secondary" : "ghost"}
                 onClick={() => onClick(route.href)}
                 className="w-full justify-start"
@@ -75,9 +80,9 @@ export const Navigation = () => {
 
   return (
     <nav className="hidden lg:flex items-center gap-x-2 overflow-x-auto">
-      {routes.map((route, index) => (
+      {routes.map((route) => (
         <NavButton
-          key={index}
+          key={route.href}
           href={route.href}
           label={route.label}
           isActive={pathname === route.href}

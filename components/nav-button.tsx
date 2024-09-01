@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   href: string;
@@ -9,7 +9,11 @@ type Props = {
   isActive?: boolean;
 };
 
-export const NavButton = ({ href, label, isActive }: Props) => {
+export const NavButton = ({
+  href,
+  label,
+  isActive,
+}: Props) => {
   return (
     <Button
       asChild
@@ -20,7 +24,9 @@ export const NavButton = ({ href, label, isActive }: Props) => {
         isActive ? "bg-white/10 text-white" : "bg-transparent",
       )}
     >
-      <Link href={href}>{label}</Link>
+      <Link href={href}>
+        {label}
+      </Link>
     </Button>
   );
 };

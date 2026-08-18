@@ -1,11 +1,13 @@
-import { z } from "zod";
 import { Loader2 } from "lucide-react";
 
 import { useGetTransaction } from "@/features/transactions/api/use-get-transaction";
 import { useOpenTransaction } from "@/features/transactions/hooks/use-open-transaction";
 import { useEditTransaction } from "@/features/transactions/api/use-edit-transaction";
 import { useDeleteTransaction } from "@/features/transactions/api/use-delete-transaction";
-import { TransactionForm } from "@/features/transactions/components/transaction-form";
+import {
+  TransactionForm,
+  type TransactionApiValues,
+} from "@/features/transactions/components/transaction-form";
 
 import { useGetCategories } from "@/features/categories/api/use-get-categories";
 import { useCreateCategory } from "@/features/categories/api/use-create-category";
@@ -14,7 +16,6 @@ import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useCreateAccount } from "@/features/accounts/api/use-create-account";
 
 import { useConfirm } from "@/hooks/use-confirm";
-import { insertTransactionSchema } from "@/db/schema";
 import {
   Sheet,
   SheetContent,
@@ -22,12 +23,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-
-const formSchema = insertTransactionSchema.omit({
-  id: true,
-});
-
-type FormValues = z.input<typeof formSchema>;
 
 export const EditTransactionSheet = () => {
   const { isOpen, onClose, id } = useOpenTransaction();
@@ -75,7 +70,7 @@ export const EditTransactionSheet = () => {
     categoryQuery.isLoading ||
     accountQuery.isLoading;
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = (values: TransactionApiValues) => {
     editMutation.mutate(values, {
       onSuccess: () => {
         onClose();
@@ -126,7 +121,7 @@ export const EditTransactionSheet = () => {
           </SheetHeader>
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="size-4 text-muted-foreground animate-spin" />
+              <Loader2 className="text-muted-foreground size-4 animate-spin" />
             </div>
           ) : (
             <TransactionForm

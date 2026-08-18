@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { type z } from "zod";
 import { Trash } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,12 +19,12 @@ const formSchema = insertCategorySchema.pick({
   name: true,
 });
 
-type FormValues = z.input<typeof formSchema>;
+export type CategoryFormValues = z.input<typeof formSchema>;
 
 type Props = {
   id?: string;
-  defaultValues?: FormValues;
-  onSubmit: (values: FormValues) => void;
+  defaultValues?: CategoryFormValues;
+  onSubmit: (values: CategoryFormValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
 };
@@ -36,12 +36,12 @@ export const CategoryForm = ({
   onDelete,
   disabled,
 }: Props) => {
-  const form = useForm<FormValues>({
+  const form = useForm<CategoryFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues,
   });
 
-  const handleSubmit = (values: FormValues) => {
+  const handleSubmit = (values: CategoryFormValues) => {
     onSubmit(values);
   };
 
@@ -68,6 +68,7 @@ export const CategoryForm = ({
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -82,7 +83,7 @@ export const CategoryForm = ({
             className="w-full"
             variant="outline"
           >
-            <Trash className="size-4 mr-2" />
+            <Trash className="mr-2 size-4" />
             Delete category
           </Button>
         )}

@@ -1,10 +1,10 @@
-import { z } from "zod";
-
-import { CategoryForm } from "@/features/categories/components/category-form";
+import {
+  CategoryForm,
+  type CategoryFormValues,
+} from "@/features/categories/components/category-form";
 import { useNewCategory } from "@/features/categories/hooks/use-new-category";
 import { useCreateCategory } from "@/features/categories/api/use-create-category";
 
-import { insertCategorySchema } from "@/db/schema";
 import {
   Sheet,
   SheetContent,
@@ -13,18 +13,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-const formSchema = insertCategorySchema.pick({
-  name: true,
-});
-
-type FormValues = z.input<typeof formSchema>;
-
 export const NewCategorySheet = () => {
   const { isOpen, onClose } = useNewCategory();
 
   const mutation = useCreateCategory();
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = (values: CategoryFormValues) => {
     mutation.mutate(values, {
       onSuccess: () => {
         onClose();

@@ -6,8 +6,16 @@ import { subDays, parse, differenceInDays } from "date-fns";
 import { and, desc, eq, gte, lt, lte, sql, sum } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
+import {
+  DATE_FORMAT,
+  DEFAULT_PERIOD_DAYS,
+  TOP_CATEGORY_COUNT,
+} from "@/lib/constants";
+import { materializeRecurringTransactions } from "@/lib/recurring";
 import { accounts, categories, transactions } from "@/db/schema";
 import { calculatePercentageChange, fillMissingDays } from "@/lib/utils";
+
+const EMPTY_PERIOD = { income: 0, expenses: 0, remaining: 0 };
 
 const app = new Hono().get(
   "/",
@@ -28,13 +36,17 @@ const app = new Hono().get(
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const defaultTo = new Date();
-    const defaultFrom = subDays(defaultTo, 30);
+    try {
+      await materializeRecurringTransactions(auth.userId);
+    } catch (error) {
+      console.error("[recurring] materialize failed", error);
+    }
 
-    const startDate = from
-      ? parse(from, "yyyy-MM-dd", new Date())
-      : defaultFrom;
-    const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
+    const defaultTo = new Date();
+    const defaultFrom = subDays(defaultTo, DEFAULT_PERIOD_DAYS);
+
+    const startDate = from ? parse(from, DATE_FORMAT, new Date()) : defaultFrom;
+    const endDate = to ? parse(to, DATE_FORMAT, new Date()) : defaultTo;
 
     const periodLength = differenceInDays(endDate, startDate) + 1;
     const lastPeriodStart = subDays(startDate, periodLength);
@@ -80,17 +92,20 @@ const app = new Hono().get(
       lastPeriodEnd
     );
 
+    const current = currentPeriod ?? EMPTY_PERIOD;
+    const previous = lastPeriod ?? EMPTY_PERIOD;
+
     const incomeChange = calculatePercentageChange(
-      currentPeriod.income,
-      lastPeriod.income
+      current.income,
+      previous.income
     );
     const expensesChange = calculatePercentageChange(
-      currentPeriod.expenses,
-      lastPeriod.expenses
+      current.expenses,
+      previous.expenses
     );
     const remainingChange = calculatePercentageChange(
-      currentPeriod.remaining,
-      lastPeriod.remaining
+      current.remaining,
+      previous.remaining
     );
 
     const category = await db
@@ -113,8 +128,8 @@ const app = new Hono().get(
       .groupBy(categories.name)
       .orderBy(desc(sql`SUM(ABS(${transactions.amount}))`));
 
-    const topCategories = category.slice(0, 3);
-    const otherCategories = category.slice(3);
+    const topCategories = category.slice(0, TOP_CATEGORY_COUNT);
+    const otherCategories = category.slice(TOP_CATEGORY_COUNT);
     const otherSum = otherCategories.reduce(
       (sum, current) => sum + current.value,
       0
@@ -157,11 +172,11 @@ const app = new Hono().get(
 
     return c.json({
       data: {
-        remainingAmount: currentPeriod.remaining,
+        remainingAmount: current.remaining,
         remainingChange,
-        incomeAmount: currentPeriod.income,
+        incomeAmount: current.income,
         incomeChange,
-        expensesAmount: currentPeriod.expenses,
+        expensesAmount: current.expenses,
         expensesChange,
         categories: finalCategories,
         days,

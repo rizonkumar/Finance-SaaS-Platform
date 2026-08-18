@@ -1,57 +1,39 @@
-import { IconType } from "react-icons";
-import { VariantProps, cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
+import type { LucideIcon } from "lucide-react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
-import { Skeleton } from "./ui/skeleton";
-import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
 import { CountUp } from "@/components/count-up";
-import { 
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
 
-const boxVariant = cva(
-  "shrink-0 rounded-md p-3",
+const iconBox = cva(
+  "flex size-9 shrink-0 items-center justify-center rounded-sm",
   {
     variants: {
       variant: {
-        default: "bg-blue-500/20",
-        success: "bg-emerald-500/20",
-        danger: "bg-rose-500/20",
-        warning: "bg-yellow-500/20",
-      }
+        default: "bg-blue-100 text-blue-900",
+        success: "bg-green-100 text-green-900",
+        danger: "bg-red-100 text-red-900",
+        warning: "bg-amber-100 text-amber-900",
+      },
     },
     defaultVariants: {
       variant: "default",
     },
-  },
+  }
 );
 
+type IconBoxVariants = VariantProps<typeof iconBox>;
 
-const iconVariant = cva(
-  "size-6",
-  {
-    variants: {
-      variant: {
-        default: "fill-blue-500",
-        success: "fill-emerald-500",
-        danger: "fill-rose-500",
-        warning: "fill-yellow-500",
-      }
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  },
-);
-
-type BoxVariants = VariantProps<typeof boxVariant>;
-type IconVariants = VariantProps<typeof iconVariant>;
-
-interface DataCardProps extends BoxVariants, IconVariants {
-  icon: IconType;
+type Props = IconBoxVariants & {
+  icon: LucideIcon;
   title: string;
   value?: number;
   dateRange: string;
@@ -65,24 +47,24 @@ export const DataCard = ({
   variant,
   dateRange,
   percentageChange = 0,
-}: DataCardProps) => {
+}: Props) => {
+  const TrendIcon = percentageChange < 0 ? TrendingDown : TrendingUp;
+
   return (
-    <Card className="border-none drop-shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between gap-x-4">
-        <div className="space-y-2">
-          <CardTitle className="text-2xl line-clamp-1">
-            {title}
-          </CardTitle>
-          <CardDescription className="line-clamp1">
+    <Card>
+      <CardHeader className="flex-row items-start justify-between space-y-0 gap-x-4">
+        <div className="min-w-0 space-y-1">
+          <CardTitle className="line-clamp-1">{title}</CardTitle>
+          <CardDescription className="line-clamp-1">
             {dateRange}
           </CardDescription>
         </div>
-        <div className={cn(boxVariant({ variant }))}>
-          <Icon className={cn(iconVariant({ variant }))} />
+        <div className={cn(iconBox({ variant }))}>
+          <Icon className="size-4" />
         </div>
       </CardHeader>
-      <CardContent>
-        <h1 className="font-bold text-2xl mb-2 line-clamp-1 break-all">
+      <CardContent className="space-y-2">
+        <p className="numeric text-gray-1000 line-clamp-1 text-2xl font-semibold break-all">
           <CountUp
             preserveValue
             start={0}
@@ -91,13 +73,22 @@ export const DataCard = ({
             decimalPlaces={2}
             formattingFn={formatCurrency}
           />
-        </h1>
-        <p className={cn(
-          "text-muted-foreground text-sm line-clamp-1",
-          percentageChange > 0 && "text-emerald-500",
-          percentageChange < 0 && "text-rose-500",
-        )}>
-          {formatPercentage(percentageChange, { addPrefix: true })} from last period
+        </p>
+        <p
+          className={cn(
+            "copy-13 line-clamp-1 flex items-center gap-x-1",
+            percentageChange > 0 && "text-green-900",
+            percentageChange < 0 && "text-red-900",
+            percentageChange === 0 && "text-gray-900"
+          )}
+        >
+          {percentageChange !== 0 && (
+            <TrendIcon className="size-3.5 shrink-0" />
+          )}
+          <span className="numeric text-xs">
+            {formatPercentage(percentageChange, { addPrefix: true })}
+          </span>
+          <span className="text-gray-900">from last period</span>
         </p>
       </CardContent>
     </Card>
@@ -106,17 +97,17 @@ export const DataCard = ({
 
 export const DataCardLoading = () => {
   return (
-    <Card className="borer-none drop-shadow-sm h-[192px]">
-      <CardHeader className="flex flex-row items-center jsutify-between gap-x-4">
+    <Card className="h-[168px]">
+      <CardHeader className="flex-row items-start justify-between space-y-0 gap-x-4">
         <div className="space-y-2">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-4 w-36" />
         </div>
-        <Skeleton className="size-12" />
+        <Skeleton className="size-9 shrink-0" />
       </CardHeader>
-      <CardContent>
-        <Skeleton className="shrink-0 h-10 w-24 mb-2" />
-        <Skeleton className="shrink-0 h-4 w-40" />
+      <CardContent className="space-y-2">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-4 w-40" />
       </CardContent>
     </Card>
   );

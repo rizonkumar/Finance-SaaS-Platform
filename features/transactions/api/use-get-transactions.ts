@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 
 import { client } from "@/lib/hono";
+import { queryKeys } from "@/lib/query-keys";
 import { convertAmountFromMiliunits } from "@/lib/utils";
 
 export const useGetTransactions = () => {
@@ -11,7 +12,7 @@ export const useGetTransactions = () => {
   const accountId = params.get("accountId") || "";
 
   const query = useQuery({
-    queryKey: ["transactions", { from, to, accountId }],
+    queryKey: [...queryKeys.transactions(), { from, to, accountId }],
     queryFn: async () => {
       const response = await client.api.transactions.$get({
         query: {

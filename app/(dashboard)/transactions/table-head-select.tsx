@@ -10,17 +10,10 @@ import {
 type Props = {
   columnIndex: number;
   selectedColumns: Record<string, string | null>;
-  onChange: (
-    columnIndex: number,
-    value: string | null
-  ) => void;
+  onChange: (columnIndex: number, value: string | null) => void;
 };
 
-const options = [
-  "amount",
-  "payee",
-  "date",
-];
+const options = ["amount", "payee", "date"];
 
 export const TableHeadSelect = ({
   columnIndex,
@@ -36,8 +29,8 @@ export const TableHeadSelect = ({
     >
       <SelectTrigger
         className={cn(
-          "focus:ring-offset-0 focus:ring-transparent outline-none border-none bg-transparent capitalize",
-          currentSelection && "text-blue-500",
+          "border-none bg-transparent capitalize outline-none focus:ring-transparent focus:ring-offset-0",
+          currentSelection && "text-blue-500"
         )}
       >
         <SelectValue placeholder="Skip" />
@@ -45,9 +38,9 @@ export const TableHeadSelect = ({
       <SelectContent>
         <SelectItem value="skip">Skip</SelectItem>
         {options.map((option, index) => {
-          const disabled = 
-            Object.values(selectedColumns).includes(option) 
-            && selectedColumns[`column_${columnIndex}`] !== option;
+          const disabled =
+            Object.values(selectedColumns).includes(option) &&
+            selectedColumns[`column_${columnIndex}`] !== option;
 
           return (
             <SelectItem
@@ -58,7 +51,7 @@ export const TableHeadSelect = ({
             >
               {option}
             </SelectItem>
-          )
+          );
         })}
       </SelectContent>
     </Select>

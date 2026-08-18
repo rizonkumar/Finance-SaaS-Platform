@@ -5,10 +5,7 @@ type Props = {
   accountId: string;
 };
 
-export const AccountColumn = ({
-  account,
-  accountId
-}: Props) => {
+export const AccountColumn = ({ account, accountId }: Props) => {
   const { onOpen: onOpenAccount } = useOpenAccount();
 
   const onClick = () => {
@@ -18,7 +15,7 @@ export const AccountColumn = ({
   return (
     <div
       onClick={onClick}
-      className="flex items-center cursor-pointer hover:underline"
+      className="flex cursor-pointer items-center hover:underline"
     >
       {account}
     </div>

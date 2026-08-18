@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import { Trash } from "lucide-react";
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  Row,
-  RowData,
-  SortingState,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type Row,
+  type RowData,
+  type SortingState,
   flexRender,
   useTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -19,16 +19,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/use-confirm";
-import { Button } from "@/components/ui/button"
-import { tableFeatureSet } from "@/lib/table-features"
+import { Button } from "@/components/ui/button";
+import { tableFeatureSet } from "@/lib/table-features";
 
 interface DataTableProps<TData extends RowData, TValue> {
-  columns: ColumnDef<typeof tableFeatureSet, TData, TValue>[]
-  data: TData[]
-  filterKey: string
+  columns: ColumnDef<typeof tableFeatureSet, TData, TValue>[];
+  data: TData[];
+  filterKey: string;
   onDelete: (rows: Row<typeof tableFeatureSet, TData>[]) => void;
   disabled?: boolean;
 }
@@ -45,11 +45,11 @@ export function DataTable<TData extends RowData, TValue>({
     "You are about to perform a bulk delete."
   );
 
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
-  )
-  const [rowSelection, setRowSelection] = React.useState({})
+  );
+  const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useTable({
     features: tableFeatureSet,
@@ -82,17 +82,17 @@ export function DataTable<TData extends RowData, TValue>({
             disabled={disabled}
             size="sm"
             variant="outline"
-            className="ml-auto font-normal text-xs"
+            className="ml-auto text-xs font-normal"
             onClick={async () => {
               const ok = await confirm();
 
               if (ok) {
-                onDelete(table.getFilteredSelectedRowModel().rows)
+                onDelete(table.getFilteredSelectedRowModel().rows);
                 table.resetRowSelection();
               }
             }}
           >
-            <Trash className="size-4 mr-2" />
+            <Trash className="mr-2 size-4" />
             Delete ({table.getFilteredSelectedRowModel().rows.length})
           </Button>
         )}
@@ -112,7 +112,7 @@ export function DataTable<TData extends RowData, TValue>({
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -126,14 +126,20 @@ export function DataTable<TData extends RowData, TValue>({
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -142,7 +148,7 @@ export function DataTable<TData extends RowData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
@@ -164,5 +170,5 @@ export function DataTable<TData extends RowData, TValue>({
         </Button>
       </div>
     </div>
-  )
+  );
 }

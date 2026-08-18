@@ -1,7 +1,6 @@
 "use client";
 
-import { useMountedState } from "react-use";
-
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { EditAccountSheet } from "@/features/accounts/components/edit-account-sheet";
 import { NewAccountSheet } from "@/features/accounts/components/new-account-sheet";
 import { EditBudgetSheet } from "@/features/budgets/components/edit-budget-sheet";
@@ -14,9 +13,9 @@ import { EditTransactionSheet } from "@/features/transactions/components/edit-tr
 import { NewTransactionSheet } from "@/features/transactions/components/new-transaction-sheet";
 
 export const SheetProvider = () => {
-  const isMounted = useMountedState();
+  const isMounted = useIsMounted();
 
-  if (!isMounted()) return null;
+  if (!isMounted) return null;
 
   return (
     <>

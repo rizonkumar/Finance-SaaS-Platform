@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { categories, accounts, transactions } from "@/db/schema";
 
-config({ path: ".env.local" });
+config({ path: [".env.local", ".env"] });
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql);
@@ -18,8 +18,18 @@ const SEED_CATEGORIES = [
 ];
 
 const SEED_ACCOUNTS = [
-  { id: "account_1", name: "Current Account", userId: SEED_USER_ID, plaidId: null },
-  { id: "account_2", name: "Saving Account", userId: SEED_USER_ID, plaidId: null },
+  {
+    id: "account_1",
+    name: "Current Account",
+    userId: SEED_USER_ID,
+    plaidId: null,
+  },
+  {
+    id: "account_2",
+    name: "Saving Account",
+    userId: SEED_USER_ID,
+    plaidId: null,
+  },
 ];
 
 const defaultTo = new Date();
@@ -50,11 +60,15 @@ const generateRandomAmount = (category: typeof categories.$inferInsert) => {
   }
 };
 
+const [defaultAccount] = SEED_ACCOUNTS;
+
 const generateTransactionsForDay = (day: Date) => {
   const numTransactions = Math.floor(Math.random() * 5) + 2;
   for (let i = 0; i < numTransactions; i++) {
     const category =
       SEED_CATEGORIES[Math.floor(Math.random() * SEED_CATEGORIES.length)];
+
+    if (!category || !defaultAccount) continue;
     const isExpense = Math.random() > 0.8;
     const amount = generateRandomAmount(category);
     const formattedAmount = convertAmountToMiliunits(
@@ -63,12 +77,13 @@ const generateTransactionsForDay = (day: Date) => {
 
     SEED_TRANSACTIONS.push({
       id: `transaction_${format(day, "yyyy-MM-dd")}_${i}`,
-      accountId: SEED_ACCOUNTS[0].id,
+      accountId: defaultAccount.id,
       categoryId: category.id,
       date: day,
       amount: formattedAmount,
       payee: "Merchant",
       notes: "Random transaction",
+      recurringId: null,
     });
   }
 };

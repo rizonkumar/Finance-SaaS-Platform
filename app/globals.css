@@ -439,6 +439,13 @@
       0 0 0 2px var(--focus-gap),
       0 0 0 4px var(--ring);
   }
+
+  .rs__input:focus-visible,
+  .rs__input input:focus-visible,
+  .rs__control input:focus-visible,
+  .rs__dummyInput:focus-visible {
+    box-shadow: none;
+  }
 }
 
 @utility heading-32 {

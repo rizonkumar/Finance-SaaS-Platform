@@ -2,8 +2,8 @@
 
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useMountedState } from "react-use";
 
+import { useIsMounted } from "@/hooks/use-is-mounted";
 import { cn } from "@/lib/utils";
 
 const OPTIONS = [
@@ -14,7 +14,7 @@ const OPTIONS = [
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const isMounted = useMountedState();
+  const isMounted = useIsMounted();
 
   return (
     <div
@@ -23,7 +23,7 @@ export function ThemeToggle() {
       className="border-alpha-300 bg-alpha-100 inline-flex items-center gap-0.5 rounded-full border p-0.5"
     >
       {OPTIONS.map(({ value, label, icon: Icon }) => {
-        const isActive = isMounted() && theme === value;
+        const isActive = isMounted && theme === value;
 
         return (
           <button

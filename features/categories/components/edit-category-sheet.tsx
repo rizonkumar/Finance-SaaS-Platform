@@ -1,14 +1,15 @@
-import { z } from "zod";
 import { Loader2 } from "lucide-react";
 
-import { CategoryForm } from "@/features/categories/components/category-form";
+import {
+  CategoryForm,
+  type CategoryFormValues,
+} from "@/features/categories/components/category-form";
 import { useGetCategory } from "@/features/categories/api/use-get-category";
 import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
 import { useEditCategory } from "@/features/categories/api/use-edit-category";
 import { useDeleteCategory } from "@/features/categories/api/use-delete-category";
 
 import { useConfirm } from "@/hooks/use-confirm";
-import { insertCategorySchema } from "@/db/schema";
 import {
   Sheet,
   SheetContent,
@@ -16,12 +17,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-
-const formSchema = insertCategorySchema.pick({
-  name: true,
-});
-
-type FormValues = z.input<typeof formSchema>;
 
 export const EditCategorySheet = () => {
   const { isOpen, onClose, id } = useOpenCategory();
@@ -39,7 +34,7 @@ export const EditCategorySheet = () => {
 
   const isLoading = categoryQuery.isLoading;
 
-  const onSubmit = (values: FormValues) => {
+  const onSubmit = (values: CategoryFormValues) => {
     editMutation.mutate(values, {
       onSuccess: () => {
         onClose();
@@ -78,7 +73,7 @@ export const EditCategorySheet = () => {
           </SheetHeader>
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="size-4 text-muted-foreground animate-spin" />
+              <Loader2 className="text-muted-foreground size-4 animate-spin" />
             </div>
           ) : (
             <CategoryForm

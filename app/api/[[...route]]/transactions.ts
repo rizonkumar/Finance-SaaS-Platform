@@ -7,6 +7,8 @@ import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
+import { DATE_FORMAT, DEFAULT_PERIOD_DAYS } from "@/lib/constants";
+import { materializeRecurringTransactions } from "@/lib/recurring";
 import {
   transactions,
   insertTransactionSchema,
@@ -34,13 +36,19 @@ const app = new Hono()
         return c.json({ error: "Unauthorized" }, 401);
       }
 
+      try {
+        await materializeRecurringTransactions(auth.userId);
+      } catch (error) {
+        console.error("[recurring] materialize failed", error);
+      }
+
       const defaultTo = new Date();
-      const defaultFrom = subDays(defaultTo, 30);
+      const defaultFrom = subDays(defaultTo, DEFAULT_PERIOD_DAYS);
 
       const startDate = from
-        ? parse(from, "yyyy-MM-dd", new Date())
+        ? parse(from, DATE_FORMAT, new Date())
         : defaultFrom;
-      const endDate = to ? parse(to, "yyyy-MM-dd", new Date()) : defaultTo;
+      const endDate = to ? parse(to, DATE_FORMAT, new Date()) : defaultTo;
 
       const data = await db
         .select({
@@ -53,6 +61,7 @@ const app = new Hono()
           notes: transactions.notes,
           account: accounts.name,
           accountId: transactions.accountId,
+          recurringId: transactions.recurringId,
         })
         .from(transactions)
         .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -119,6 +128,7 @@ const app = new Hono()
       "json",
       insertTransactionSchema.omit({
         id: true,
+        recurringId: true,
       })
     ),
     async (c) => {
@@ -148,6 +158,7 @@ const app = new Hono()
       z.array(
         insertTransactionSchema.omit({
           id: true,
+          recurringId: true,
         })
       )
     ),
@@ -231,6 +242,7 @@ const app = new Hono()
       "json",
       insertTransactionSchema.omit({
         id: true,
+        recurringId: true,
       })
     ),
     async (c) => {

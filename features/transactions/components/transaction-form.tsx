@@ -29,17 +29,17 @@ const formSchema = z.object({
   notes: z.string().nullable().optional(),
 });
 
-const apiSchema = insertTransactionSchema.omit({
+const _apiSchema = insertTransactionSchema.omit({
   id: true,
 });
 
 type FormValues = z.input<typeof formSchema>;
-type ApiFormValues = z.input<typeof apiSchema>;
+export type TransactionApiValues = z.input<typeof _apiSchema>;
 
 type Props = {
   id?: string;
   defaultValues?: FormValues;
-  onSubmit: (values: ApiFormValues) => void;
+  onSubmit: (values: TransactionApiValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
   accountOptions: { label: string; value: string }[];
@@ -96,6 +96,7 @@ export const TransactionForm = ({
                   disabled={disabled}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -115,6 +116,7 @@ export const TransactionForm = ({
                   disabled={disabled}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -134,6 +136,7 @@ export const TransactionForm = ({
                   disabled={disabled}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -150,6 +153,7 @@ export const TransactionForm = ({
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -166,6 +170,7 @@ export const TransactionForm = ({
                   placeholder="0.00"
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -183,6 +188,7 @@ export const TransactionForm = ({
                   placeholder="Optional notes"
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -197,7 +203,7 @@ export const TransactionForm = ({
             className="w-full"
             variant="outline"
           >
-            <Trash className="size-4 mr-2" />
+            <Trash className="mr-2 size-4" />
             Delete transaction
           </Button>
         )}

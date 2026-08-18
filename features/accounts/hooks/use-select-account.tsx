@@ -16,7 +16,7 @@ import {
 
 export const useSelectAccount = (): [
   () => JSX.Element,
-  () => Promise<unknown>
+  () => Promise<unknown>,
 ] => {
   const accountQuery = useGetAccounts();
   const accountMutation = useCreateAccount();
@@ -35,7 +35,7 @@ export const useSelectAccount = (): [
   const selectValue = useRef<string | undefined>(undefined);
 
   const confirm = () =>
-    new Promise((resolve, reject) => {
+    new Promise((resolve) => {
       setPromise({ resolve });
     });
 

@@ -1,14 +1,8 @@
-import { format } from "date-fns";
-import {
-  Tooltip,
-  XAxis,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  CartesianGrid,
-} from "recharts";
+import { Bar, BarChart, ResponsiveContainer, Tooltip } from "recharts";
 
-import { CustomTooltip } from "@/components/custom-tooltip";
+import { chartGrid, dateXAxis } from "@/components/chart-axis";
+import { CashFlowTooltip } from "@/components/chart-tooltip";
+import { CHART_HEIGHT, CHART_SERIES } from "@/lib/constants";
 
 type Props = {
   data: {
@@ -20,20 +14,24 @@ type Props = {
 
 export const BarVariant = ({ data }: Props) => {
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
       <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis
-          axisLine={false}
-          tickLine={false}
-          dataKey="date"
-          tickFormatter={(value) => format(value, "dd MMM")}
-          style={{ fontSize: "12px" }}
-          tickMargin={16}
+        {chartGrid}
+        {dateXAxis}
+        <Tooltip
+          content={<CashFlowTooltip />}
+          cursor={{ fill: "var(--gray-alpha-100)" }}
         />
-        <Tooltip content={<CustomTooltip />} />
-        <Bar dataKey="income" fill="#3b82f6" className="drop-shadow-sm" />
-        <Bar dataKey="expenses" fill="#f43f5e" className="drop-shadow-sm" />
+        <Bar
+          dataKey="income"
+          fill={CHART_SERIES.income}
+          radius={[4, 4, 0, 0]}
+        />
+        <Bar
+          dataKey="expenses"
+          fill={CHART_SERIES.expenses}
+          radius={[4, 4, 0, 0]}
+        />
       </BarChart>
     </ResponsiveContainer>
   );

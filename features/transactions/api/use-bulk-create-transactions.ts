@@ -1,8 +1,9 @@
 import { toast } from "sonner";
-import { InferRequestType, InferResponseType } from "hono";
+import { type InferRequestType, type InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { client } from "@/lib/hono";
+import { MONEY_DEPENDENT_KEYS } from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<
   (typeof client.api.transactions)["bulk-create"]["$post"]
@@ -23,8 +24,9 @@ export const useBulkCreateTransactions = () => {
     },
     onSuccess: () => {
       toast.success("Transactions created");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      MONEY_DEPENDENT_KEYS.forEach((queryKey) =>
+        queryClient.invalidateQueries({ queryKey })
+      );
     },
     onError: () => {
       toast.error("Failed to create transactions");

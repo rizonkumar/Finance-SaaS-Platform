@@ -1,15 +1,16 @@
 import { Suspense } from "react";
 
-import { DataGrid } from "@/components/data-grid";
+import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { DataCharts } from "@/components/data-charts";
+import { DataGrid } from "@/components/data-grid";
 
 export default function DashboardPage() {
   return (
-    <div className="max-w-screen-2xl mx-auto w-full pb-10 -mt-24">
-      <Suspense fallback={null}>
+    <div className="space-y-4">
+      <Suspense fallback={<CardGridSkeleton count={3} />}>
         <DataGrid />
       </Suspense>
-      <Suspense fallback={null}>
+      <Suspense fallback={<CardGridSkeleton count={2} />}>
         <DataCharts />
       </Suspense>
     </div>

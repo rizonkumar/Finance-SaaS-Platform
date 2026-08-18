@@ -1,22 +1,25 @@
-"use client"
+"use client";
 
 import { format } from "date-fns";
-import { InferResponseType } from "hono";
-import { ArrowUpDown } from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
+import { type InferResponseType } from "hono";
+import { Repeat } from "lucide-react";
+import { type ColumnDef } from "@tanstack/react-table";
 
-import { client } from "@/lib/hono";
+import { type client } from "@/lib/hono";
 import { formatCurrency } from "@/lib/utils";
-import { tableFeatureSet } from "@/lib/table-features";
+import { type tableFeatureSet } from "@/lib/table-features";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SortableHeader } from "@/components/sortable-header";
 
 import { Actions } from "./actions";
 import { AccountColumn } from "./account-column";
 import { CategoryColumn } from "./category-column";
 
-export type ResponseType = InferResponseType<typeof client.api.transactions.$get, 200>["data"][0];
+export type ResponseType = InferResponseType<
+  typeof client.api.transactions.$get,
+  200
+>["data"][0];
 
 export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
   {
@@ -42,42 +45,16 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
   },
   {
     accessorKey: "date",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="-ml-4"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: ({ column }) => <SortableHeader column={column} label="Date" />,
     cell: ({ row }) => {
       const date = row.getValue("date") as Date;
 
-      return (
-        <span>
-          {format(date, "dd MMMM, yyyy")}
-        </span>
-      )
-    }
+      return <span>{format(date, "dd MMMM, yyyy")}</span>;
+    },
   },
   {
     accessorKey: "category",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="-ml-4"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Category
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: ({ column }) => <SortableHeader column={column} label="Category" />,
     cell: ({ row }) => {
       return (
         <CategoryColumn
@@ -86,75 +63,53 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
           categoryId={row.original.categoryId}
         />
       );
-    }
+    },
   },
   {
     accessorKey: "payee",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="-ml-4"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Payee
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: ({ column }) => <SortableHeader column={column} label="Payee" />,
+    cell: ({ row }) => (
+      <div className="flex items-center gap-x-2">
+        <span className="line-clamp-1">{row.original.payee}</span>
+        {row.original.recurringId && (
+          <Badge variant="info" title="Generated from a recurring schedule">
+            <Repeat className="size-3" />
+            Recurring
+          </Badge>
+        )}
+      </div>
+    ),
   },
   {
     accessorKey: "amount",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="-ml-4"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: ({ column }) => <SortableHeader column={column} label="Amount" />,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("amount"));
 
       return (
         <Badge
-          variant={amount < 0 ? "destructive" : "primary"}
-          className="text-xs font-medium px-3.5 py-2.5"
+          variant={amount < 0 ? "expense" : "income"}
+          className="px-3.5 py-2.5 text-xs font-medium"
         >
           {formatCurrency(amount)}
         </Badge>
       );
-    }
+    },
   },
   {
     accessorKey: "account",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          className="-ml-4"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Account
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
+    header: ({ column }) => <SortableHeader column={column} label="Account" />,
     cell: ({ row }) => {
       return (
         <AccountColumn
           account={row.original.account}
           accountId={row.original.accountId}
         />
-      )
-    }
+      );
+    },
   },
   {
     id: "actions",
-    cell: ({ row }) => <Actions id={row.original.id} />
-  }
+    cell: ({ row }) => <Actions id={row.original.id} />,
+  },
 ];

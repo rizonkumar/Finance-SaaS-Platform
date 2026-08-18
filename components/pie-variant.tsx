@@ -1,16 +1,16 @@
-import { 
-  Cell, 
-  Legend, 
-  Pie, 
-  PieChart, 
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
-  Tooltip
+  Tooltip,
 } from "recharts";
 
+import { ChartLegend } from "@/components/chart-legend";
+import { CategoryTooltip } from "@/components/chart-tooltip";
+import { CHART_CATEGORY_COLORS, CHART_HEIGHT } from "@/lib/constants";
 import { formatPercentage } from "@/lib/utils";
-import { CategoryTooltip } from "@/components/category-tooltip";
-
-const COLORS = ["#0062FF", "#12C6FF", "#FF647F", "#FF9354"];
 
 type Props = {
   data: {
@@ -21,38 +21,21 @@ type Props = {
 
 export const PieVariant = ({ data }: Props) => {
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
       <PieChart>
         <Legend
           layout="horizontal"
-          verticalAlign="bottom" 
+          verticalAlign="bottom"
           align="right"
           iconType="circle"
-          content={({ payload }: any) => {
-            return (
-              <ul className="flex flex-col space-y-2">
-                {payload.map((entry: any, index: number) => (
-                  <li 
-                    key={`item-${index}`}
-                    className="flex items-center space-x-2"
-                  >
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <div className="space-x-1">
-                      <span className="text-sm text-muted-foreground">
-                        {entry.value}
-                      </span>
-                      <span className="text-sm">
-                        {formatPercentage(entry.payload.percent * 100)}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )
-          }}
+          content={({ payload }) => (
+            <ChartLegend
+              payload={payload}
+              formatValue={(entry) =>
+                formatPercentage((entry.payload?.percent ?? 0) * 100)
+              }
+            />
+          )}
         />
         <Tooltip content={<CategoryTooltip />} />
         <Pie
@@ -62,14 +45,15 @@ export const PieVariant = ({ data }: Props) => {
           outerRadius={90}
           innerRadius={60}
           paddingAngle={2}
-          fill="#8884d8"
           dataKey="value"
           labelLine={false}
+          stroke="var(--background-200)"
+          strokeWidth={2}
         >
-          {data.map((_entry, index) => (
+          {data.map((entry, index) => (
             <Cell
-              key={`cell-${index}`}
-              fill={COLORS[index % COLORS.length]}
+              key={entry.name}
+              fill={CHART_CATEGORY_COLORS[index % CHART_CATEGORY_COLORS.length]}
             />
           ))}
         </Pie>

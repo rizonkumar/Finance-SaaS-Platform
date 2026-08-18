@@ -1,7 +1,8 @@
 import { useState } from "react";
-import CurrencyInput from "react-currency-input-field";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import CurrencyInput from "react-currency-input-field";
 
+import { CURRENCY_SYMBOL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -10,6 +11,10 @@ type Props = {
   placeholder?: string;
   disabled?: boolean;
 };
+
+const TOGGLE_BASE =
+  "flex flex-1 items-center justify-center gap-x-1.5 rounded-sm border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-700";
+const TOGGLE_IDLE = "border-input text-gray-900 hover:bg-alpha-100";
 
 export const AmountInput = ({
   value,
@@ -38,24 +43,26 @@ export const AmountInput = ({
       return;
     }
 
-    const sign = hasValue ? (isDebit ? -1 : 1) : preferredSign;
+    const currentSign = isDebit ? -1 : 1;
+    const sign = hasValue ? currentSign : preferredSign;
     const magnitude = Math.abs(parseFloat(rawValue));
 
     onChange((magnitude * sign).toString());
   };
 
   return (
-    <div>
-      <div className="flex gap-x-2 mb-2">
+    <div className="space-y-2">
+      <div className="flex gap-x-2">
         <button
           type="button"
           disabled={disabled}
+          aria-pressed={isCredit}
           onClick={() => selectType(1)}
           className={cn(
-            "flex-1 flex items-center justify-center gap-x-1.5 rounded-md border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
+            TOGGLE_BASE,
             isCredit
-              ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-              : "border-input text-muted-foreground hover:bg-accent"
+              ? "border-green-500 bg-green-100 text-green-900"
+              : TOGGLE_IDLE
           )}
         >
           <ArrowUpCircle className="size-4" />
@@ -64,12 +71,11 @@ export const AmountInput = ({
         <button
           type="button"
           disabled={disabled}
+          aria-pressed={isDebit}
           onClick={() => selectType(-1)}
           className={cn(
-            "flex-1 flex items-center justify-center gap-x-1.5 rounded-md border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
-            isDebit
-              ? "border-rose-500 bg-rose-50 text-rose-700"
-              : "border-input text-muted-foreground hover:bg-accent"
+            TOGGLE_BASE,
+            isDebit ? "border-red-500 bg-red-100 text-red-900" : TOGGLE_IDLE
           )}
         >
           <ArrowDownCircle className="size-4" />
@@ -77,8 +83,8 @@ export const AmountInput = ({
         </button>
       </div>
       <CurrencyInput
-        prefix="$"
-        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        prefix={CURRENCY_SYMBOL}
+        className="border-input bg-surface text-gray-1000 hover:border-alpha-500 numeric flex h-10 w-full rounded-sm border px-3 text-sm transition-colors placeholder:text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-700"
         placeholder={placeholder}
         value={value}
         decimalsLimit={2}
@@ -86,7 +92,7 @@ export const AmountInput = ({
         onValueChange={onValueChange}
         disabled={disabled}
       />
-      <p className="text-xs text-muted-foreground mt-2">
+      <p className="copy-13 text-gray-900">
         {isCredit && "Credit: money coming in, e.g. a salary payment."}
         {isDebit && "Debit: money going out, e.g. a subscription charge."}
         {!hasValue &&

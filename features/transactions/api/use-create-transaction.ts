@@ -1,8 +1,9 @@
 import { toast } from "sonner";
-import { InferRequestType, InferResponseType } from "hono";
+import { type InferRequestType, type InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { client } from "@/lib/hono";
+import { MONEY_DEPENDENT_KEYS } from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<typeof client.api.transactions.$post>;
 type RequestType = InferRequestType<
@@ -19,8 +20,9 @@ export const useCreateTransaction = () => {
     },
     onSuccess: () => {
       toast.success("Transaction created");
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      MONEY_DEPENDENT_KEYS.forEach((queryKey) =>
+        queryClient.invalidateQueries({ queryKey })
+      );
     },
     onError: () => {
       toast.error("Failed to create transaction");

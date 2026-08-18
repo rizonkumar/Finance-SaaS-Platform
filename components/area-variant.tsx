@@ -1,14 +1,8 @@
-import { format } from "date-fns";
-import {
-  Tooltip,
-  XAxis,
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 
-import { CustomTooltip } from "@/components/custom-tooltip";
+import { chartGrid, dateXAxis } from "@/components/chart-axis";
+import { CashFlowTooltip } from "@/components/chart-tooltip";
+import { CHART_HEIGHT, CHART_SERIES } from "@/lib/constants";
 
 type Props = {
   data: {
@@ -20,45 +14,52 @@ type Props = {
 
 export const AreaVariant = ({ data }: Props) => {
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
       <AreaChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
+        {chartGrid}
         <defs>
-          <linearGradient id="income" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="2%" stopColor="#3d82f6" stopOpacity={0.8} />
-            <stop offset="98%" stopColor="#3d82f6" stopOpacity={0} />
+          <linearGradient id="income-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop
+              offset="2%"
+              stopColor={CHART_SERIES.income}
+              stopOpacity={0.3}
+            />
+            <stop
+              offset="98%"
+              stopColor={CHART_SERIES.income}
+              stopOpacity={0}
+            />
           </linearGradient>
-          <linearGradient id="expenses" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="2%" stopColor="#f43f5e" stopOpacity={0.8} />
-            <stop offset="98%" stopColor="#f43f5e" stopOpacity={0} />
+          <linearGradient id="expenses-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop
+              offset="2%"
+              stopColor={CHART_SERIES.expenses}
+              stopOpacity={0.3}
+            />
+            <stop
+              offset="98%"
+              stopColor={CHART_SERIES.expenses}
+              stopOpacity={0}
+            />
           </linearGradient>
         </defs>
-        <XAxis
-          axisLine={false}
-          tickLine={false}
-          dataKey="date"
-          tickFormatter={(value) => format(value, "dd MMM")}
-          style={{ fontSize: "12px" }}
-          tickMargin={16}
-        />
-        <Tooltip content={<CustomTooltip />} />
+        {dateXAxis}
+        <Tooltip content={<CashFlowTooltip />} />
         <Area
           type="monotone"
           dataKey="income"
           stackId="income"
           strokeWidth={2}
-          stroke="#3d82f6"
-          fill="url(#income)"
-          className="drop-shadow-sm"
+          stroke={CHART_SERIES.income}
+          fill="url(#income-fill)"
         />
         <Area
           type="monotone"
           dataKey="expenses"
           stackId="expenses"
           strokeWidth={2}
-          stroke="#f43f5e"
-          fill="url(#expenses)"
-          className="drop-shadow-sm"
+          stroke={CHART_SERIES.expenses}
+          fill="url(#expenses-fill)"
         />
       </AreaChart>
     </ResponsiveContainer>

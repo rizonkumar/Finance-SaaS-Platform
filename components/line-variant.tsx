@@ -1,14 +1,8 @@
-import { format } from "date-fns";
-import { 
-  Tooltip, 
-  XAxis, 
-  ResponsiveContainer, 
-  LineChart, 
-  Line, 
-  CartesianGrid
-} from "recharts";
+import { Line, LineChart, ResponsiveContainer, Tooltip } from "recharts";
 
-import { CustomTooltip } from "@/components/custom-tooltip";
+import { chartGrid, dateXAxis } from "@/components/chart-axis";
+import { CashFlowTooltip } from "@/components/chart-tooltip";
+import { CHART_HEIGHT, CHART_SERIES } from "@/lib/constants";
 
 type Props = {
   data: {
@@ -20,31 +14,22 @@ type Props = {
 
 export const LineVariant = ({ data }: Props) => {
   return (
-    <ResponsiveContainer width="100%" height={350}>
+    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
       <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis
-          axisLine={false}
-          tickLine={false}
-          dataKey="date"
-          tickFormatter={(value) => format(value, "dd MMM")}
-          style={{ fontSize: "12px" }}
-          tickMargin={16}
-        />
-        <Tooltip content={<CustomTooltip />} />
+        {chartGrid}
+        {dateXAxis}
+        <Tooltip content={<CashFlowTooltip />} />
         <Line
           dot={false}
           dataKey="income"
-          stroke="#3b82f6"
+          stroke={CHART_SERIES.income}
           strokeWidth={2}
-          className="drop-shadow-sm"
         />
         <Line
           dot={false}
           dataKey="expenses"
-          stroke="#f43f5e"
+          stroke={CHART_SERIES.expenses}
           strokeWidth={2}
-          className="drop-shadow-sm"
         />
       </LineChart>
     </ResponsiveContainer>

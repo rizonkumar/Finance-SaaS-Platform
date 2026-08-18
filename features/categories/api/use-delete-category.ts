@@ -1,8 +1,9 @@
 import { toast } from "sonner";
-import { InferRequestType, InferResponseType } from "hono";
+import { type InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { client } from "@/lib/hono";
+import { queryKeys } from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<
   (typeof client.api.categories)[":id"]["$delete"]
@@ -20,10 +21,10 @@ export const useDeleteCategory = (id?: string) => {
     },
     onSuccess: () => {
       toast.success("Category deleted");
-      queryClient.invalidateQueries({ queryKey: ["category", { id }] });
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.category(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.summary() });
     },
     onError: () => {
       toast.error("Failed to delete category");

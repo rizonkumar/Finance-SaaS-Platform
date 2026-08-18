@@ -1,8 +1,9 @@
 import { toast } from "sonner";
-import { InferRequestType, InferResponseType } from "hono";
+import { type InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { client } from "@/lib/hono";
+import { MONEY_DEPENDENT_KEYS, queryKeys } from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<
   (typeof client.api.transactions)[":id"]["$delete"]
@@ -20,9 +21,10 @@ export const useDeleteTransaction = (id?: string) => {
     },
     onSuccess: () => {
       toast.success("Transaction deleted");
-      queryClient.invalidateQueries({ queryKey: ["transaction", { id }] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.transaction(id) });
+      MONEY_DEPENDENT_KEYS.forEach((queryKey) =>
+        queryClient.invalidateQueries({ queryKey })
+      );
     },
     onError: () => {
       toast.error("Failed to delete transaction");

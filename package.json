@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun ./scripts/seed.ts",
@@ -65,12 +65,12 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "drizzle-kit": "0.31.10",
-    "eslint": "^10",
+    "eslint": "9.39.5",
     "eslint-config-next": "16.3.1",
     "pg": "^8.23.0",
     "postcss": "^8",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7"
+    "typescript": "6.0.3"
   },
   "trustedDependencies": [
     "@clerk/shared",

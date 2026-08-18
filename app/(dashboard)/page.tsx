@@ -9,7 +9,9 @@ export default function DashboardPage() {
       <Suspense fallback={null}>
         <DataGrid />
       </Suspense>
-      <DataCharts />
+      <Suspense fallback={null}>
+        <DataCharts />
+      </Suspense>
     </div>
   );
 }

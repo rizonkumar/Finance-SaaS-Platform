@@ -1,13 +1,8 @@
+import { useState } from "react";
 import CurrencyInput from "react-currency-input-field";
-import { Info, MinusCircle, PlusCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 type Props = {
   value: string;
@@ -22,54 +17,80 @@ export const AmountInput = ({
   placeholder,
   disabled,
 }: Props) => {
+  const [preferredSign, setPreferredSign] = useState<1 | -1>(1);
+
   const parsedValue = parseFloat(value);
-  const isIncome = parsedValue > 0;
-  const isExpense = parsedValue < 0;
+  const hasValue = value !== "" && !isNaN(parsedValue) && parsedValue !== 0;
+  const isCredit = hasValue && parsedValue > 0;
+  const isDebit = hasValue && parsedValue < 0;
 
-  const onReverseValue = () => {
-    if (!value) return;
+  const selectType = (sign: 1 | -1) => {
+    setPreferredSign(sign);
 
-    const newValue = parseFloat(value) * -1;
-    onChange(newValue.toString());
+    if (hasValue) {
+      onChange((Math.abs(parsedValue) * sign).toString());
+    }
+  };
+
+  const onValueChange = (rawValue: string | undefined) => {
+    if (!rawValue) {
+      onChange(rawValue);
+      return;
+    }
+
+    const sign = hasValue ? (isDebit ? -1 : 1) : preferredSign;
+    const magnitude = Math.abs(parseFloat(rawValue));
+
+    onChange((magnitude * sign).toString());
   };
 
   return (
-    <div className="relative">
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={onReverseValue}
-              className={cn(
-                "bg-slate-400 hover:bg-slate-500 absolute top-1.5 left-1.5 rounded-md p-2 flex items-center justify-center transition",
-                isIncome && "bg-emerald-500 hover:bg-emerald-600",
-                isExpense && "bg-rose-500 hover:bg-rose-600"
-              )}
-            >
-              {!parsedValue && <Info className="size-3 text-white" />}
-              {isIncome && <PlusCircle className="size-3 text-white" />}
-              {isExpense && <MinusCircle className="size-3 text-white" />}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            Use [+] for income and [-] for expenses
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+    <div>
+      <div className="flex gap-x-2 mb-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => selectType(1)}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-x-1.5 rounded-md border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
+            isCredit
+              ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+              : "border-input text-muted-foreground hover:bg-accent"
+          )}
+        >
+          <ArrowUpCircle className="size-4" />
+          Credit
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => selectType(-1)}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-x-1.5 rounded-md border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
+            isDebit
+              ? "border-rose-500 bg-rose-50 text-rose-700"
+              : "border-input text-muted-foreground hover:bg-accent"
+          )}
+        >
+          <ArrowDownCircle className="size-4" />
+          Debit
+        </button>
+      </div>
       <CurrencyInput
         prefix="$"
-        className="pl-10 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         placeholder={placeholder}
         value={value}
         decimalsLimit={2}
         decimalScale={2}
-        onValueChange={onChange}
+        onValueChange={onValueChange}
         disabled={disabled}
       />
       <p className="text-xs text-muted-foreground mt-2">
-        {isIncome && "This will count as income"}
-        {isExpense && "This will count as an expense"}
+        {isCredit && "Credit: money coming in, e.g. a salary payment."}
+        {isDebit && "Debit: money going out, e.g. a subscription charge."}
+        {!hasValue &&
+          "Pick Credit for money in (salary, refunds) or Debit for money out (subscriptions, purchases), then enter the amount."}
       </p>
     </div>
   );

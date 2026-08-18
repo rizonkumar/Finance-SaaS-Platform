@@ -6,13 +6,10 @@ import {
   ColumnDef,
   ColumnFiltersState,
   Row,
+  RowData,
   SortingState,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  useTable,
 } from "@tanstack/react-table"
 
 import {
@@ -26,16 +23,17 @@ import {
 import { Input } from "@/components/ui/input"
 import { useConfirm } from "@/hooks/use-confirm";
 import { Button } from "@/components/ui/button"
+import { tableFeatureSet } from "@/lib/table-features"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
+interface DataTableProps<TData extends RowData, TValue> {
+  columns: ColumnDef<typeof tableFeatureSet, TData, TValue>[]
   data: TData[]
   filterKey: string
-  onDelete: (rows: Row<TData>[]) => void;
+  onDelete: (rows: Row<typeof tableFeatureSet, TData>[]) => void;
   disabled?: boolean;
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData, TValue>({
   columns,
   data,
   filterKey,
@@ -53,15 +51,12 @@ export function DataTable<TData, TValue>({
   )
   const [rowSelection, setRowSelection] = React.useState({})
 
-  const table = useReactTable({
+  const table = useTable({
+    features: tableFeatureSet,
     data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    columns: columns as ColumnDef<typeof tableFeatureSet, TData, unknown>[],
     onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
     state: {
       sorting,

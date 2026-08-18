@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { UserButton, ClerkLoading, ClerkLoaded } from "@clerk/nextjs";
 
@@ -16,14 +17,16 @@ export const Header = () => {
             <Navigation />
           </div>
           <ClerkLoaded>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </ClerkLoaded>
           <ClerkLoading>
             <Loader2 className="size-8 animate-spin text-slate-400" />
           </ClerkLoading>
         </div>
         <WelcomeMsg />
-        <Filters />
+        <Suspense fallback={null}>
+          <Filters />
+        </Suspense>
       </div>
     </header>
   );

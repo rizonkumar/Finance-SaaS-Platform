@@ -54,7 +54,7 @@ export function DataTable<TData extends RowData, TValue>({
   const table = useTable({
     features: tableFeatureSet,
     data,
-    columns,
+    columns: columns as ColumnDef<typeof tableFeatureSet, TData, unknown>[],
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,

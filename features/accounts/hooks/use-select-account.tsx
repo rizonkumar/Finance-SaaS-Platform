@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type JSX } from "react";
 
 import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useCreateAccount } from "@/features/accounts/api/use-create-account";
@@ -32,7 +32,7 @@ export const useSelectAccount = (): [
   const [promise, setPromise] = useState<{
     resolve: (value: string | undefined) => void;
   } | null>(null);
-  const selectValue = useRef<string>();
+  const selectValue = useRef<string | undefined>(undefined);
 
   const confirm = () =>
     new Promise((resolve, reject) => {

@@ -83,7 +83,7 @@ export const DateFilter = () => {
       >
         <Calendar
           disabled={false}
-          initialFocus
+          autoFocus
           mode="range"
           defaultMonth={date?.from}
           selected={date}

@@ -7,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 import { client } from "@/lib/hono";
 import { formatCurrency } from "@/lib/utils";
+import { tableFeatureSet } from "@/lib/table-features";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,7 +18,7 @@ import { CategoryColumn } from "./category-column";
 
 export type ResponseType = InferResponseType<typeof client.api.transactions.$get, 200>["data"][0];
 
-export const columns: ColumnDef<ResponseType>[] = [
+export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -38,7 +39,6 @@ export const columns: ColumnDef<ResponseType>[] = [
       />
     ),
     enableSorting: false,
-    enableHiding: false,
   },
   {
     accessorKey: "date",

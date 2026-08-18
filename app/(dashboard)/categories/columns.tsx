@@ -5,6 +5,7 @@ import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 
 import { client } from "@/lib/hono";
+import { tableFeatureSet } from "@/lib/table-features";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -15,7 +16,7 @@ export type ResponseType = InferResponseType<
   200
 >["data"][0];
 
-export const columns: ColumnDef<ResponseType>[] = [
+export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -36,7 +37,6 @@ export const columns: ColumnDef<ResponseType>[] = [
       />
     ),
     enableSorting: false,
-    enableHiding: false,
   },
   {
     accessorKey: "name",

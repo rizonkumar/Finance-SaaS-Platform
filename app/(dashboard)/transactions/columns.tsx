@@ -46,6 +46,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
       return (
         <Button
           variant="ghost"
+          className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Date
@@ -69,6 +70,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
       return (
         <Button
           variant="ghost"
+          className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Category
@@ -92,6 +94,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
       return (
         <Button
           variant="ghost"
+          className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Payee
@@ -106,6 +109,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
       return (
         <Button
           variant="ghost"
+          className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Amount
@@ -132,6 +136,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
       return (
         <Button
           variant="ghost"
+          className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Account

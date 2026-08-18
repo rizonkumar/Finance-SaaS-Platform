@@ -50,24 +50,30 @@ export const SpendingPie = ({ data = [] }: Props) => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="pie">
-              <div className="flex items-center">
-                <PieChart className="size-4 mr-2 shrink-0" />
+              <div className="flex items-center gap-x-2">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <PieChart className="size-3.5" />
+                </span>
                 <p className="line-clamp-1">
                   Pie chart
                 </p>
               </div>
             </SelectItem>
             <SelectItem value="radar">
-              <div className="flex items-center">
-                <Radar className="size-4 mr-2 shrink-0" />
+              <div className="flex items-center gap-x-2">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Radar className="size-3.5" />
+                </span>
                 <p className="line-clamp-1">
                   Radar chart
                 </p>
               </div>
             </SelectItem>
             <SelectItem value="radial">
-              <div className="flex items-center">
-                <Target className="size-4 mr-2 shrink-0" />
+              <div className="flex items-center gap-x-2">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Target className="size-3.5" />
+                </span>
                 <p className="line-clamp-1">
                   Radial chart
                 </p>

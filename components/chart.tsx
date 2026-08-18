@@ -51,24 +51,30 @@ export const Chart = ({ data = [] }: Props) => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="area">
-              <div className="flex items-center">
-                <AreaChart className="size-4 mr-2 shrink-0" />
+              <div className="flex items-center gap-x-2">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <AreaChart className="size-3.5" />
+                </span>
                 <p className="line-clamp-1">
                   Area chart
                 </p>
               </div>
             </SelectItem>
             <SelectItem value="line">
-              <div className="flex items-center">
-                <LineChart className="size-4 mr-2 shrink-0" />
+              <div className="flex items-center gap-x-2">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <LineChart className="size-3.5" />
+                </span>
                 <p className="line-clamp-1">
                   Line chart
                 </p>
               </div>
             </SelectItem>
             <SelectItem value="bar">
-              <div className="flex items-center">
-                <BarChart3 className="size-4 mr-2 shrink-0" />
+              <div className="flex items-center gap-x-2">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <BarChart3 className="size-3.5" />
+                </span>
                 <p className="line-clamp-1">
                   Bar chart
                 </p>

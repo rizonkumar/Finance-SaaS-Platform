@@ -44,6 +44,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
       return (
         <Button
           variant="ghost"
+          className="-ml-4"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Name

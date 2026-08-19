@@ -13,28 +13,44 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  numberOfMonths,
   ...props
 }: CalendarProps) {
+  const isMultiMonth = (numberOfMonths ?? 1) > 1;
+  const navLayout = isMultiMonth ? "after" : "around";
+
   return (
     <DayPicker
+      navLayout={navLayout}
+      numberOfMonths={numberOfMonths}
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("w-fit p-3", className)}
       classNames={{
-        months:
-          "relative flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        month_caption: "flex justify-center pt-1 items-center",
+        months: isMultiMonth
+          ? "relative flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0"
+          : "flex flex-col",
+        month: isMultiMonth
+          ? "space-y-4"
+          : "grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-4",
+        month_caption: isMultiMonth
+          ? "flex justify-center pt-1 items-center"
+          : "flex items-center justify-center",
         caption_label: "text-sm font-medium",
-        nav: "absolute inset-x-0 top-1 z-10 flex items-center justify-between px-1",
+        nav: isMultiMonth
+          ? "absolute inset-x-0 top-1 z-10 flex items-center justify-between px-1"
+          : "basis-full flex w-full items-center justify-between px-1",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-7 w-7 shrink-0 bg-transparent p-0 opacity-50 hover:opacity-100"
         ),
         button_next: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-7 w-7 shrink-0 bg-transparent p-0 opacity-50 hover:opacity-100"
         ),
-        month_grid: "w-full border-collapse space-y-1",
+        month_grid: cn(
+          "border-collapse space-y-1",
+          isMultiMonth ? "w-full" : "col-span-full"
+        ),
         weekdays: "flex",
         weekday:
           "text-muted-foreground rounded-sm w-9 font-normal text-[0.8rem]",

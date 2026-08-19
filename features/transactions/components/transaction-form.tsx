@@ -42,6 +42,8 @@ type Props = {
   onSubmit: (values: TransactionApiValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
+  isSubmitting?: boolean;
+  isDeleting?: boolean;
   accountOptions: { label: string; value: string }[];
   categoryOptions: { label: string; value: string }[];
   onCreateAccount: (name: string) => void;
@@ -54,6 +56,8 @@ export const TransactionForm = ({
   onSubmit,
   onDelete,
   disabled,
+  isSubmitting,
+  isDeleting,
   accountOptions,
   categoryOptions,
   onCreateAccount,
@@ -192,13 +196,14 @@ export const TransactionForm = ({
             </FormItem>
           )}
         />
-        <Button className="w-full" disabled={disabled}>
+        <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
           {id ? "Save changes" : "Create transaction"}
         </Button>
         {!!id && (
           <Button
             type="button"
             disabled={disabled}
+            isLoading={isDeleting}
             onClick={handleDelete}
             className="w-full"
             variant="outline"

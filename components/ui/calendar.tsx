@@ -13,46 +13,64 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  numberOfMonths,
   ...props
 }: CalendarProps) {
+  const isMultiMonth = (numberOfMonths ?? 1) > 1;
+  const navLayout = isMultiMonth ? "after" : "around";
+
   return (
     <DayPicker
+      navLayout={navLayout}
+      numberOfMonths={numberOfMonths}
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("w-fit p-3", className)}
       classNames={{
-        months:
-          "relative flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        month_caption: "flex justify-center pt-1 items-center",
+        months: isMultiMonth
+          ? "relative flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0"
+          : "flex flex-col",
+        month: isMultiMonth
+          ? "space-y-4"
+          : "grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-4",
+        month_caption: isMultiMonth
+          ? "flex justify-center pt-1 items-center"
+          : "flex items-center justify-center",
         caption_label: "text-sm font-medium",
-        nav: "absolute inset-x-0 top-1 z-10 flex items-center justify-between px-1",
+        nav: isMultiMonth
+          ? "absolute inset-x-0 top-1 z-10 flex items-center justify-between px-1"
+          : "basis-full flex w-full items-center justify-between px-1",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-7 w-7 shrink-0 bg-transparent p-0 opacity-50 hover:opacity-100"
         ),
         button_next: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-7 w-7 shrink-0 bg-transparent p-0 opacity-50 hover:opacity-100"
         ),
-        month_grid: "w-full border-collapse space-y-1",
+        month_grid: cn(
+          "border-collapse space-y-1",
+          isMultiMonth ? "w-full" : "col-span-full"
+        ),
         weekdays: "flex",
         weekday:
           "text-muted-foreground rounded-sm w-9 font-normal text-[0.8rem]",
         week: "flex w-full mt-2",
-        day: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].range-end)]:rounded-r-md [&:has([aria-selected].outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        day: "relative h-9 w-9 p-0 text-center text-sm focus-within:relative focus-within:z-20",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+          "h-9 w-9 rounded-sm p-0 font-normal"
         ),
-        range_end: "range-end",
         selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        today: "bg-accent text-accent-foreground",
-        outside:
-          "outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        disabled: "text-muted-foreground opacity-50",
+          "[&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary [&>button]:hover:text-primary-foreground",
+        today:
+          "[&:not([data-selected])>button]:bg-accent [&:not([data-selected])>button]:text-accent-foreground [&:not([data-selected])>button]:font-medium",
+        range_start: "rounded-l-sm",
+        range_end: "rounded-r-sm",
         range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
+          "bg-accent [&[data-selected]>button]:bg-transparent [&[data-selected]>button]:text-accent-foreground [&[data-selected]>button]:rounded-none [&[data-selected]>button]:hover:bg-alpha-100",
+        outside:
+          "[&>button]:text-muted-foreground [&>button]:opacity-50 [&[data-selected]>button]:opacity-100",
+        disabled: "[&>button]:text-muted-foreground [&>button]:opacity-50",
         hidden: "invisible",
         ...classNames,
       }}

@@ -61,6 +61,8 @@ type Props = {
   onSubmit: (values: RecurringApiValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
+  isSubmitting?: boolean;
+  isDeleting?: boolean;
   accountOptions: { label: string; value: string }[];
   categoryOptions: { label: string; value: string }[];
   onCreateAccount: (name: string) => void;
@@ -73,6 +75,8 @@ export const RecurringForm = ({
   onSubmit,
   onDelete,
   disabled,
+  isSubmitting,
+  isDeleting,
   accountOptions,
   categoryOptions,
   onCreateAccount,
@@ -275,7 +279,7 @@ export const RecurringForm = ({
             </FormItem>
           )}
         />
-        <Button className="w-full" disabled={disabled}>
+        <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
           {id ? "Save Changes" : "Create Recurring Transaction"}
         </Button>
         {!!id && (
@@ -284,6 +288,7 @@ export const RecurringForm = ({
             variant="outline"
             className="w-full"
             disabled={disabled}
+            isLoading={isDeleting}
             onClick={onDelete}
           >
             <Trash className="size-4" />

@@ -5,6 +5,9 @@ import { EditAccountSheet } from "@/features/accounts/components/edit-account-sh
 import { NewAccountSheet } from "@/features/accounts/components/new-account-sheet";
 import { EditBudgetSheet } from "@/features/budgets/components/edit-budget-sheet";
 import { NewBudgetSheet } from "@/features/budgets/components/new-budget-sheet";
+import { ContributeGoalSheet } from "@/features/goals/components/contribute-goal-sheet";
+import { EditGoalSheet } from "@/features/goals/components/edit-goal-sheet";
+import { NewGoalSheet } from "@/features/goals/components/new-goal-sheet";
 import { EditCategorySheet } from "@/features/categories/components/edit-category-sheet";
 import { NewCategorySheet } from "@/features/categories/components/new-category-sheet";
 import { EditRecurringSheet } from "@/features/recurring/components/edit-recurring-sheet";
@@ -33,6 +36,10 @@ export const SheetProvider = () => {
 
       <NewRecurringSheet />
       <EditRecurringSheet />
+
+      <NewGoalSheet />
+      <EditGoalSheet />
+      <ContributeGoalSheet />
     </>
   );
 };

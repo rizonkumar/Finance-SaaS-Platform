@@ -27,6 +27,8 @@ type Props = {
   onSubmit: (values: AccountFormValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
+  isSubmitting?: boolean;
+  isDeleting?: boolean;
 };
 
 export const AccountForm = ({
@@ -35,6 +37,8 @@ export const AccountForm = ({
   onSubmit,
   onDelete,
   disabled,
+  isSubmitting,
+  isDeleting,
 }: Props) => {
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(formSchema),
@@ -72,13 +76,14 @@ export const AccountForm = ({
             </FormItem>
           )}
         />
-        <Button className="w-full" disabled={disabled}>
+        <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
           {id ? "Save changes" : "Create account"}
         </Button>
         {!!id && (
           <Button
             type="button"
             disabled={disabled}
+            isLoading={isDeleting}
             onClick={handleDelete}
             className="w-full"
             variant="outline"

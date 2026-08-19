@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
-import CurrencyInput from "react-currency-input-field";
-
-import { CURRENCY_SYMBOL } from "@/lib/constants";
+import { MoneyInput } from "@/components/money-input";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -82,14 +80,10 @@ export const AmountInput = ({
           Debit
         </button>
       </div>
-      <CurrencyInput
-        prefix={CURRENCY_SYMBOL}
-        className="border-input bg-surface text-gray-1000 hover:border-alpha-500 numeric flex h-10 w-full rounded-sm border px-3 text-sm transition-colors placeholder:text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-700"
+      <MoneyInput
         placeholder={placeholder}
         value={value}
-        decimalsLimit={2}
-        decimalScale={2}
-        onValueChange={onValueChange}
+        onChange={onValueChange}
         disabled={disabled}
       />
       <p className="copy-13 text-gray-900">

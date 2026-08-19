@@ -15,6 +15,9 @@ export const queryKeys = {
 
   recurring: () => ["recurring"] as const,
   recurringItem: (id?: string) => ["recurring-item", { id }] as const,
+
+  goals: () => ["goals"] as const,
+  goal: (id?: string) => ["goal", { id }] as const,
 };
 
 export const MONEY_DEPENDENT_KEYS = [

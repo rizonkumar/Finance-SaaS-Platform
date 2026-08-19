@@ -42,9 +42,14 @@ export type ContributionApiValues = {
 type Props = {
   onSubmit: (values: ContributionApiValues) => void;
   disabled?: boolean;
+  isSubmitting?: boolean;
 };
 
-export const ContributionForm = ({ onSubmit, disabled }: Props) => {
+export const ContributionForm = ({
+  onSubmit,
+  disabled,
+  isSubmitting,
+}: Props) => {
   const form = useForm<ContributionFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -173,7 +178,11 @@ export const ContributionForm = ({ onSubmit, disabled }: Props) => {
             </FormItem>
           )}
         />
-        <Button className="w-full" disabled={disabled}>
+        <Button
+          className="w-full"
+          disabled={disabled}
+          isLoading={isSubmitting}
+        >
           Record Entry
         </Button>
       </form>

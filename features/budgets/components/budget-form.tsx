@@ -61,6 +61,8 @@ type Props = {
   onSubmit: (values: BudgetApiValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
+  isSubmitting?: boolean;
+  isDeleting?: boolean;
   categoryOptions: { label: string; value: string }[];
 };
 
@@ -70,6 +72,8 @@ export const BudgetForm = ({
   onSubmit,
   onDelete,
   disabled,
+  isSubmitting,
+  isDeleting,
   categoryOptions,
 }: Props) => {
   const form = useForm<BudgetFormValues>({
@@ -195,7 +199,7 @@ export const BudgetForm = ({
             )}
           />
         )}
-        <Button className="w-full" disabled={disabled}>
+        <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
           {id ? "Save Changes" : "Create Budget"}
         </Button>
         {!!id && (
@@ -204,6 +208,7 @@ export const BudgetForm = ({
             variant="outline"
             className="w-full"
             disabled={disabled}
+            isLoading={isDeleting}
             onClick={onDelete}
           >
             <Trash className="size-4" />

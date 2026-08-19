@@ -71,6 +71,8 @@ type Props = {
   onSubmit: (values: GoalApiValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
+  isSubmitting?: boolean;
+  isDeleting?: boolean;
   accountOptions: { label: string; value: string }[];
 };
 
@@ -80,6 +82,8 @@ export const GoalForm = ({
   onSubmit,
   onDelete,
   disabled,
+  isSubmitting,
+  isDeleting,
   accountOptions,
 }: Props) => {
   const form = useForm<GoalFormValues>({
@@ -195,7 +199,7 @@ export const GoalForm = ({
           name="hasDeadline"
           control={form.control}
           render={({ field }) => (
-            <FormItem className="flex-row items-center space-y-0 gap-x-2">
+            <FormItem className="flex flex-row items-center space-y-0 gap-x-2">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -246,7 +250,11 @@ export const GoalForm = ({
             </FormItem>
           )}
         />
-        <Button className="w-full" disabled={disabled}>
+        <Button
+          className="w-full"
+          disabled={disabled}
+          isLoading={isSubmitting}
+        >
           {id ? "Save Changes" : "Create Goal"}
         </Button>
         {!!id && (
@@ -255,6 +263,7 @@ export const GoalForm = ({
             variant="outline"
             className="w-full"
             disabled={disabled}
+            isLoading={isDeleting}
             onClick={onDelete}
           >
             <Trash className="size-4" />

@@ -7,6 +7,7 @@ import { API_ERRORS } from "@/lib/messages";
 import accounts from "./accounts";
 import budgets from "./budgets";
 import categories from "./categories";
+import goals from "./goals";
 import recurring from "./recurring";
 import summary from "./summary";
 import transactions from "./transactions";
@@ -31,7 +32,8 @@ const _routes = app
   .route("/categories", categories)
   .route("/transactions", transactions)
   .route("/budgets", budgets)
-  .route("/recurring", recurring);
+  .route("/recurring", recurring)
+  .route("/goals", goals);
 
 export const GET = handle(app);
 export const POST = handle(app);

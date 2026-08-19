@@ -1,3 +1,5 @@
+import { auth } from "@clerk/nextjs/server";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 
@@ -5,7 +7,14 @@ type Props = {
   children: React.ReactNode;
 };
 
-const DashboardLayout = ({ children }: Props) => {
+const DashboardLayout = async ({ children }: Props) => {
+  // Gating here rather than in the proxy covers every dashboard route at once,
+  // and cannot drift out of step with the filesystem router the way a path
+  // matcher does.
+  const { userId, redirectToSignIn } = await auth();
+
+  if (!userId) return redirectToSignIn();
+
   return (
     <div className="flex h-dvh overflow-hidden">
       <AppSidebar />

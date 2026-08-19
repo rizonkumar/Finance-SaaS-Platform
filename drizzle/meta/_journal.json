@@ -22,6 +22,13 @@
       "when": 1787045583114,
       "tag": "0002_many_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787110202412,
+      "tag": "0003_dashing_sersi",
+      "breakpoints": true
     }
   ]
 }

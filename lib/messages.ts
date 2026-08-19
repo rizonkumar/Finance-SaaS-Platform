@@ -1,5 +1,11 @@
 type ResourceLabel =
-  "Account" | "Category" | "Transaction" | "Budget" | "Recurring transaction";
+  | "Account"
+  | "Category"
+  | "Transaction"
+  | "Budget"
+  | "Recurring transaction"
+  | "Goal"
+  | "Contribution";
 
 export const toastMessages = (resource: ResourceLabel) => ({
   createSuccess: `${resource} created`,

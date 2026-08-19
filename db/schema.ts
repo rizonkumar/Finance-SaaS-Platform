@@ -22,6 +22,7 @@ export const accounts = pgTable("accounts", {
 export const accountsRelations = relations(accounts, ({ many }) => ({
   transactions: many(transactions),
   recurring: many(recurringTransactions),
+  goals: many(goals),
 }));
 
 export const insertAccountSchema = createInsertSchema(accounts);
@@ -196,3 +197,77 @@ export const insertBudgetSchema = createInsertSchema(budgets, {
   endDate: z.coerce.date().nullable().optional(),
   amount: z.coerce.number().int().positive(),
 });
+
+export const goals = pgTable(
+  "goals",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    targetAmount: integer("target_amount").notNull(),
+    accountId: text("account_id").references(() => accounts.id, {
+      onDelete: "set null",
+    }),
+    notes: text("notes"),
+    startDate: timestamp("start_date", { mode: "date" }).notNull(),
+    targetDate: timestamp("target_date", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("goals_user_id_idx").on(table.userId),
+    uniqueIndex("goals_user_name_idx").on(table.userId, table.name),
+  ]
+);
+
+export const goalContributions = pgTable(
+  "goal_contributions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    goalId: text("goal_id")
+      .references(() => goals.id, { onDelete: "cascade" })
+      .notNull(),
+    amount: integer("amount").notNull(),
+    notes: text("notes"),
+    date: timestamp("date", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("goal_contributions_goal_id_idx").on(table.goalId),
+    index("goal_contributions_user_id_idx").on(table.userId),
+  ]
+);
+
+export const goalsRelations = relations(goals, ({ one, many }) => ({
+  account: one(accounts, {
+    fields: [goals.accountId],
+    references: [accounts.id],
+  }),
+  contributions: many(goalContributions),
+}));
+
+export const goalContributionsRelations = relations(
+  goalContributions,
+  ({ one }) => ({
+    goal: one(goals, {
+      fields: [goalContributions.goalId],
+      references: [goals.id],
+    }),
+  })
+);
+
+export const insertGoalSchema = createInsertSchema(goals, {
+  name: z.string().trim().min(1, "Name is required"),
+  startDate: z.coerce.date(),
+  targetDate: z.coerce.date().nullable().optional(),
+  targetAmount: z.coerce.number().int().positive(),
+});
+
+export const insertGoalContributionSchema = createInsertSchema(
+  goalContributions,
+  {
+    date: z.coerce.date(),
+    amount: z.coerce.number().int(),
+  }
+);

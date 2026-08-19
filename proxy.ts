@@ -1,10 +1,9 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-const isProtectedRoute = createRouteMatcher(["/"]);
-
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) await auth.protect();
-});
+// Auth checks live with the resources they guard — see the dashboard layout for
+// pages and `app/api/[[...route]]/_middleware.ts` for the API. Path matching
+// here would diverge from how Next.js actually routes requests.
+export default clerkMiddleware();
 
 export const config = {
   matcher: [

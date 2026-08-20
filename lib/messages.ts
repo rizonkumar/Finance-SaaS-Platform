@@ -5,7 +5,10 @@ type ResourceLabel =
   | "Budget"
   | "Recurring transaction"
   | "Goal"
-  | "Contribution";
+  | "Contribution"
+  | "Transfer"
+  | "Debt"
+  | "Payment";
 
 export const toastMessages = (resource: ResourceLabel) => ({
   createSuccess: `${resource} created`,

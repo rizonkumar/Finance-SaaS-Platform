@@ -22,6 +22,7 @@ import {
 } from "@/lib/budgets";
 import { API_ERRORS } from "@/lib/messages";
 
+import { requireId } from "./_helpers";
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
 const MAX_BUDGETS = 200;
@@ -41,11 +42,6 @@ const budgetBody = insertBudgetSchema
       });
     }
   });
-
-const requireId = (id?: string) => {
-  if (!id) throw new HTTPException(400, { message: API_ERRORS.missingId });
-  return id;
-};
 
 const isUniqueViolation = (error: unknown) =>
   String(error).includes("budgets_user_");
@@ -107,6 +103,7 @@ async function spentByBudget(
            from ${transactions} t
            inner join ${accounts} a on a.id = t.account_id
            where a.user_id = ${userId} and t.amount < 0
+             and t.transfer_id is null
          )
     select w.budget_id as budget_id,
            coalesce(sum(abs(ut.amount)), 0)::bigint as spent

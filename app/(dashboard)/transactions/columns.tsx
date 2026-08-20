@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { type InferResponseType } from "hono";
-import { Repeat } from "lucide-react";
+import { ArrowLeftRight, Repeat } from "lucide-react";
 import { type ColumnDef } from "@tanstack/react-table";
 
 import { type client } from "@/lib/hono";
@@ -61,6 +61,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
           id={row.original.id}
           category={row.original.category}
           categoryId={row.original.categoryId}
+          transferId={row.original.transferId}
         />
       );
     },
@@ -75,6 +76,15 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
           <Badge variant="info" title="Generated from a recurring schedule">
             <Repeat className="size-3" />
             Recurring
+          </Badge>
+        )}
+        {row.original.transferId && (
+          <Badge
+            variant="muted"
+            title="One leg of a transfer between your own accounts"
+          >
+            <ArrowLeftRight className="size-3" />
+            Transfer
           </Badge>
         )}
       </div>
@@ -110,6 +120,8 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <Actions id={row.original.id} />,
+    cell: ({ row }) => (
+      <Actions id={row.original.id} transferId={row.original.transferId} />
+    ),
   },
 ];

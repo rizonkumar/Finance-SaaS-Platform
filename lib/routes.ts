@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   CreditCard,
+  Landmark,
   LayoutDashboard,
   PiggyBank,
   Repeat,
@@ -13,6 +14,7 @@ export const NAV_ROUTES = [
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/budgets", label: "Budgets", icon: PiggyBank },
   { href: "/goals", label: "Goals", icon: Target },
+  { href: "/debts", label: "Debts", icon: Landmark },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/accounts", label: "Accounts", icon: CreditCard },
   { href: "/categories", label: "Categories", icon: Shapes },
@@ -23,6 +25,7 @@ export const PAGE_TITLES: Record<string, string> = {
   "/transactions": "Transactions",
   "/budgets": "Budgets",
   "/goals": "Goals",
+  "/debts": "Debts",
   "/recurring": "Recurring",
   "/accounts": "Accounts",
   "/categories": "Categories",

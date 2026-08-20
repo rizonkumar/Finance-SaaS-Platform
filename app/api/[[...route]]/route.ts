@@ -7,10 +7,12 @@ import { API_ERRORS } from "@/lib/messages";
 import accounts from "./accounts";
 import budgets from "./budgets";
 import categories from "./categories";
+import debts from "./debts";
 import goals from "./goals";
 import recurring from "./recurring";
 import summary from "./summary";
 import transactions from "./transactions";
+import transfers from "./transfers";
 
 export const runtime = "nodejs";
 
@@ -33,7 +35,9 @@ const _routes = app
   .route("/transactions", transactions)
   .route("/budgets", budgets)
   .route("/recurring", recurring)
-  .route("/goals", goals);
+  .route("/goals", goals)
+  .route("/debts", debts)
+  .route("/transfers", transfers);
 
 export const GET = handle(app);
 export const POST = handle(app);

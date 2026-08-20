@@ -23,6 +23,7 @@ export const accountsRelations = relations(accounts, ({ many }) => ({
   transactions: many(transactions),
   recurring: many(recurringTransactions),
   goals: many(goals),
+  debts: many(debts),
 }));
 
 export const insertAccountSchema = createInsertSchema(accounts);
@@ -100,9 +101,11 @@ export const transactions = pgTable(
       () => recurringTransactions.id,
       { onDelete: "set null" }
     ),
+    transferId: text("transfer_id"),
   },
   (table) => [
     index("transactions_recurring_id_idx").on(table.recurringId),
+    index("transactions_transfer_id_idx").on(table.transferId),
     index("transactions_account_id_date_idx").on(table.accountId, table.date),
     index("transactions_category_id_date_idx").on(table.categoryId, table.date),
   ]
@@ -271,3 +274,82 @@ export const insertGoalContributionSchema = createInsertSchema(
     amount: z.coerce.number().int(),
   }
 );
+
+export const debtKindEnum = pgEnum("debt_kind", [
+  "loan",
+  "credit-card",
+  "other",
+]);
+
+export const debts = pgTable(
+  "debts",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    kind: debtKindEnum("kind").notNull().default("loan"),
+    principal: integer("principal").notNull(),
+    aprBasisPoints: integer("apr_basis_points").notNull().default(0),
+    minimumPayment: integer("minimum_payment").notNull().default(0),
+    accountId: text("account_id").references(() => accounts.id, {
+      onDelete: "set null",
+    }),
+    notes: text("notes"),
+    startDate: timestamp("start_date", { mode: "date" }).notNull(),
+    targetDate: timestamp("target_date", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("debts_user_id_idx").on(table.userId),
+    uniqueIndex("debts_user_name_idx").on(table.userId, table.name),
+  ]
+);
+
+export const debtPayments = pgTable(
+  "debt_payments",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    debtId: text("debt_id")
+      .references(() => debts.id, { onDelete: "cascade" })
+      .notNull(),
+    amount: integer("amount").notNull(),
+    notes: text("notes"),
+    date: timestamp("date", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("debt_payments_debt_id_idx").on(table.debtId),
+    index("debt_payments_user_id_idx").on(table.userId),
+  ]
+);
+
+export const debtsRelations = relations(debts, ({ one, many }) => ({
+  account: one(accounts, {
+    fields: [debts.accountId],
+    references: [accounts.id],
+  }),
+  payments: many(debtPayments),
+}));
+
+export const debtPaymentsRelations = relations(debtPayments, ({ one }) => ({
+  debt: one(debts, {
+    fields: [debtPayments.debtId],
+    references: [debts.id],
+  }),
+}));
+
+export const insertDebtSchema = createInsertSchema(debts, {
+  name: z.string().trim().min(1, "Name is required"),
+  startDate: z.coerce.date(),
+  targetDate: z.coerce.date().nullable().optional(),
+  principal: z.coerce.number().int().positive(),
+  aprBasisPoints: z.coerce.number().int().min(0).max(100_000),
+  minimumPayment: z.coerce.number().int().min(0),
+});
+
+export const insertDebtPaymentSchema = createInsertSchema(debtPayments, {
+  date: z.coerce.date(),
+  amount: z.coerce.number().int(),
+});

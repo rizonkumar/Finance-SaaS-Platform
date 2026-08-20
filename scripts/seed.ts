@@ -84,6 +84,7 @@ const generateTransactionsForDay = (day: Date) => {
       payee: "Merchant",
       notes: "Random transaction",
       recurringId: null,
+      transferId: null,
     });
   }
 };

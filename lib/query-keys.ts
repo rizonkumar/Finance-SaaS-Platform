@@ -18,6 +18,13 @@ export const queryKeys = {
 
   goals: () => ["goals"] as const,
   goal: (id?: string) => ["goal", { id }] as const,
+
+  transfer: (id?: string) => ["transfer", { id }] as const,
+
+  debts: () => ["debts"] as const,
+  debt: (id?: string) => ["debt", { id }] as const,
+  debtPlans: () => ["debt-plan"] as const,
+  debtPlan: (extra: number) => ["debt-plan", { extra }] as const,
 };
 
 export const MONEY_DEPENDENT_KEYS = [

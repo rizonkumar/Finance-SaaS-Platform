@@ -6,6 +6,13 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
+import {
+  assertAccountOwned,
+  duplicateNameConflict,
+  isDuplicateNameError,
+  requireId,
+} from "./_helpers";
+
 import { db } from "@/db/drizzle";
 import {
   accounts,
@@ -60,17 +67,6 @@ const contributionBody = z.object({
   date: z.coerce.date(),
   notes: z.string().trim().nullable().optional(),
 });
-
-const requireId = (id?: string) => {
-  if (!id) throw new HTTPException(400, { message: API_ERRORS.missingId });
-  return id;
-};
-
-const isDuplicateName = (error: unknown) =>
-  String(error).includes("goals_user_name_idx");
-
-const duplicateNameError = () =>
-  new HTTPException(409, { message: "A goal with that name already exists" });
 
 type GoalRow = {
   id: string;
@@ -162,19 +158,6 @@ async function withProgress(userId: string, rows: GoalRow[]) {
   });
 }
 
-async function assertAccountOwned(userId: string, accountId?: string | null) {
-  if (!accountId) return;
-
-  const [owned] = await db
-    .select({ id: accounts.id })
-    .from(accounts)
-    .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)));
-
-  if (!owned) {
-    throw new HTTPException(400, { message: "Unknown account" });
-  }
-}
-
 async function requireGoal(userId: string, goalId: string) {
   const [owned] = await db
     .select({ id: goals.id })
@@ -255,7 +238,9 @@ const app = new Hono<AuthedEnv>()
 
       return c.json({ data });
     } catch (error) {
-      if (isDuplicateName(error)) throw duplicateNameError();
+      if (isDuplicateNameError(error, "goals_user_name_idx")) {
+        throw duplicateNameConflict("A goal with that name already exists");
+      }
       throw error;
     }
   })
@@ -289,7 +274,9 @@ const app = new Hono<AuthedEnv>()
 
         return c.json({ data });
       } catch (error) {
-        if (isDuplicateName(error)) throw duplicateNameError();
+        if (isDuplicateNameError(error, "goals_user_name_idx")) {
+          throw duplicateNameConflict("A goal with that name already exists");
+        }
         throw error;
       }
     }

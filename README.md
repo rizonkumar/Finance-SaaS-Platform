@@ -1,8 +1,9 @@
 # Fintrack
 
 A personal finance workspace built on Next.js 16 and Postgres. Track accounts and
-transactions, import statements from CSV, set budgets per category, and schedule
-recurring transactions that enter themselves.
+transactions, import statements from CSV, set budgets per category, move money
+between accounts, plan a debt payoff, and schedule recurring transactions that
+enter themselves.
 
 Built as a full-stack showcase: type-safe end to end (Drizzle → Hono RPC → React
 Query), a Geist-derived design system with real dark mode, and a lint gate that
@@ -20,6 +21,9 @@ enforces SonarQube-style rules.
 | **CSV import** | Map arbitrary columns onto amount/date/payee, then bulk-create |
 | **Dashboard** | Income / expenses / remaining with period-over-period change, plus six chart types |
 | **Budget goals** | Per-category or overall limits on weekly, monthly, yearly or custom periods, with live progress and on-track / warning / over states |
+| **Savings goals** | A target, a deadline and a contribution ledger, with pace measured against the time elapsed |
+| **Transfers** | Move money between your own accounts as one linked pair of entries, kept out of income, expenses and budgets |
+| **Debt payoff** | Loans and cards with APR and minimum payment, projected payoff date and interest, plus a snowball vs avalanche comparison for any extra payment |
 | **Recurring transactions** | Daily, weekly, monthly or yearly schedules that materialise into real transactions — no cron, no queue, no extra infrastructure |
 | **Theming** | Light, dark and system, on a fully tokenised design system |
 
@@ -90,6 +94,10 @@ erDiagram
     CATEGORIES ||--o{ BUDGETS : "limits"
     CATEGORIES ||--o{ RECURRING_TRANSACTIONS : "classifies"
     RECURRING_TRANSACTIONS ||--o{ TRANSACTIONS : "generates"
+    ACCOUNTS ||--o{ GOALS : "holds"
+    GOALS ||--o{ GOAL_CONTRIBUTIONS : "funded by"
+    ACCOUNTS ||--o{ DEBTS : "pays from"
+    DEBTS ||--o{ DEBT_PAYMENTS : "cleared by"
 
     ACCOUNTS {
         text id PK
@@ -112,6 +120,7 @@ erDiagram
         text account_id FK "cascade"
         text category_id FK "set null"
         text recurring_id FK "set null"
+        text transfer_id "shared by both legs"
     }
     BUDGETS {
         text id PK
@@ -136,11 +145,59 @@ erDiagram
         timestamp last_generated_at "watermark"
         boolean is_active
     }
+    GOALS {
+        text id PK
+        text user_id
+        text name
+        integer target_amount "miliunits"
+        text account_id FK "set null"
+        timestamp start_date
+        timestamp target_date
+    }
+    GOAL_CONTRIBUTIONS {
+        text id PK
+        text goal_id FK "cascade"
+        integer amount "miliunits, signed"
+        timestamp date
+    }
+    DEBTS {
+        text id PK
+        text user_id
+        text name
+        enum kind "loan credit-card other"
+        integer principal "miliunits, opening balance"
+        integer apr_basis_points
+        integer minimum_payment "miliunits"
+        text account_id FK "set null"
+        timestamp start_date
+        timestamp target_date
+    }
+    DEBT_PAYMENTS {
+        text id PK
+        text debt_id FK "cascade"
+        integer amount "miliunits, + clears, - borrows"
+        timestamp date
+    }
 ```
 
 Money is stored as **miliunits** (integer thousandths) so no float ever touches a
 balance. `transactions.recurring_id` is `ON DELETE SET NULL` on purpose: deleting a
 schedule must never erase months of real financial history.
+
+A transfer is not a table. It is a pair of transactions — one negative on the
+source account, one positive on the destination — sharing a `transfer_id`. Every
+account-scoped view and balance then stays correct with no special cases; the only
+rule to remember is that summaries and budgets filter `transfer_id is null`,
+because moving your own money is neither income nor spending. Both legs are
+written in one statement and deleted together, so the ledger is never half a
+transfer.
+
+Debts run the same way as savings goals but in reverse: `principal` is the opening
+balance and stays put, while `debt_payments` records what has been paid off (and,
+as a negative amount, anything freshly borrowed). Rates live in basis points so
+they stay integers, and every projection — payoff date, total interest, the
+snowball and avalanche simulations — is pure maths in `lib/debts.ts`, tested
+without a database.
 
 ### A mutation, end to end
 

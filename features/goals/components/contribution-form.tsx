@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { DatePicker } from "@/components/date-picker";
+import { DirectionToggle } from "@/components/direction-toggle";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,11 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { cn, convertAmountToMiliunits } from "@/lib/utils";
-
-const TOGGLE_BASE =
-  "flex flex-1 items-center justify-center gap-x-1.5 rounded-sm border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-700";
-const TOGGLE_IDLE = "border-input text-gray-900 hover:bg-alpha-100";
+import { convertAmountToMiliunits } from "@/lib/utils";
 
 const formSchema = z.object({
   direction: z.enum(["add", "withdraw"]),
@@ -88,38 +85,17 @@ export const ContributionForm = ({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <div className="flex gap-x-2">
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    aria-pressed={field.value === "add"}
-                    onClick={() => field.onChange("add")}
-                    className={cn(
-                      TOGGLE_BASE,
-                      field.value === "add"
-                        ? "border-green-500 bg-green-100 text-green-900"
-                        : TOGGLE_IDLE
-                    )}
-                  >
-                    <PlusCircle className="size-4" />
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    aria-pressed={field.value === "withdraw"}
-                    onClick={() => field.onChange("withdraw")}
-                    className={cn(
-                      TOGGLE_BASE,
-                      field.value === "withdraw"
-                        ? "border-red-500 bg-red-100 text-red-900"
-                        : TOGGLE_IDLE
-                    )}
-                  >
-                    <MinusCircle className="size-4" />
-                    Withdraw
-                  </button>
-                </div>
+                <DirectionToggle
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                  positive={{ value: "add", label: "Add", icon: PlusCircle }}
+                  negative={{
+                    value: "withdraw",
+                    label: "Withdraw",
+                    icon: MinusCircle,
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -178,11 +154,7 @@ export const ContributionForm = ({
             </FormItem>
           )}
         />
-        <Button
-          className="w-full"
-          disabled={disabled}
-          isLoading={isSubmitting}
-        >
+        <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
           Record Entry
         </Button>
       </form>

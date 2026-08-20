@@ -10,6 +10,7 @@ import { db } from "@/db/drizzle";
 import { type accounts, type categories } from "@/db/schema";
 import { API_ERRORS } from "@/lib/messages";
 
+import { requireId } from "./_helpers";
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
 const idParam = z.object({ id: z.string().optional() });
@@ -23,13 +24,6 @@ export function createResourceRoutes(table: ResourceTable) {
   const nameSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
   });
-
-  const requireId = (id?: string) => {
-    if (!id) {
-      throw new HTTPException(400, { message: API_ERRORS.missingId });
-    }
-    return id;
-  };
 
   const requireRow = <T>(row: T | undefined) => {
     if (!row) {

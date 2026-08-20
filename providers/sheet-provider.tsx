@@ -5,6 +5,9 @@ import { EditAccountSheet } from "@/features/accounts/components/edit-account-sh
 import { NewAccountSheet } from "@/features/accounts/components/new-account-sheet";
 import { EditBudgetSheet } from "@/features/budgets/components/edit-budget-sheet";
 import { NewBudgetSheet } from "@/features/budgets/components/new-budget-sheet";
+import { EditDebtSheet } from "@/features/debts/components/edit-debt-sheet";
+import { NewDebtSheet } from "@/features/debts/components/new-debt-sheet";
+import { PayDebtSheet } from "@/features/debts/components/pay-debt-sheet";
 import { ContributeGoalSheet } from "@/features/goals/components/contribute-goal-sheet";
 import { EditGoalSheet } from "@/features/goals/components/edit-goal-sheet";
 import { NewGoalSheet } from "@/features/goals/components/new-goal-sheet";
@@ -14,6 +17,8 @@ import { EditRecurringSheet } from "@/features/recurring/components/edit-recurri
 import { NewRecurringSheet } from "@/features/recurring/components/new-recurring-sheet";
 import { EditTransactionSheet } from "@/features/transactions/components/edit-transaction-sheet";
 import { NewTransactionSheet } from "@/features/transactions/components/new-transaction-sheet";
+import { EditTransferSheet } from "@/features/transfers/components/edit-transfer-sheet";
+import { NewTransferSheet } from "@/features/transfers/components/new-transfer-sheet";
 
 export const SheetProvider = () => {
   const isMounted = useIsMounted();
@@ -31,6 +36,9 @@ export const SheetProvider = () => {
       <NewTransactionSheet />
       <EditTransactionSheet />
 
+      <NewTransferSheet />
+      <EditTransferSheet />
+
       <NewBudgetSheet />
       <EditBudgetSheet />
 
@@ -40,6 +48,10 @@ export const SheetProvider = () => {
       <NewGoalSheet />
       <EditGoalSheet />
       <ContributeGoalSheet />
+
+      <NewDebtSheet />
+      <EditDebtSheet />
+      <PayDebtSheet />
     </>
   );
 };

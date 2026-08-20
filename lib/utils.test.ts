@@ -5,6 +5,7 @@ import {
   convertAmountFromMiliunits,
   convertAmountToMiliunits,
   fillMissingDays,
+  formatMonths,
 } from "@/lib/utils";
 
 describe("miliunits", () => {
@@ -53,5 +54,27 @@ describe("fillMissingDays", () => {
     expect(result).toHaveLength(5);
     expect(result[2]).toMatchObject({ income: 10, expenses: 4 });
     expect(result[0]).toMatchObject({ income: 0, expenses: 0 });
+  });
+});
+
+describe("formatMonths", () => {
+  it("stays in months under a year", () => {
+    expect(formatMonths(8)).toBe("8 mo");
+  });
+
+  it("drops the months on a whole number of years", () => {
+    expect(formatMonths(24)).toBe("2 yr");
+  });
+
+  it("reads out both parts", () => {
+    expect(formatMonths(27)).toBe("2 yr 3 mo");
+  });
+
+  it("rounds a part month up", () => {
+    expect(formatMonths(11.2)).toBe("1 yr");
+  });
+
+  it("floors at zero", () => {
+    expect(formatMonths(-3)).toBe("0 mo");
   });
 });

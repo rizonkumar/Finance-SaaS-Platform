@@ -91,6 +91,17 @@ export function formatDateRange(period?: Period) {
   return format(period.from, "LLL dd, y");
 }
 
+export function formatMonths(months: number) {
+  const total = Math.max(Math.ceil(months), 0);
+  const years = Math.floor(total / 12);
+  const remainder = total % 12;
+
+  if (years === 0) return `${remainder} mo`;
+  if (remainder === 0) return `${years} yr`;
+
+  return `${years} yr ${remainder} mo`;
+}
+
 export function formatPercentage(
   value: number,
   options: { addPrefix?: boolean } = {

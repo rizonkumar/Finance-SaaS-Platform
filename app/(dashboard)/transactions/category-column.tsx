@@ -10,9 +10,15 @@ type Props = {
   id: string;
   category: string | null;
   categoryId: string | null;
+  transferId: string | null;
 };
 
-export const CategoryColumn = ({ id, category, categoryId }: Props) => {
+export const CategoryColumn = ({
+  id,
+  category,
+  categoryId,
+  transferId,
+}: Props) => {
   const { onOpen: onOpenCategory } = useOpenCategory();
   const { onOpen: onOpenTransaction } = useOpenTransaction();
 
@@ -23,6 +29,14 @@ export const CategoryColumn = ({ id, category, categoryId }: Props) => {
       onOpenTransaction(id);
     }
   };
+
+  if (transferId) {
+    return (
+      <span className="text-gray-700" title="Transfers are not categorised">
+        —
+      </span>
+    );
+  }
 
   return (
     <div

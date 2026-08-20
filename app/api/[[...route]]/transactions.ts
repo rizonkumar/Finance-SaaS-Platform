@@ -16,6 +16,40 @@ import {
   accounts,
 } from "@/db/schema";
 
+const TRANSFER_LEG_ERROR =
+  "This is one leg of a transfer. Edit it from the transfer sheet instead.";
+
+async function withTransferSiblings(userId: string, ids: string[]) {
+  if (ids.length === 0) return [];
+
+  const owned = await db
+    .select({ id: transactions.id, transferId: transactions.transferId })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(and(inArray(transactions.id, ids), eq(accounts.userId, userId)));
+
+  const transferIds = owned
+    .map((row) => row.transferId)
+    .filter((value): value is string => value !== null);
+
+  if (transferIds.length === 0) return owned.map((row) => row.id);
+
+  const legs = await db
+    .select({ id: transactions.id })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(
+      and(
+        inArray(transactions.transferId, transferIds),
+        eq(accounts.userId, userId)
+      )
+    );
+
+  return [
+    ...new Set([...owned.map((row) => row.id), ...legs.map((row) => row.id)]),
+  ];
+}
+
 const app = new Hono()
   .get(
     "/",
@@ -62,6 +96,7 @@ const app = new Hono()
           account: accounts.name,
           accountId: transactions.accountId,
           recurringId: transactions.recurringId,
+          transferId: transactions.transferId,
         })
         .from(transactions)
         .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -109,6 +144,7 @@ const app = new Hono()
           amount: transactions.amount,
           notes: transactions.notes,
           accountId: transactions.accountId,
+          transferId: transactions.transferId,
         })
         .from(transactions)
         .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -129,6 +165,7 @@ const app = new Hono()
       insertTransactionSchema.omit({
         id: true,
         recurringId: true,
+        transferId: true,
       })
     ),
     async (c) => {
@@ -159,6 +196,7 @@ const app = new Hono()
         insertTransactionSchema.omit({
           id: true,
           recurringId: true,
+          transferId: true,
         })
       )
     ),
@@ -200,28 +238,15 @@ const app = new Hono()
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      const transactionsToDelete = db.$with("transactions_to_delete").as(
-        db
-          .select({ id: transactions.id })
-          .from(transactions)
-          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-          .where(
-            and(
-              inArray(transactions.id, values.ids),
-              eq(accounts.userId, auth.userId)
-            )
-          )
-      );
+      const ids = await withTransferSiblings(auth.userId, values.ids);
+
+      if (ids.length === 0) {
+        return c.json({ data: [] });
+      }
 
       const data = await db
-        .with(transactionsToDelete)
         .delete(transactions)
-        .where(
-          inArray(
-            transactions.id,
-            sql`(select id from ${transactionsToDelete})`
-          )
-        )
+        .where(inArray(transactions.id, ids))
         .returning({
           id: transactions.id,
         });
@@ -243,6 +268,7 @@ const app = new Hono()
       insertTransactionSchema.omit({
         id: true,
         recurringId: true,
+        transferId: true,
       })
     ),
     async (c) => {
@@ -256,6 +282,20 @@ const app = new Hono()
 
       if (!auth?.userId) {
         return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const [existing] = await db
+        .select({ transferId: transactions.transferId })
+        .from(transactions)
+        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+        .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)));
+
+      if (!existing) {
+        return c.json({ error: "Not found" }, 404);
+      }
+
+      if (existing.transferId) {
+        return c.json({ error: TRANSFER_LEG_ERROR }, 400);
       }
 
       const transactionsToUpdate = db.$with("transactions_to_update").as(
@@ -306,32 +346,15 @@ const app = new Hono()
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      const transactionsToDelete = db.$with("transactions_to_delete").as(
-        db
-          .select({ id: transactions.id })
-          .from(transactions)
-          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-          .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)))
-      );
+      const ids = await withTransferSiblings(auth.userId, [id]);
 
-      const [data] = await db
-        .with(transactionsToDelete)
-        .delete(transactions)
-        .where(
-          inArray(
-            transactions.id,
-            sql`(select id from ${transactionsToDelete})`
-          )
-        )
-        .returning({
-          id: transactions.id,
-        });
-
-      if (!data) {
+      if (ids.length === 0) {
         return c.json({ error: "Not found" }, 404);
       }
 
-      return c.json({ data });
+      await db.delete(transactions).where(inArray(transactions.id, ids));
+
+      return c.json({ data: { id } });
     }
   );
 

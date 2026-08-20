@@ -48,6 +48,27 @@ type Plan = {
   }[];
 };
 
+const PayoffSummary = ({ plan }: { plan: Plan }) => (
+  <div className="space-y-1">
+    <p className="copy-13 text-gray-900">
+      {plan.clearedAll ? (
+        <>
+          Debt free in{" "}
+          <span className="numeric text-gray-1000 font-medium">
+            {formatMonths(plan.months)}
+          </span>
+        </>
+      ) : (
+        "Does not clear at this payment"
+      )}
+    </p>
+    <p className="copy-13 text-gray-900">
+      <span className="numeric">{formatCurrency(plan.totalInterest)}</span> of
+      interest along the way
+    </p>
+  </div>
+);
+
 const StrategyPanel = ({
   plan,
   isRecommended,
@@ -66,24 +87,7 @@ const StrategyPanel = ({
         </div>
         {isRecommended && <Badge variant="income">Recommended</Badge>}
       </div>
-      <div className="space-y-1">
-        <p className="copy-13 text-gray-900">
-          {plan.clearedAll ? (
-            <>
-              Debt free in{" "}
-              <span className="numeric text-gray-1000 font-medium">
-                {formatMonths(plan.months)}
-              </span>
-            </>
-          ) : (
-            "Does not clear at this payment"
-          )}
-        </p>
-        <p className="copy-13 text-gray-900">
-          <span className="numeric">{formatCurrency(plan.totalInterest)}</span>{" "}
-          of interest along the way
-        </p>
-      </div>
+      <PayoffSummary plan={plan} />
       <ol className="divide-border divide-y">
         {plan.order.map((entry, index) => (
           <li
@@ -105,6 +109,15 @@ const StrategyPanel = ({
   );
 };
 
+const SingleDebtProjection = ({ plan }: { plan: Plan }) => (
+  <div className="border-border space-y-3 rounded-md border p-4">
+    <p className="heading-14 text-gray-1000">
+      {plan.order[0]?.name ?? "This debt"}
+    </p>
+    <PayoffSummary plan={plan} />
+  </div>
+);
+
 export const PayoffPlanCard = () => {
   const [input, setInput] = useState("");
   const [extra, setExtra] = useState(0);
@@ -121,14 +134,18 @@ export const PayoffPlanCard = () => {
 
   const planQuery = useGetPayoffPlan(extra);
   const plan = planQuery.data;
+  const isSingleDebt = (plan?.snowball.order.length ?? 0) < 2;
+  const neitherCleared =
+    !!plan && !plan.snowball.clearedAll && !plan.avalanche.clearedAll;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Payoff Plan</CardTitle>
         <CardDescription>
-          Both routes pay the same amount each month. They only differ in which
-          debt gets the leftover once every minimum is covered.
+          {isSingleDebt
+            ? "See how an extra payment each month changes when this clears."
+            : "Both routes pay the same amount each month. They only differ in which debt gets the leftover once every minimum is covered."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -160,7 +177,9 @@ export const PayoffPlanCard = () => {
           </div>
         )}
 
-        {plan && (
+        {plan && isSingleDebt && <SingleDebtProjection plan={plan.snowball} />}
+
+        {plan && !isSingleDebt && (
           <>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <StrategyPanel
@@ -189,14 +208,25 @@ export const PayoffPlanCard = () => {
                 "Both routes cost the same here, so take the snowball for the quicker first win."
               )}
             </p>
-            {!plan.snowball.clearedAll && !plan.avalanche.clearedAll && (
-              <p className="copy-13 text-amber-900">
+          </>
+        )}
+
+        {neitherCleared && (
+          <p className="copy-13 text-amber-900">
+            {isSingleDebt ? (
+              <>
+                This debt does not clear within{" "}
+                {formatMonths(MAX_PROJECTION_MONTHS)} at this payment — it is
+                not keeping up with the interest.
+              </>
+            ) : (
+              <>
                 Neither route clears these debts within{" "}
                 {formatMonths(MAX_PROJECTION_MONTHS)} — the payments are not
                 keeping up with the interest.
-              </p>
+              </>
             )}
-          </>
+          </p>
         )}
       </CardContent>
     </Card>

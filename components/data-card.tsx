@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
 
-const iconBox = cva(
+export const iconBox = cva(
   "flex size-9 shrink-0 items-center justify-center rounded-sm",
   {
     variants: {
@@ -30,7 +30,7 @@ const iconBox = cva(
   }
 );
 
-type IconBoxVariants = VariantProps<typeof iconBox>;
+export type IconBoxVariants = VariantProps<typeof iconBox>;
 
 type Props = IconBoxVariants & {
   icon: LucideIcon;
@@ -38,6 +38,7 @@ type Props = IconBoxVariants & {
   value?: number;
   dateRange: string;
   percentageChange?: number;
+  subtitle?: string;
 };
 
 export const DataCard = ({
@@ -47,6 +48,7 @@ export const DataCard = ({
   variant,
   dateRange,
   percentageChange = 0,
+  subtitle,
 }: Props) => {
   const TrendIcon = percentageChange < 0 ? TrendingDown : TrendingUp;
 
@@ -74,22 +76,26 @@ export const DataCard = ({
             formattingFn={formatCurrency}
           />
         </p>
-        <p
-          className={cn(
-            "copy-13 line-clamp-1 flex items-center gap-x-1",
-            percentageChange > 0 && "text-green-900",
-            percentageChange < 0 && "text-red-900",
-            percentageChange === 0 && "text-gray-900"
-          )}
-        >
-          {percentageChange !== 0 && (
-            <TrendIcon className="size-3.5 shrink-0" />
-          )}
-          <span className="numeric text-xs">
-            {formatPercentage(percentageChange, { addPrefix: true })}
-          </span>
-          <span className="text-gray-900">from last period</span>
-        </p>
+        {subtitle !== undefined ? (
+          <p className="copy-13 line-clamp-1 text-gray-900">{subtitle}</p>
+        ) : (
+          <p
+            className={cn(
+              "copy-13 line-clamp-1 flex items-center gap-x-1",
+              percentageChange > 0 && "text-green-900",
+              percentageChange < 0 && "text-red-900",
+              percentageChange === 0 && "text-gray-900"
+            )}
+          >
+            {percentageChange !== 0 && (
+              <TrendIcon className="size-3.5 shrink-0" />
+            )}
+            <span className="numeric text-xs">
+              {formatPercentage(percentageChange, { addPrefix: true })}
+            </span>
+            <span className="text-gray-900">from last period</span>
+          </p>
+        )}
       </CardContent>
     </Card>
   );

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { client } from "@/lib/hono";
 import { toastMessages } from "@/lib/messages";
-import { queryKeys } from "@/lib/query-keys";
+import { DEBT_DEPENDENT_KEYS } from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<typeof client.api.debts.$post>;
 type RequestType = InferRequestType<typeof client.api.debts.$post>["json"];
@@ -27,8 +27,9 @@ export const useCreateDebt = () => {
     },
     onSuccess: () => {
       toast.success(messages.createSuccess);
-      queryClient.invalidateQueries({ queryKey: queryKeys.debts() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.debtPlans() });
+      DEBT_DEPENDENT_KEYS.forEach((queryKey) =>
+        queryClient.invalidateQueries({ queryKey })
+      );
     },
     onError: (error) => {
       toast.error(error.message || messages.createError);

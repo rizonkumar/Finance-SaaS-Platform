@@ -1,5 +1,6 @@
 export const queryKeys = {
   summary: () => ["summary"] as const,
+  netWorth: () => ["net-worth"] as const,
 
   accounts: () => ["accounts"] as const,
   account: (id?: string) => ["account", { id }] as const,
@@ -29,6 +30,14 @@ export const queryKeys = {
 
 export const MONEY_DEPENDENT_KEYS = [
   queryKeys.summary(),
+  queryKeys.netWorth(),
+  queryKeys.accounts(),
   queryKeys.transactions(),
   queryKeys.budgets(),
+];
+
+export const DEBT_DEPENDENT_KEYS = [
+  queryKeys.debts(),
+  queryKeys.debtPlans(),
+  queryKeys.netWorth(),
 ];

@@ -12,11 +12,17 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import { ACCOUNT_TYPES } from "@/lib/net-worth";
+
+export const accountTypeEnum = pgEnum("account_type", ACCOUNT_TYPES);
+
 export const accounts = pgTable("accounts", {
   id: text("id").primaryKey(),
   plaidId: text("plaid_id"),
   name: text("name").notNull(),
   userId: text("user_id").notNull(),
+  type: accountTypeEnum("type").notNull().default("checking"),
+  openingBalance: integer("opening_balance").notNull().default(0),
 });
 
 export const accountsRelations = relations(accounts, ({ many }) => ({
@@ -26,7 +32,10 @@ export const accountsRelations = relations(accounts, ({ many }) => ({
   debts: many(debts),
 }));
 
-export const insertAccountSchema = createInsertSchema(accounts);
+export const insertAccountSchema = createInsertSchema(accounts, {
+  name: z.string().trim().min(1, "Name is required"),
+  openingBalance: z.coerce.number().int(),
+});
 
 export const categories = pgTable("categories", {
   id: text("id").primaryKey(),

@@ -46,3 +46,23 @@ export const dateKeyUTC = (date: Date) =>
     String(date.getUTCMonth() + 1).padStart(2, "0"),
     String(date.getUTCDate()).padStart(2, "0"),
   ].join("-");
+
+export const parseDayUTC = (value: string) => {
+  const [year = 0, month = 1, day = 1] = value.split("-").map(Number);
+
+  return utcNoon(year, month - 1, day);
+};
+
+export const eachDayUTC = (from: Date, to: Date, limit: number) => {
+  const days: Date[] = [];
+
+  let cursor = toUtcNoon(from);
+  const last = toUtcNoon(to);
+
+  while (cursor.getTime() <= last.getTime() && days.length < limit) {
+    days.push(cursor);
+    cursor = addDaysUTC(cursor, 1);
+  }
+
+  return days;
+};

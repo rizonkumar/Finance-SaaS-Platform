@@ -1,13 +1,15 @@
 "use client";
 
 import { type InferResponseType } from "hono";
-import { ArrowUpDown } from "lucide-react";
 import { type ColumnDef } from "@tanstack/react-table";
 
+import { SortableHeader } from "@/components/sortable-header";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ACCOUNT_TYPE_LABELS } from "@/lib/constants";
 import { type client } from "@/lib/hono";
 import { type tableFeatureSet } from "@/lib/table-features";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { convertAmountFromMiliunits, formatCurrency } from "@/lib/utils";
 
 import { Actions } from "./actions";
 
@@ -40,16 +42,27 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
   },
   {
     accessorKey: "name",
-    header: ({ column }) => {
+    header: ({ column }) => <SortableHeader column={column} label="Name" />,
+  },
+  {
+    accessorKey: "type",
+    header: "Type",
+    cell: ({ row }) => (
+      <span className="copy-13 text-gray-900">
+        {ACCOUNT_TYPE_LABELS[row.original.type]}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "balance",
+    header: ({ column }) => <SortableHeader column={column} label="Balance" />,
+    cell: ({ row }) => {
+      const balance = convertAmountFromMiliunits(row.original.balance);
+
       return (
-        <Button
-          variant="ghost"
-          className="-ml-4"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <Badge variant={balance < 0 ? "expense" : "income"}>
+          <span className="numeric">{formatCurrency(balance)}</span>
+        </Badge>
       );
     },
   },

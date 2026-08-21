@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 type LegendEntry = {
   value?: string;
   color?: string;
@@ -7,13 +9,23 @@ type LegendEntry = {
 type Props = {
   payload?: readonly LegendEntry[];
   formatValue: (entry: LegendEntry) => string;
+  orientation?: "vertical" | "horizontal";
 };
 
-export const ChartLegend = ({ payload, formatValue }: Props) => {
+const ORIENTATION = {
+  vertical: "flex-col gap-y-2",
+  horizontal: "flex-wrap gap-x-5 gap-y-2",
+} as const;
+
+export const ChartLegend = ({
+  payload,
+  formatValue,
+  orientation = "vertical",
+}: Props) => {
   if (!payload) return null;
 
   return (
-    <ul className="flex flex-col gap-y-2">
+    <ul className={cn("flex", ORIENTATION[orientation])}>
       {payload.map((entry) => (
         <li key={entry.value} className="flex items-center gap-x-2">
           <span

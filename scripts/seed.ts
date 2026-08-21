@@ -17,18 +17,30 @@ const SEED_CATEGORIES = [
   { id: "category_7", name: "Clothing", userId: SEED_USER_ID, plaidId: null },
 ];
 
-const SEED_ACCOUNTS = [
+const SEED_ACCOUNTS: (typeof accounts.$inferInsert)[] = [
   {
     id: "account_1",
     name: "Current Account",
     userId: SEED_USER_ID,
     plaidId: null,
+    type: "checking",
+    openingBalance: convertAmountToMiliunits(120_000),
   },
   {
     id: "account_2",
     name: "Saving Account",
     userId: SEED_USER_ID,
     plaidId: null,
+    type: "savings",
+    openingBalance: convertAmountToMiliunits(450_000),
+  },
+  {
+    id: "account_3",
+    name: "Credit Card",
+    userId: SEED_USER_ID,
+    plaidId: null,
+    type: "credit",
+    openingBalance: convertAmountToMiliunits(-38_000),
   },
 ];
 

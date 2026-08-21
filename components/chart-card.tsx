@@ -13,8 +13,8 @@ import { CHART_HEIGHT } from "@/lib/constants";
 
 type Props = {
   title: string;
-  options: readonly ChartTypeOption[];
-  defaultType: string;
+  options?: readonly ChartTypeOption[];
+  defaultType?: string;
   isEmpty: boolean;
   children: (chartType: string) => React.ReactNode;
 };
@@ -26,17 +26,19 @@ export const ChartCard = ({
   isEmpty,
   children,
 }: Props) => {
-  const [chartType, setChartType] = useState(defaultType);
+  const [chartType, setChartType] = useState(defaultType ?? "");
 
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0 gap-x-4">
         <CardTitle>{title}</CardTitle>
-        <ChartTypeSelect
-          value={chartType}
-          options={options}
-          onChange={setChartType}
-        />
+        {options && options.length > 0 && (
+          <ChartTypeSelect
+            value={chartType}
+            options={options}
+            onChange={setChartType}
+          />
+        )}
       </CardHeader>
       <CardContent>
         {isEmpty ? (

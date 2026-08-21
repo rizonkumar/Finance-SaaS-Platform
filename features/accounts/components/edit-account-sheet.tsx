@@ -3,7 +3,8 @@ import { Loader2 } from "lucide-react";
 import { useGetAccount } from "@/features/accounts/api/use-get-account";
 import {
   AccountForm,
-  type AccountFormValues,
+  toAccountFormValues,
+  type AccountApiValues,
 } from "@/features/accounts/components/account-form";
 import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 import { useEditAccount } from "@/features/accounts/api/use-edit-account";
@@ -33,7 +34,7 @@ export const EditAccountSheet = () => {
 
   const isLoading = accountQuery.isLoading;
 
-  const onSubmit = (values: AccountFormValues) => {
+  const onSubmit = (values: AccountApiValues) => {
     editMutation.mutate(values, {
       onSuccess: () => {
         onClose();
@@ -53,13 +54,7 @@ export const EditAccountSheet = () => {
     }
   };
 
-  const defaultValues = accountQuery.data
-    ? {
-        name: accountQuery.data.name,
-      }
-    : {
-        name: "",
-      };
+  const defaultValues = toAccountFormValues(accountQuery.data);
 
   return (
     <>
@@ -79,6 +74,8 @@ export const EditAccountSheet = () => {
               id={id}
               onSubmit={onSubmit}
               disabled={isPending}
+              isSubmitting={editMutation.isPending}
+              isDeleting={deleteMutation.isPending}
               defaultValues={defaultValues}
               onDelete={onDelete}
             />

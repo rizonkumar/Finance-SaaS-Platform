@@ -1,7 +1,8 @@
 import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
 import {
   AccountForm,
-  type AccountFormValues,
+  toAccountFormValues,
+  type AccountApiValues,
 } from "@/features/accounts/components/account-form";
 import { useCreateAccount } from "@/features/accounts/api/use-create-account";
 
@@ -18,7 +19,7 @@ export const NewAccountSheet = () => {
 
   const mutation = useCreateAccount();
 
-  const onSubmit = (values: AccountFormValues) => {
+  const onSubmit = (values: AccountApiValues) => {
     mutation.mutate(values, {
       onSuccess: () => {
         onClose();
@@ -38,9 +39,8 @@ export const NewAccountSheet = () => {
         <AccountForm
           onSubmit={onSubmit}
           disabled={mutation.isPending}
-          defaultValues={{
-            name: "",
-          }}
+          isSubmitting={mutation.isPending}
+          defaultValues={toAccountFormValues()}
         />
       </SheetContent>
     </Sheet>

@@ -1,18 +1,42 @@
+import { ACCOUNT_TYPES, type AccountType } from "@/lib/net-worth";
+
 export const MILIUNITS_FACTOR = 1000;
 
 export const DEFAULT_PERIOD_DAYS = 30;
 
+export const MAX_TREND_DAYS = 400;
+
 export const DATE_FORMAT = "yyyy-MM-dd";
+export const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 export const DISPLAY_DATE_FORMAT = "dd MMMM, yyyy";
 
 export const TOP_CATEGORY_COUNT = 3;
+
+export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
+  checking: "Checking",
+  savings: "Savings",
+  cash: "Cash",
+  investment: "Investment",
+  credit: "Credit card",
+};
+
+export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.map((value) => ({
+  value,
+  label: ACCOUNT_TYPE_LABELS[value],
+}));
 
 export const CHART_HEIGHT = 350;
 
 export const CHART_SERIES = {
   income: "var(--chart-2)",
   expenses: "var(--chart-3)",
+} as const;
+
+export const NET_WORTH_SERIES = {
+  assets: "var(--chart-2)",
+  liabilities: "var(--chart-3)",
+  netWorth: "var(--chart-1)",
 } as const;
 
 export const CHART_CATEGORY_COLORS = [

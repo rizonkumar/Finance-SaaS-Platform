@@ -250,11 +250,7 @@ export const GoalForm = ({
             </FormItem>
           )}
         />
-        <Button
-          className="w-full"
-          disabled={disabled}
-          isLoading={isSubmitting}
-        >
+        <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
           {id ? "Save Changes" : "Create Goal"}
         </Button>
         {!!id && (

@@ -1,9 +1,9 @@
 # Fintrack
 
 A personal finance workspace built on Next.js 16 and Postgres. Track accounts and
-transactions, import statements from CSV, set budgets per category, move money
-between accounts, plan a debt payoff, and schedule recurring transactions that
-enter themselves.
+transactions, watch net worth move day by day, import statements from CSV, set
+budgets per category, move money between accounts, plan a debt payoff, and
+schedule recurring transactions that enter themselves.
 
 Built as a full-stack showcase: type-safe end to end (Drizzle → Hono RPC → React
 Query), a Geist-derived design system with real dark mode, and a lint gate that
@@ -15,11 +15,12 @@ enforces SonarQube-style rules.
 
 | | |
 |---|---|
-| **Accounts** | Track bank accounts, cards and wallets |
+| **Accounts** | Bank accounts, cards and wallets, each with a type and an opening balance, so every account carries a live balance |
+| **Net worth** | Assets, liabilities and net worth as of any date, plus a daily trend built from real balances rather than cash flow |
 | **Categories** | Group spending and see where the money actually goes |
 | **Transactions** | Full CRUD, bulk delete, sorting, filtering, pagination |
 | **CSV import** | Map arbitrary columns onto amount/date/payee, then bulk-create |
-| **Dashboard** | Income / expenses / remaining with period-over-period change, plus six chart types |
+| **Dashboard** | A balance sheet on top of income / expenses / remaining with period-over-period change, plus seven chart types |
 | **Budget goals** | Per-category or overall limits on weekly, monthly, yearly or custom periods, with live progress and on-track / warning / over states |
 | **Savings goals** | A target, a deadline and a contribution ledger, with pace measured against the time elapsed |
 | **Transfers** | Move money between your own accounts as one linked pair of entries, kept out of income, expenses and budgets |
@@ -104,6 +105,8 @@ erDiagram
         text user_id
         text name
         text plaid_id
+        enum type "checking savings cash investment credit"
+        integer opening_balance "miliunits, signed"
     }
     CATEGORIES {
         text id PK
@@ -179,6 +182,21 @@ erDiagram
         timestamp date
     }
 ```
+
+An account balance is `opening_balance` plus every transaction on it. Transfer
+legs are deliberately counted here — moving your own money changes two balances
+even though it is neither income nor spending — which is the one place the rule
+inverts from summaries and budgets.
+
+Net worth splits those balances by **sign**, not by account type: anything above
+zero is an asset, anything below it is a liability, and outstanding debt is added
+to the liability side. An overdrawn current account is then a real liability and
+an overpaid card is real money owed back to you, with no special cases. The type
+only decides how a row reads and which way the opening balance is signed, so a
+card is entered as the amount owed and stored below zero. The trend walks the
+window forward one day at a time carrying a running balance per account, so every
+point is a balance sheet rather than a cumulative sum of cash flow — all of it
+pure maths in `lib/net-worth.ts`, tested without a database.
 
 Money is stored as **miliunits** (integer thousandths) so no float ever touches a
 balance. `transactions.recurring_id` is `ON DELETE SET NULL` on purpose: deleting a

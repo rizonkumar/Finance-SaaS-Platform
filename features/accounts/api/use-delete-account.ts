@@ -3,7 +3,7 @@ import { type InferResponseType } from "hono";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { client } from "@/lib/hono";
-import { queryKeys } from "@/lib/query-keys";
+import { MONEY_DEPENDENT_KEYS, queryKeys } from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<
   (typeof client.api.accounts)[":id"]["$delete"]
@@ -23,8 +23,9 @@ export const useDeleteAccount = (id?: string) => {
       toast.success("Account deleted");
       queryClient.invalidateQueries({ queryKey: queryKeys.account(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.summary() });
+      MONEY_DEPENDENT_KEYS.forEach((queryKey) =>
+        queryClient.invalidateQueries({ queryKey })
+      );
     },
     onError: () => {
       toast.error("Failed to delete account");

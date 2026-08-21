@@ -4,10 +4,12 @@ import { Separator } from "@/components/ui/separator";
 import { DISPLAY_DATE_FORMAT } from "@/lib/constants";
 import { cn, formatCurrency } from "@/lib/utils";
 
+type TooltipTone = "income" | "expense" | "net";
+
 type TooltipRow = {
   label: string;
   value: number;
-  tone: "income" | "expense";
+  tone: TooltipTone;
 };
 
 type Props = {
@@ -15,10 +17,11 @@ type Props = {
   rows: TooltipRow[];
 };
 
-const TONE_DOT = {
+const TONE_DOT: Record<TooltipTone, string> = {
   income: "bg-chart-2",
   expense: "bg-chart-3",
-} as const;
+  net: "bg-chart-1",
+};
 
 export const ChartTooltip = ({ heading, rows }: Props) => {
   return (
@@ -91,6 +94,39 @@ export const CategoryTooltip = ({ active, payload }: RechartsTooltipProps) => {
       heading={entry.payload?.name ?? ""}
       rows={[
         { label: "Expenses", value: (entry.value ?? 0) * -1, tone: "expense" },
+      ]}
+    />
+  );
+};
+
+type NetWorthDatum = {
+  date?: string | Date;
+  assets?: number;
+  liabilities?: number;
+  netWorth?: number;
+};
+
+type NetWorthTooltipProps = {
+  active?: boolean;
+  payload?: { payload?: NetWorthDatum }[];
+};
+
+export const NetWorthTooltip = ({ active, payload }: NetWorthTooltipProps) => {
+  const datum = payload?.at(0)?.payload;
+
+  if (!active || !datum) return null;
+
+  return (
+    <ChartTooltip
+      heading={datum.date ? format(datum.date, DISPLAY_DATE_FORMAT) : ""}
+      rows={[
+        { label: "Assets", value: datum.assets ?? 0, tone: "income" },
+        {
+          label: "Liabilities",
+          value: datum.liabilities ?? 0,
+          tone: "expense",
+        },
+        { label: "Net worth", value: datum.netWorth ?? 0, tone: "net" },
       ]}
     />
   );

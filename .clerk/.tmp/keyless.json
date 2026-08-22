@@ -1,6 +1,0 @@
-{
-  "publishableKey": "pk_test_bWFnaWNhbC1wYXJha2VldC03MDMuY2xlcmsuYWNjb3VudHMuZGV2JA",
-  "secretKey": "sk_test_dAmHuMRye9AzxlJbdEhutEg5uS3Iiid3aTgyze7u7o",
-  "claimUrl": "https://dashboard.clerk.com/apps/claim?framework=nextjs&token=xj8jtrb9j2rs60uy9wsp340h4svyvj9x3ffpi53w",
-  "apiKeysUrl": "https://dashboard.clerk.com/apps/app_3IGdPvERKTMg0vAP9kQdZost7cT/instances/ins_3IGdPz6Wf13tWO7fxM3ZCvA2B1H/api-keys"
-}

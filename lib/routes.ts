@@ -7,11 +7,13 @@ import {
   Repeat,
   Shapes,
   Target,
+  TrendingUp,
 } from "lucide-react";
 
 export const NAV_ROUTES = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/forecast", label: "Forecast", icon: TrendingUp },
   { href: "/budgets", label: "Budgets", icon: PiggyBank },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/debts", label: "Debts", icon: Landmark },
@@ -23,6 +25,7 @@ export const NAV_ROUTES = [
 export const PAGE_TITLES: Record<string, string> = {
   "/": "Overview",
   "/transactions": "Transactions",
+  "/forecast": "Forecast",
   "/budgets": "Budgets",
   "/goals": "Goals",
   "/debts": "Debts",
@@ -31,4 +34,9 @@ export const PAGE_TITLES: Record<string, string> = {
   "/categories": "Categories",
 };
 
-export const FILTERED_ROUTES: string[] = ["/", "/transactions", "/budgets"];
+export const FILTERED_ROUTES: string[] = [
+  "/",
+  "/transactions",
+  "/forecast",
+  "/budgets",
+];

@@ -131,3 +131,36 @@ export const NetWorthTooltip = ({ active, payload }: NetWorthTooltipProps) => {
     />
   );
 };
+
+type ForecastDatum = {
+  date?: string | Date;
+  balance?: number;
+  income?: number;
+  expenses?: number;
+};
+
+type ForecastTooltipProps = {
+  active?: boolean;
+  payload?: { payload?: ForecastDatum }[];
+};
+
+export const ForecastTooltip = ({ active, payload }: ForecastTooltipProps) => {
+  const datum = payload?.at(0)?.payload;
+
+  if (!active || !datum) return null;
+
+  return (
+    <ChartTooltip
+      heading={datum.date ? format(datum.date, DISPLAY_DATE_FORMAT) : ""}
+      rows={[
+        { label: "Balance", value: datum.balance ?? 0, tone: "net" },
+        { label: "Income", value: datum.income ?? 0, tone: "income" },
+        {
+          label: "Expenses",
+          value: (datum.expenses ?? 0) * -1,
+          tone: "expense",
+        },
+      ]}
+    />
+  );
+};

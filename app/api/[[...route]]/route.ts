@@ -8,6 +8,7 @@ import accounts from "./accounts";
 import budgets from "./budgets";
 import categories from "./categories";
 import debts from "./debts";
+import forecast from "./forecast";
 import goals from "./goals";
 import netWorth from "./net-worth";
 import recurring from "./recurring";
@@ -32,6 +33,7 @@ app.onError((error, c) => {
 const _routes = app
   .route("/summary", summary)
   .route("/net-worth", netWorth)
+  .route("/forecast", forecast)
   .route("/accounts", accounts)
   .route("/categories", categories)
   .route("/transactions", transactions)

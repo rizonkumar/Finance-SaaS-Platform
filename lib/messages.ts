@@ -24,8 +24,8 @@ export const toastMessages = (resource: ResourceLabel) => ({
 });
 
 export const API_ERRORS = {
-  unauthorized: "Unauthorized",
-  missingId: "Missing id",
-  notFound: "Not found",
+  unauthorized: "Your session has expired. Sign in and try again.",
+  missingId: "Something went wrong. Try again.",
+  notFound: "That is no longer there. Refresh the page and try again.",
   internal: "Something went wrong. Try again.",
 } as const;

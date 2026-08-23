@@ -158,7 +158,9 @@ async function assertCategoryOwned(userId: string, categoryId?: string | null) {
     .where(and(eq(categories.userId, userId), eq(categories.id, categoryId)));
 
   if (!owned) {
-    throw new HTTPException(400, { message: "Unknown category" });
+    throw new HTTPException(400, {
+      message: "That category could not be found",
+    });
   }
 }
 

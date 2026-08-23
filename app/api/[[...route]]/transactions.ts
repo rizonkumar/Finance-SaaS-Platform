@@ -8,6 +8,7 @@ import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
+import { API_ERRORS } from "@/lib/messages";
 import { DATE_FORMAT, DEFAULT_PERIOD_DAYS } from "@/lib/constants";
 import { materializeRecurringTransactions } from "@/lib/recurring";
 import {
@@ -86,7 +87,7 @@ const app = new Hono()
       const { from, to, accountId } = c.req.valid("query");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       try {
@@ -147,11 +148,11 @@ const app = new Hono()
       const { id } = c.req.valid("param");
 
       if (!id) {
-        return c.json({ error: "Missing id" }, 400);
+        return c.json({ error: API_ERRORS.missingId }, 400);
       }
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const [data] = await db
@@ -170,7 +171,7 @@ const app = new Hono()
         .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)));
 
       if (!data) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
 
       return c.json({ data });
@@ -192,7 +193,7 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const [data] = await db
@@ -224,7 +225,7 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const data = await db
@@ -254,7 +255,7 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const ids = await withTransferSiblings(auth.userId, values.ids);
@@ -298,11 +299,11 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!id) {
-        return c.json({ error: "Missing id" }, 400);
+        return c.json({ error: API_ERRORS.missingId }, 400);
       }
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const [existing] = await db
@@ -312,7 +313,7 @@ const app = new Hono()
         .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)));
 
       if (!existing) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
 
       if (existing.transferId) {
@@ -342,7 +343,7 @@ const app = new Hono()
         .returning();
 
       if (!data) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
 
       return c.json({ data });
@@ -362,17 +363,17 @@ const app = new Hono()
       const { id } = c.req.valid("param");
 
       if (!id) {
-        return c.json({ error: "Missing id" }, 400);
+        return c.json({ error: API_ERRORS.missingId }, 400);
       }
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const ids = await withTransferSiblings(auth.userId, [id]);
 
       if (ids.length === 0) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
 
       await assertNoTradeBacked(auth.userId, ids);

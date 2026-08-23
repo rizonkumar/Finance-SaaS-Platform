@@ -17,6 +17,7 @@ import {
 } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
+import { API_ERRORS } from "@/lib/messages";
 import {
   DATE_FORMAT,
   DEFAULT_PERIOD_DAYS,
@@ -53,7 +54,7 @@ const app = new Hono().get(
     const { from, to, accountId } = c.req.valid("query");
 
     if (!auth?.userId) {
-      return c.json({ error: "Unauthorized" }, 401);
+      return c.json({ error: API_ERRORS.unauthorized }, 401);
     }
 
     try {

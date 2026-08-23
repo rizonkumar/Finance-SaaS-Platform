@@ -100,7 +100,9 @@ async function assertOwnedRefs(userId: string, refs: OwnedRefs) {
     .where(and(eq(accounts.userId, userId), inArray(accounts.id, accountIds)));
 
   if (owned.length !== accountIds.length) {
-    throw new HTTPException(400, { message: "Unknown account" });
+    throw new HTTPException(400, {
+      message: "That account could not be found",
+    });
   }
 
   if (!categoryId) return;
@@ -111,7 +113,9 @@ async function assertOwnedRefs(userId: string, refs: OwnedRefs) {
     .where(and(eq(categories.userId, userId), eq(categories.id, categoryId)));
 
   if (!category) {
-    throw new HTTPException(400, { message: "Unknown category" });
+    throw new HTTPException(400, {
+      message: "That category could not be found",
+    });
   }
 }
 

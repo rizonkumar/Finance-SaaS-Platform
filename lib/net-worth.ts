@@ -1,16 +1,23 @@
 import { dateKeyUTC } from "@/lib/date-utc";
 
 export const ACCOUNT_TYPES = [
-  "checking",
   "savings",
   "cash",
+  "wallet",
   "investment",
+  "fixed_deposit",
+  "ppf",
+  "epf",
   "credit",
+  "loan",
 ] as const;
 
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
-export const LIABILITY_ACCOUNT_TYPES: readonly AccountType[] = ["credit"];
+export const LIABILITY_ACCOUNT_TYPES: readonly AccountType[] = [
+  "credit",
+  "loan",
+];
 
 export const isLiabilityAccount = (type: AccountType) =>
   LIABILITY_ACCOUNT_TYPES.includes(type);

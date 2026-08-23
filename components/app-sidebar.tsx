@@ -1,9 +1,6 @@
-import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
-
 import { AppLogo } from "@/components/app-logo";
 import { NavLinks } from "@/components/nav-links";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SidebarUserCard } from "@/components/sidebar-user-card";
 
 export const AppSidebar = () => {
   return (
@@ -16,14 +13,8 @@ export const AppSidebar = () => {
         <NavLinks />
       </div>
 
-      <div className="border-alpha-300 flex items-center justify-between gap-x-2 border-t px-3 py-3">
-        <ClerkLoaded>
-          <UserButton />
-        </ClerkLoaded>
-        <ClerkLoading>
-          <Loader2 className="size-7 animate-spin text-gray-600" />
-        </ClerkLoading>
-        <ThemeToggle />
+      <div className="p-3">
+        <SidebarUserCard />
       </div>
     </aside>
   );

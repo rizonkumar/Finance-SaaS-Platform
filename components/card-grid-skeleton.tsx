@@ -7,7 +7,7 @@ type Props = {
 
 export const CardGridSkeleton = ({ count = 6 }: Props) => {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: count }, (_, index) => `card-${index}`).map(
         (key) => (
           <Card key={key}>

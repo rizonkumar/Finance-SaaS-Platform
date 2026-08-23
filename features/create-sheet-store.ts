@@ -20,6 +20,21 @@ export const createNewSheetStore = () =>
     onClose: () => set({ isOpen: false }),
   }));
 
+type PrefillSheetState<TPrefill> = {
+  isOpen: boolean;
+  prefill?: TPrefill;
+  onOpen: (prefill?: TPrefill) => void;
+  onClose: () => void;
+};
+
+export const createPrefillSheetStore = <TPrefill>() =>
+  create<PrefillSheetState<TPrefill>>((set) => ({
+    isOpen: false,
+    prefill: undefined,
+    onOpen: (prefill) => set({ isOpen: true, prefill }),
+    onClose: () => set({ isOpen: false, prefill: undefined }),
+  }));
+
 export const createOpenSheetStore = () =>
   create<OpenSheetState>((set) => ({
     id: undefined,

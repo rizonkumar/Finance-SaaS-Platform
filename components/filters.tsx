@@ -3,7 +3,7 @@ import { DateFilter } from "@/components/date-filter";
 
 export const Filters = () => {
   return (
-    <div className="flex w-full flex-col items-stretch gap-2 lg:w-auto lg:flex-row lg:items-center">
+    <div className="flex flex-wrap items-center gap-2">
       <AccountFilter />
       <DateFilter />
     </div>

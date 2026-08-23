@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sheet";
 
 export const NewTransactionSheet = () => {
-  const { isOpen, onClose } = useNewTransaction();
+  const { isOpen, onClose, prefill } = useNewTransaction();
 
   const createMutation = useCreateTransaction();
 
@@ -76,6 +76,13 @@ export const NewTransactionSheet = () => {
           </div>
         ) : (
           <TransactionForm
+            // defaultValues are only read on mount, and SheetProvider keeps
+            // this sheet mounted — so re-key it whenever the seed changes.
+            key={prefill?.categoryId ?? "unseeded"}
+            defaultValues={{
+              date: new Date(),
+              categoryId: prefill?.categoryId,
+            }}
             onSubmit={onSubmit}
             disabled={isPending}
             categoryOptions={categoryOptions}

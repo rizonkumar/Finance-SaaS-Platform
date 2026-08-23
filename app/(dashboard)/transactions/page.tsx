@@ -6,8 +6,10 @@ import { toast } from "sonner";
 
 import { DataTable } from "@/components/data-table";
 import { TablePageSkeleton } from "@/components/table-page-skeleton";
+import { Filters } from "@/components/filters";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useSelectAccount } from "@/features/accounts/hooks/use-select-account";
 import { useBulkCreateTransactions } from "@/features/transactions/api/use-bulk-create-transactions";
 import { useBulkDeleteTransactions } from "@/features/transactions/api/use-bulk-delete-transactions";
@@ -15,6 +17,7 @@ import { useGetTransactions } from "@/features/transactions/api/use-get-transact
 import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
 import { useNewTransfer } from "@/features/transfers/hooks/use-new-transfer";
 import type { ImportedTransaction } from "@/lib/csv-import";
+import { PAGE_META } from "@/lib/routes";
 
 import { columns } from "./columns";
 import { ImportCard } from "./import-card";
@@ -99,43 +102,50 @@ const TransactionsPageContent = () => {
   }
 
   return (
-    <Card>
-      <CardHeader className="gap-y-2 lg:flex-row lg:items-center lg:justify-between">
-        <CardTitle>Transaction History</CardTitle>
-        <div className="flex flex-col items-center gap-x-2 gap-y-2 lg:flex-row">
-          <Button
-            onClick={newTransaction.onOpen}
-            size="sm"
-            className="w-full lg:w-auto"
-          >
-            <Plus className="size-4" />
-            Add Transaction
-          </Button>
-          <Button
-            onClick={newTransfer.onOpen}
-            size="sm"
-            variant="outline"
-            className="w-full lg:w-auto"
-          >
-            <ArrowLeftRight className="size-4" />
-            Transfer
-          </Button>
-          <UploadButton onUpload={onUpload} />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          filterKey="payee"
-          columns={columns}
-          data={transactions}
-          onDelete={(row) => {
-            const ids = row.map((r) => r.original.id);
-            deleteTransactions.mutate({ ids });
-          }}
-          disabled={isDisabled}
-        />
-      </CardContent>
-    </Card>
+    <>
+      <PageHeader
+        title={PAGE_META["/transactions"].title}
+        description={PAGE_META["/transactions"].description}
+        chips={
+          transactions.length > 0
+            ? [
+                {
+                  label: `${transactions.length} ${transactions.length === 1 ? "transaction" : "transactions"}`,
+                  icon: ArrowLeftRight,
+                },
+              ]
+            : undefined
+        }
+        filters={<Filters />}
+        actions={
+          <>
+            <Button onClick={() => newTransaction.onOpen()} size="sm">
+              <Plus className="size-4" />
+              Add Transaction
+            </Button>
+            <Button onClick={newTransfer.onOpen} size="sm" variant="outline">
+              <ArrowLeftRight className="size-4" />
+              Transfer
+            </Button>
+            <UploadButton onUpload={onUpload} />
+          </>
+        }
+      />
+      <Card>
+        <CardContent className="pt-5">
+          <DataTable
+            filterKey="payee"
+            columns={columns}
+            data={transactions}
+            onDelete={(row) => {
+              const ids = row.map((r) => r.original.id);
+              deleteTransactions.mutate({ ids });
+            }}
+            disabled={isDisabled}
+          />
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

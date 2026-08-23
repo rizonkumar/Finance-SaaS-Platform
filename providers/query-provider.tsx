@@ -2,6 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import "@/lib/zod-config";
+
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {

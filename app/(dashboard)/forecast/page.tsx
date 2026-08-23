@@ -7,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { ChartCard, ChartCardLoading } from "@/components/chart-card";
 import { ErrorState } from "@/components/error-state";
+import { Filters } from "@/components/filters";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGetForecast } from "@/features/forecast/api/use-get-forecast";
 import { ForecastBalanceChart } from "@/features/forecast/components/forecast-balance-chart";
@@ -14,6 +16,7 @@ import { ForecastEventsCard } from "@/features/forecast/components/forecast-even
 import { ForecastSummaryGrid } from "@/features/forecast/components/forecast-summary-grid";
 import { DEFAULT_PERIOD_DAYS } from "@/lib/constants";
 import { parseDayUTC } from "@/lib/date-utc";
+import { PAGE_META } from "@/lib/routes";
 
 function forecastDateRange(from?: string, to?: string) {
   const start = from ? parseDayUTC(from) : new Date();
@@ -67,7 +70,12 @@ const ForecastPageContent = () => {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      <PageHeader
+        title={PAGE_META["/forecast"].title}
+        description={PAGE_META["/forecast"].description}
+        filters={<Filters />}
+      />
       <ForecastSummaryGrid
         closingBalance={forecast?.closingBalance ?? 0}
         projectedChange={forecast?.projectedChange ?? 0}

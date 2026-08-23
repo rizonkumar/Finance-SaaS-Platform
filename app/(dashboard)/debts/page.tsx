@@ -1,12 +1,14 @@
 "use client";
 
-import { Landmark, Plus } from "lucide-react";
+import { Landmark, Plus, TrendingDown } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PAGE_META } from "@/lib/routes";
 import { useGetDebts } from "@/features/debts/api/use-get-debts";
 import { DebtCard } from "@/features/debts/components/debt-card";
 import { PayoffPlanCard } from "@/features/debts/components/payoff-plan-card";
@@ -42,22 +44,30 @@ const DebtsPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-x-2">
-        <p className="copy-14 text-gray-900">
-          {debts.length} {debts.length === 1 ? "debt" : "debts"}
-          {debts.length > 0 && (
-            <>
-              {" · "}
-              <span className="numeric">{formatCurrency(owed)}</span> still owed
-              of <span className="numeric">{formatCurrency(borrowed)}</span>
-            </>
-          )}
-        </p>
-        <Button size="sm" onClick={newDebt.onOpen}>
-          <Plus className="size-4" />
-          Add Debt
-        </Button>
-      </div>
+      <PageHeader
+        title={PAGE_META["/debts"].title}
+        description={PAGE_META["/debts"].description}
+        chips={
+          debts.length > 0
+            ? [
+                {
+                  label: `${debts.length} ${debts.length === 1 ? "debt" : "debts"}`,
+                  icon: Landmark,
+                },
+                {
+                  label: `${formatCurrency(owed)} owed of ${formatCurrency(borrowed)}`,
+                  icon: TrendingDown,
+                },
+              ]
+            : undefined
+        }
+        actions={
+          <Button size="sm" onClick={newDebt.onOpen}>
+            <Plus className="size-4" />
+            Add Debt
+          </Button>
+        }
+      />
 
       {debts.length === 0 ? (
         <Card>
@@ -73,7 +83,7 @@ const DebtsPage = () => {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {debts.map((debt) => (
               <DebtCard
                 key={debt.id}

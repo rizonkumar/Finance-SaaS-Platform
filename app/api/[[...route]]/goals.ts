@@ -19,6 +19,7 @@ import {
   goalContributions,
   goals,
   insertGoalSchema,
+  transactions,
 } from "@/db/schema";
 import {
   averagePerMonth,
@@ -60,6 +61,7 @@ const goalBody = insertGoalSchema
   });
 
 const contributionBody = z.object({
+  accountId: z.string().min(1, "Pick the account the money moves through"),
   amount: z
     .number()
     .int()
@@ -160,7 +162,7 @@ async function withProgress(userId: string, rows: GoalRow[]) {
 
 async function requireGoal(userId: string, goalId: string) {
   const [owned] = await db
-    .select({ id: goals.id })
+    .select({ id: goals.id, name: goals.name })
     .from(goals)
     .where(and(eq(goals.userId, userId), eq(goals.id, goalId)));
 
@@ -168,7 +170,7 @@ async function requireGoal(userId: string, goalId: string) {
     throw new HTTPException(404, { message: API_ERRORS.notFound });
   }
 
-  return owned.id;
+  return owned;
 }
 
 function loadContributions(userId: string, goalId: string) {
@@ -297,9 +299,9 @@ const app = new Hono<AuthedEnv>()
   })
   .get("/:id/contributions", zValidator("param", idParam), async (c) => {
     const userId = c.get("userId");
-    const id = await requireGoal(userId, requireId(c.req.valid("param").id));
+    const goal = await requireGoal(userId, requireId(c.req.valid("param").id));
 
-    return c.json({ data: await loadContributions(userId, id) });
+    return c.json({ data: await loadContributions(userId, goal.id) });
   })
   .post(
     "/:id/contributions",
@@ -307,12 +309,17 @@ const app = new Hono<AuthedEnv>()
     zValidator("json", contributionBody),
     async (c) => {
       const userId = c.get("userId");
-      const id = await requireGoal(userId, requireId(c.req.valid("param").id));
+      const goal = await requireGoal(
+        userId,
+        requireId(c.req.valid("param").id)
+      );
       const values = c.req.valid("json");
+
+      await assertAccountOwned(userId, values.accountId);
 
       // A withdrawal is allowed, but it cannot take the goal below zero.
       if (values.amount < 0) {
-        const saved = (await savedByGoal(userId, [id])).get(id) ?? 0;
+        const saved = (await savedByGoal(userId, [goal.id])).get(goal.id) ?? 0;
 
         if (saved + values.amount < 0) {
           throw new HTTPException(400, {
@@ -321,16 +328,38 @@ const app = new Hono<AuthedEnv>()
         }
       }
 
-      const [data] = await db
-        .insert(goalContributions)
-        .values({
-          ...values,
-          notes: values.notes ?? null,
-          id: createId(),
-          goalId: id,
-          userId,
-        })
-        .returning();
+      // Funding a goal moves cash out of the account, so the transaction is
+      // the negation of the contribution. Both rows are written together: a
+      // contribution without its transaction would inflate net worth.
+      const data = await db.transaction(async (tx) => {
+        const [movement] = await tx
+          .insert(transactions)
+          .values({
+            id: createId(),
+            amount: -values.amount,
+            payee: `Goal: ${goal.name}`,
+            notes: values.notes ?? null,
+            date: values.date,
+            accountId: values.accountId,
+            categoryId: null,
+          })
+          .returning({ id: transactions.id });
+
+        const [contribution] = await tx
+          .insert(goalContributions)
+          .values({
+            amount: values.amount,
+            date: values.date,
+            notes: values.notes ?? null,
+            id: createId(),
+            goalId: goal.id,
+            userId,
+            transactionId: movement?.id ?? null,
+          })
+          .returning();
+
+        return contribution;
+      });
 
       return c.json({ data });
     }
@@ -341,18 +370,34 @@ const app = new Hono<AuthedEnv>()
     async (c) => {
       const userId = c.get("userId");
       const { id, contributionId } = c.req.valid("param");
-      const goalId = await requireGoal(userId, requireId(id));
+      const goal = await requireGoal(userId, requireId(id));
 
-      const [data] = await db
-        .delete(goalContributions)
-        .where(
-          and(
-            eq(goalContributions.userId, userId),
-            eq(goalContributions.goalId, goalId),
-            eq(goalContributions.id, requireId(contributionId))
+      const data = await db.transaction(async (tx) => {
+        const [removed] = await tx
+          .delete(goalContributions)
+          .where(
+            and(
+              eq(goalContributions.userId, userId),
+              eq(goalContributions.goalId, goal.id),
+              eq(goalContributions.id, requireId(contributionId))
+            )
           )
-        )
-        .returning({ id: goalContributions.id });
+          .returning({
+            id: goalContributions.id,
+            transactionId: goalContributions.transactionId,
+          });
+
+        if (!removed) return null;
+
+        // Take the cash movement with it, otherwise the money stays spent.
+        if (removed.transactionId) {
+          await tx
+            .delete(transactions)
+            .where(eq(transactions.id, removed.transactionId));
+        }
+
+        return { id: removed.id };
+      });
 
       if (!data) {
         throw new HTTPException(404, { message: API_ERRORS.notFound });

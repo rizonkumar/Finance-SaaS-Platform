@@ -14,11 +14,15 @@ export const DISPLAY_DATE_FORMAT = "dd MMMM, yyyy";
 export const TOP_CATEGORY_COUNT = 3;
 
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
-  checking: "Checking",
   savings: "Savings",
   cash: "Cash",
+  wallet: "Wallet",
   investment: "Investment",
+  fixed_deposit: "Fixed deposit",
+  ppf: "PPF",
+  epf: "EPF",
   credit: "Credit card",
+  loan: "Loan",
 };
 
 export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.map((value) => ({

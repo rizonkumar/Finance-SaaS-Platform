@@ -6,10 +6,12 @@ import { z } from "zod";
 import { DatePicker } from "@/components/date-picker";
 import { DirectionToggle } from "@/components/direction-toggle";
 import { MoneyInput } from "@/components/money-input";
+import { Select } from "@/components/select";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { convertAmountToMiliunits } from "@/lib/utils";
 
 const formSchema = z.object({
+  accountId: z.string().min(1, "Pick an account"),
   direction: z.enum(["pay", "borrow"]),
   amount: z
     .string()
@@ -31,6 +34,7 @@ const formSchema = z.object({
 export type PaymentFormValues = z.output<typeof formSchema>;
 
 export type PaymentApiValues = {
+  accountId: string;
   amount: number;
   date: Date;
   notes: string | null;
@@ -40,12 +44,21 @@ type Props = {
   onSubmit: (values: PaymentApiValues) => void;
   disabled?: boolean;
   isSubmitting?: boolean;
+  accountOptions: { label: string; value: string }[];
+  defaultAccountId?: string | null;
 };
 
-export const PaymentForm = ({ onSubmit, disabled, isSubmitting }: Props) => {
+export const PaymentForm = ({
+  onSubmit,
+  disabled,
+  isSubmitting,
+  accountOptions,
+  defaultAccountId,
+}: Props) => {
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      accountId: defaultAccountId ?? "",
       direction: "pay",
       amount: "",
       date: new Date(),
@@ -59,12 +72,14 @@ export const PaymentForm = ({ onSubmit, disabled, isSubmitting }: Props) => {
     );
 
     onSubmit({
+      accountId: values.accountId,
       amount: values.direction === "borrow" ? -magnitude : magnitude,
       date: values.date,
       notes: values.notes?.trim() ? values.notes.trim() : null,
     });
 
     form.reset({
+      accountId: values.accountId,
       direction: values.direction,
       amount: "",
       date: values.date,
@@ -93,6 +108,29 @@ export const PaymentForm = ({ onSubmit, disabled, isSubmitting }: Props) => {
                   }}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="accountId"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Account</FormLabel>
+              <FormControl>
+                <Select
+                  placeholder="Select an account"
+                  options={accountOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                />
+              </FormControl>
+              <FormDescription>
+                Paying records money leaving this account; borrowing records it
+                coming in.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

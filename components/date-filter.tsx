@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { format, subDays } from "date-fns";
 import { type DateRange } from "react-day-picker";
-import { ChevronDown } from "lucide-react";
+import { CalendarRange, ChevronDown } from "lucide-react";
 import qs from "query-string";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
+import { FILTER_CHIP } from "@/components/filter-chip";
 import { DATE_FORMAT, DEFAULT_PERIOD_DAYS } from "@/lib/constants";
 import { formatDateRange } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -67,10 +68,11 @@ export const DateFilter = () => {
           disabled={false}
           size="sm"
           variant="outline"
-          className="h-8 w-full justify-between font-normal lg:w-auto"
+          className={FILTER_CHIP}
         >
+          <CalendarRange className="size-3" />
           <span>{formatDateRange(paramState)}</span>
-          <ChevronDown className="ml-2 size-4 opacity-50" />
+          <ChevronDown className="size-3 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0 lg:w-auto" align="start">

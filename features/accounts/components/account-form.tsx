@@ -32,7 +32,7 @@ import {
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   type: z.enum(ACCOUNT_TYPES),
-  openingBalance: z.string(),
+  openingBalance: z.string("Enter a starting balance"),
 });
 
 export type AccountFormValues = z.output<typeof formSchema>;
@@ -51,7 +51,7 @@ type Account = {
 
 export const toAccountFormValues = (account?: Account): AccountFormValues => {
   if (!account) {
-    return { name: "", type: "checking", openingBalance: "" };
+    return { name: "", type: "savings", openingBalance: "" };
   }
 
   const amount = displayOpeningBalance(
@@ -91,7 +91,7 @@ export const AccountForm = ({
   });
 
   const type = useWatch({ control: form.control, name: "type" });
-  const owesMoney = isLiabilityAccount(type ?? "checking");
+  const owesMoney = isLiabilityAccount(type ?? "savings");
 
   const handleSubmit = (values: AccountFormValues) => {
     const entered = parseFloat(values.openingBalance);
@@ -120,7 +120,7 @@ export const AccountForm = ({
               <FormControl>
                 <Input
                   disabled={disabled}
-                  placeholder="e.g. Cash, Bank, Credit Card"
+                  placeholder="e.g. ICICI Savings, HDFC Credit Card, Paytm Wallet"
                   {...field}
                 />
               </FormControl>
@@ -144,8 +144,8 @@ export const AccountForm = ({
                 />
               </FormControl>
               <FormDescription>
-                Credit cards count against your net worth, everything else
-                counts towards it.
+                Credit cards and loans count against your net worth, everything
+                else counts towards it.
               </FormDescription>
               <FormMessage />
             </FormItem>

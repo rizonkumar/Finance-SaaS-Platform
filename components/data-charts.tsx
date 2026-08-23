@@ -4,7 +4,7 @@ import { Chart, ChartLoading } from "@/components/chart";
 import { SpendingPie, SpendingPieLoading } from "@/components/spending-pie";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
 
-const GRID = "grid grid-cols-1 gap-4 lg:grid-cols-6";
+const GRID = "grid grid-cols-1 gap-3 lg:grid-cols-6";
 const WIDE = "col-span-1 lg:col-span-3 xl:col-span-4";
 const NARROW = "col-span-1 lg:col-span-3 xl:col-span-2";
 

@@ -7,7 +7,13 @@ import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle";
-import { accounts, debtPayments, debts, insertDebtSchema } from "@/db/schema";
+import {
+  accounts,
+  debtPayments,
+  debts,
+  insertDebtSchema,
+  transactions,
+} from "@/db/schema";
 import {
   assertAccountOwned,
   duplicateNameConflict,
@@ -60,6 +66,7 @@ const debtBody = insertDebtSchema
   });
 
 const paymentBody = z.object({
+  accountId: z.string().min(1, "Pick the account the money moves through"),
   amount: z
     .number()
     .int()
@@ -166,7 +173,7 @@ async function withProgress(userId: string, rows: DebtRow[]) {
 
 async function requireDebt(userId: string, debtId: string) {
   const [owned] = await db
-    .select({ id: debts.id, principal: debts.principal })
+    .select({ id: debts.id, name: debts.name, principal: debts.principal })
     .from(debts)
     .where(and(eq(debts.userId, userId), eq(debts.id, debtId)));
 
@@ -342,6 +349,8 @@ const app = new Hono<AuthedEnv>()
       );
       const values = c.req.valid("json");
 
+      await assertAccountOwned(userId, values.accountId);
+
       if (values.amount > 0) {
         const paid = (await paidByDebt(userId, [debt.id])).get(debt.id) ?? 0;
 
@@ -352,16 +361,35 @@ const app = new Hono<AuthedEnv>()
         }
       }
 
-      const [data] = await db
-        .insert(debtPayments)
-        .values({
-          ...values,
-          notes: values.notes ?? null,
-          id: createId(),
-          debtId: debt.id,
-          userId,
-        })
-        .returning();
+      const data = await db.transaction(async (tx) => {
+        const [movement] = await tx
+          .insert(transactions)
+          .values({
+            id: createId(),
+            amount: -values.amount,
+            payee: `Debt: ${debt.name}`,
+            notes: values.notes ?? null,
+            date: values.date,
+            accountId: values.accountId,
+            categoryId: null,
+          })
+          .returning({ id: transactions.id });
+
+        const [payment] = await tx
+          .insert(debtPayments)
+          .values({
+            amount: values.amount,
+            date: values.date,
+            notes: values.notes ?? null,
+            id: createId(),
+            debtId: debt.id,
+            userId,
+            transactionId: movement?.id ?? null,
+          })
+          .returning();
+
+        return payment;
+      });
 
       return c.json({ data });
     }
@@ -374,16 +402,31 @@ const app = new Hono<AuthedEnv>()
       const { id, paymentId } = c.req.valid("param");
       const debt = await requireDebt(userId, requireId(id));
 
-      const [data] = await db
-        .delete(debtPayments)
-        .where(
-          and(
-            eq(debtPayments.userId, userId),
-            eq(debtPayments.debtId, debt.id),
-            eq(debtPayments.id, requireId(paymentId))
+      const data = await db.transaction(async (tx) => {
+        const [removed] = await tx
+          .delete(debtPayments)
+          .where(
+            and(
+              eq(debtPayments.userId, userId),
+              eq(debtPayments.debtId, debt.id),
+              eq(debtPayments.id, requireId(paymentId))
+            )
           )
-        )
-        .returning({ id: debtPayments.id });
+          .returning({
+            id: debtPayments.id,
+            transactionId: debtPayments.transactionId,
+          });
+
+        if (!removed) return null;
+
+        if (removed.transactionId) {
+          await tx
+            .delete(transactions)
+            .where(eq(transactions.id, removed.transactionId));
+        }
+
+        return { id: removed.id };
+      });
 
       if (!data) {
         throw new HTTPException(404, { message: API_ERRORS.notFound });

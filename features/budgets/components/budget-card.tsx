@@ -1,7 +1,11 @@
+"use client";
+
 import {
   AlertTriangle,
+  CalendarRange,
   CheckCircle2,
-  MoreHorizontal,
+  Pencil,
+  Plus,
   TrendingUp,
 } from "lucide-react";
 
@@ -9,14 +13,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetProgress } from "@/features/budgets/components/budget-progress";
+import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
 import type { BudgetStatus } from "@/lib/budgets";
-import { formatCurrency, formatPercentage } from "@/lib/utils";
+import { formatCurrency, formatDateRange, formatPercentage } from "@/lib/utils";
 
 type Props = {
   id: string;
+  categoryId: string | null;
   category: string | null;
   period: string;
   amount: number;
+  periodStart: string;
+  periodEnd: string;
   spent: number;
   remaining: number;
   percentage: number;
@@ -33,9 +41,12 @@ const STATUS_META = {
 
 export const BudgetCard = ({
   id,
+  categoryId,
   category,
   period,
   amount,
+  periodStart,
+  periodEnd,
   spent,
   remaining,
   percentage,
@@ -45,6 +56,7 @@ export const BudgetCard = ({
 }: Props) => {
   const meta = STATUS_META[status];
   const StatusIcon = meta.icon;
+  const newTransaction = useNewTransaction();
 
   return (
     <Card>
@@ -57,6 +69,10 @@ export const BudgetCard = ({
             <Badge variant="muted" className="capitalize">
               {period}
             </Badge>
+            <Badge variant="muted">
+              <CalendarRange className="size-3" />
+              {formatDateRange({ from: periodStart, to: periodEnd })}
+            </Badge>
             <Badge variant={meta.variant}>
               <StatusIcon className="size-3" />
               {meta.label}
@@ -64,14 +80,24 @@ export const BudgetCard = ({
             {!isActiveNow && <Badge variant="outline">Inactive</Badge>}
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Edit budget"
-          onClick={() => onEdit(id)}
-        >
-          <MoreHorizontal className="size-4" />
-        </Button>
+        <div className="flex shrink-0 items-center gap-x-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => newTransaction.onOpen({ categoryId })}
+          >
+            <Plus className="size-4" />
+            Add spend
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Edit budget"
+            onClick={() => onEdit(id)}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <BudgetProgress percentage={percentage} status={status} />

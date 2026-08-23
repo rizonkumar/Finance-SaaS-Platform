@@ -15,9 +15,26 @@ type Props = {
   value?: Date;
   onChange?: OnSelectHandler<Date | undefined>;
   disabled?: boolean;
+  allowClear?: boolean;
 };
 
-export const DatePicker = ({ value, onChange, disabled }: Props) => {
+export const DatePicker = ({
+  value,
+  onChange,
+  disabled,
+  allowClear = false,
+}: Props) => {
+  const onSelect: OnSelectHandler<Date | undefined> = (
+    selected,
+    triggerDate,
+    modifiers,
+    event
+  ) => {
+    if (!selected && !allowClear) return;
+
+    onChange?.(selected, triggerDate, modifiers, event);
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -37,7 +54,7 @@ export const DatePicker = ({ value, onChange, disabled }: Props) => {
         <Calendar
           mode="single"
           selected={value}
-          onSelect={onChange}
+          onSelect={onSelect}
           disabled={disabled}
           autoFocus
         />

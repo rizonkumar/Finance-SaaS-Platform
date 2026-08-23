@@ -3,13 +3,12 @@
 import { Landmark, Target } from "lucide-react";
 
 import { DataCard, DataCardLoading } from "@/components/data-card";
+import { StatGroup } from "@/components/stat-group";
 import { useGetDebts } from "@/features/debts/api/use-get-debts";
 import { useGetGoals } from "@/features/goals/api/use-get-goals";
 import { payoffPercentage } from "@/lib/debts";
 import { goalPercentage } from "@/lib/goals";
 import { formatCurrency, formatPercentage } from "@/lib/utils";
-
-const GRID = "mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2";
 
 export const PositionGrid = () => {
   const goalsQuery = useGetGoals();
@@ -17,10 +16,10 @@ export const PositionGrid = () => {
 
   if (goalsQuery.isLoading || debtsQuery.isLoading) {
     return (
-      <div className={GRID}>
+      <StatGroup columns={2} className="mb-4">
         <DataCardLoading />
         <DataCardLoading />
-      </div>
+      </StatGroup>
     );
   }
 
@@ -45,11 +44,10 @@ export const PositionGrid = () => {
   const clearedPercentage = payoffPercentage(paidTotal, principalTotal);
 
   return (
-    <div className={GRID}>
+    <StatGroup caption="As of today" columns={2} className="mb-4">
       <DataCard
         title="Saved Toward Goals"
         value={savedTotal}
-        dateRange="As of today"
         subtitle={
           goals.length === 0
             ? "No goals yet"
@@ -60,7 +58,6 @@ export const PositionGrid = () => {
       <DataCard
         title="Total Owed"
         value={owedTotal}
-        dateRange="As of today"
         subtitle={
           debts.length === 0
             ? "No debts yet"
@@ -69,6 +66,6 @@ export const PositionGrid = () => {
         icon={Landmark}
         variant={owedTotal > 0 ? "warning" : "success"}
       />
-    </div>
+    </StatGroup>
   );
 };

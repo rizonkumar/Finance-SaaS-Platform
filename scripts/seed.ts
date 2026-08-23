@@ -23,7 +23,7 @@ const SEED_ACCOUNTS: (typeof accounts.$inferInsert)[] = [
     name: "Current Account",
     userId: SEED_USER_ID,
     plaidId: null,
-    type: "checking",
+    type: "savings",
     openingBalance: convertAmountToMiliunits(120_000),
   },
   {

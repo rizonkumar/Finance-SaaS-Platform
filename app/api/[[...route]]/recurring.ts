@@ -192,8 +192,10 @@ const app = new Hono<AuthedEnv>()
     const projected = projectedBackfill(values, values.endDate ?? null);
 
     if (projected > MAX_BACKFILL_AT_CREATE) {
+      const rows = values.toAccountId ? projected * 2 : projected;
+
       throw new HTTPException(400, {
-        message: `That schedule would create ${projected} past transactions. Move the start date closer or widen the interval.`,
+        message: `That schedule would create ${rows} past transactions. Move the start date closer or widen the interval.`,
       });
     }
 

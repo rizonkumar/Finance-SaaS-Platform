@@ -12,6 +12,7 @@ import {
   budgets,
   categories,
   insertBudgetSchema,
+  trades,
   transactions,
 } from "@/db/schema";
 import {
@@ -104,6 +105,9 @@ async function spentByBudget(
            inner join ${accounts} a on a.id = t.account_id
            where a.user_id = ${userId} and t.amount < 0
              and t.transfer_id is null
+             and not exists (
+               select 1 from ${trades} tr where tr.transaction_id = t.id
+             )
          )
     select w.budget_id as budget_id,
            coalesce(sum(abs(ut.amount)), 0)::bigint as spent

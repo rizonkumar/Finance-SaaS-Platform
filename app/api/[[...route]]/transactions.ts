@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { parse, subDays } from "date-fns";
 import { createId } from "@paralleldrive/cuid2";
 import { zValidator } from "@hono/zod-validator";
@@ -14,10 +15,28 @@ import {
   insertTransactionSchema,
   categories,
   accounts,
+  trades,
 } from "@/db/schema";
 
 const TRANSFER_LEG_ERROR =
   "This is one leg of a transfer. Edit it from the transfer sheet instead.";
+
+const TRADE_BACKED_ERROR =
+  "This is the cash side of a trade. Change it from the Portfolio page instead.";
+
+async function assertNoTradeBacked(userId: string, ids: string[]) {
+  if (ids.length === 0) return;
+
+  const [backed] = await db
+    .select({ id: trades.id })
+    .from(trades)
+    .where(and(eq(trades.userId, userId), inArray(trades.transactionId, ids)))
+    .limit(1);
+
+  if (backed) {
+    throw new HTTPException(400, { message: TRADE_BACKED_ERROR });
+  }
+}
 
 async function withTransferSiblings(userId: string, ids: string[]) {
   if (ids.length === 0) return [];
@@ -244,6 +263,8 @@ const app = new Hono()
         return c.json({ data: [] });
       }
 
+      await assertNoTradeBacked(auth.userId, ids);
+
       const data = await db
         .delete(transactions)
         .where(inArray(transactions.id, ids))
@@ -298,6 +319,8 @@ const app = new Hono()
         return c.json({ error: TRANSFER_LEG_ERROR }, 400);
       }
 
+      await assertNoTradeBacked(auth.userId, [id]);
+
       const transactionsToUpdate = db.$with("transactions_to_update").as(
         db
           .select({ id: transactions.id })
@@ -351,6 +374,8 @@ const app = new Hono()
       if (ids.length === 0) {
         return c.json({ error: "Not found" }, 404);
       }
+
+      await assertNoTradeBacked(auth.userId, ids);
 
       await db.delete(transactions).where(inArray(transactions.id, ids));
 

@@ -3,7 +3,18 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { subDays, parse, differenceInDays } from "date-fns";
-import { and, desc, eq, gte, isNull, lt, lte, sql, sum } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  isNull,
+  lt,
+  lte,
+  notExists,
+  sql,
+  sum,
+} from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import {
@@ -12,12 +23,19 @@ import {
   TOP_CATEGORY_COUNT,
 } from "@/lib/constants";
 import { materializeRecurringTransactions } from "@/lib/recurring";
-import { accounts, categories, transactions } from "@/db/schema";
+import { accounts, categories, trades, transactions } from "@/db/schema";
 import { calculatePercentageChange, fillMissingDays } from "@/lib/utils";
 
 const EMPTY_PERIOD = { income: 0, expenses: 0, remaining: 0 };
 
 const NOT_A_TRANSFER = isNull(transactions.transferId);
+
+const NOT_A_TRADE = notExists(
+  db
+    .select({ one: sql`1` })
+    .from(trades)
+    .where(eq(trades.transactionId, transactions.id))
+);
 
 const app = new Hono().get(
   "/",
@@ -78,6 +96,8 @@ const app = new Hono().get(
             accountId ? eq(transactions.accountId, accountId) : undefined,
             eq(accounts.userId, userId),
             NOT_A_TRANSFER,
+            NOT_A_TRADE,
+            NOT_A_TRADE,
             gte(transactions.date, startDate),
             lte(transactions.date, endDate)
           )
@@ -124,6 +144,7 @@ const app = new Hono().get(
           accountId ? eq(transactions.accountId, accountId) : undefined,
           eq(accounts.userId, auth.userId),
           NOT_A_TRANSFER,
+          NOT_A_TRADE,
           lt(transactions.amount, 0),
           gte(transactions.date, startDate),
           lte(transactions.date, endDate)
@@ -166,6 +187,7 @@ const app = new Hono().get(
           accountId ? eq(transactions.accountId, accountId) : undefined,
           eq(accounts.userId, auth.userId),
           NOT_A_TRANSFER,
+          NOT_A_TRADE,
           gte(transactions.date, startDate),
           lte(transactions.date, endDate)
         )

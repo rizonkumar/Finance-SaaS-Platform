@@ -15,15 +15,19 @@ const utc = (iso: string) => new Date(`${iso}T12:00:00.000Z`);
 const days = [utc("2026-03-01"), utc("2026-03-02"), utc("2026-03-03")];
 
 describe("isLiabilityAccount", () => {
-  it("treats credit as borrowed money", () => {
+  it("treats credit and loans as borrowed money", () => {
     expect(isLiabilityAccount("credit")).toBe(true);
+    expect(isLiabilityAccount("loan")).toBe(true);
   });
 
   it("treats every cash-like account as an asset", () => {
-    expect(isLiabilityAccount("checking")).toBe(false);
     expect(isLiabilityAccount("savings")).toBe(false);
     expect(isLiabilityAccount("cash")).toBe(false);
+    expect(isLiabilityAccount("wallet")).toBe(false);
     expect(isLiabilityAccount("investment")).toBe(false);
+    expect(isLiabilityAccount("fixed_deposit")).toBe(false);
+    expect(isLiabilityAccount("ppf")).toBe(false);
+    expect(isLiabilityAccount("epf")).toBe(false);
   });
 });
 
@@ -50,8 +54,12 @@ describe("signOpeningBalance", () => {
     expect(signOpeningBalance("savings", 45_000)).toBe(45_000);
   });
 
+  it("stores a loan as money owed", () => {
+    expect(signOpeningBalance("loan", 250_000)).toBe(-250_000);
+  });
+
   it("allows an overdrawn asset account", () => {
-    expect(signOpeningBalance("checking", -2_000)).toBe(-2_000);
+    expect(signOpeningBalance("savings", -2_000)).toBe(-2_000);
   });
 });
 
@@ -61,7 +69,7 @@ describe("displayOpeningBalance", () => {
   });
 
   it("round-trips an asset account", () => {
-    expect(displayOpeningBalance("checking", -2_000)).toBe(-2_000);
+    expect(displayOpeningBalance("savings", -2_000)).toBe(-2_000);
   });
 });
 

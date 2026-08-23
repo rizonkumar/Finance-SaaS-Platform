@@ -3,8 +3,12 @@
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  Banknote,
+  Building2,
   CreditCard,
+  HandCoins,
   Landmark,
+  Lock,
   PiggyBank,
   Trash,
   TrendingUp,
@@ -24,11 +28,15 @@ import { cn, convertAmountFromMiliunits, formatCurrency } from "@/lib/utils";
 import { Actions } from "./actions";
 
 const TYPE_ICON: Record<AccountType, LucideIcon> = {
-  checking: Landmark,
-  savings: PiggyBank,
-  cash: Wallet,
+  savings: Landmark,
+  cash: Banknote,
+  wallet: Wallet,
   investment: TrendingUp,
+  fixed_deposit: Lock,
+  ppf: PiggyBank,
+  epf: Building2,
   credit: CreditCard,
+  loan: HandCoins,
 };
 
 type Account = {

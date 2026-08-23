@@ -21,7 +21,7 @@ export const accounts = pgTable("accounts", {
   plaidId: text("plaid_id"),
   name: text("name").notNull(),
   userId: text("user_id").notNull(),
-  type: accountTypeEnum("type").notNull().default("checking"),
+  type: accountTypeEnum("type").notNull().default("savings"),
   openingBalance: integer("opening_balance").notNull().default(0),
 });
 

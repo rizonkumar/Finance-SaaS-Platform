@@ -5,7 +5,14 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle";
-import { accounts, debtPayments, debts, transactions } from "@/db/schema";
+import {
+  accounts,
+  debtPayments,
+  debts,
+  holdings,
+  trades,
+  transactions,
+} from "@/db/schema";
 import {
   DAY_PATTERN,
   DEFAULT_PERIOD_DAYS,
@@ -19,12 +26,13 @@ import {
   startOfDayUTC,
   toUtcNoon,
 } from "@/lib/date-utc";
+import { marketValue, signedQuantity } from "@/lib/holdings";
 import {
   buildBalanceSheet,
   buildNetWorthSeries,
   netWorthChange,
   type AccountDelta,
-  type DebtDelta,
+  type DailyDelta,
 } from "@/lib/net-worth";
 import { materializeRecurringTransactions } from "@/lib/recurring";
 
@@ -67,6 +75,19 @@ function listAccounts(userId: string) {
     .from(accounts)
     .where(eq(accounts.userId, userId))
     .orderBy(accounts.name);
+}
+
+function pricedTrades(userId: string) {
+  return db
+    .select({
+      date: trades.date,
+      side: trades.side,
+      quantity: trades.quantity,
+      lastPrice: holdings.lastPrice,
+    })
+    .from(trades)
+    .innerJoin(holdings, eq(trades.holdingId, holdings.id))
+    .where(eq(trades.userId, userId));
 }
 
 function movementBefore(userId: string, start: Date) {
@@ -171,6 +192,7 @@ const app = new Hono<AuthedEnv>()
       borrowed,
       cleared,
       priorDebt,
+      holdingTrades,
     ] = await Promise.all([
       listAccounts(userId),
       movementBefore(userId, start),
@@ -178,6 +200,7 @@ const app = new Hono<AuthedEnv>()
       borrowedWithin(userId, start, end),
       clearedWithin(userId, start, end),
       debtBefore(userId, start),
+      pricedTrades(userId),
     ]);
 
     const priorByAccount = new Map(
@@ -195,7 +218,7 @@ const app = new Hono<AuthedEnv>()
       amount: row.amount,
     }));
 
-    const debtDeltas: DebtDelta[] = [
+    const debtDeltas: DailyDelta[] = [
       ...borrowed.map((row) => ({
         date: new Date(row.date),
         amount: row.amount,
@@ -205,6 +228,26 @@ const app = new Hono<AuthedEnv>()
         amount: -row.amount,
       })),
     ];
+
+    const startingHoldingsValue = holdingTrades
+      .filter((trade) => trade.date < start)
+      .reduce(
+        (total, trade) =>
+          total + marketValue(signedQuantity(trade), trade.lastPrice),
+        0
+      );
+
+    const holdingsDeltas: DailyDelta[] = holdingTrades
+      .filter((trade) => trade.date >= start && trade.date <= end)
+      .map((trade) => ({
+        date: new Date(trade.date),
+        amount: marketValue(signedQuantity(trade), trade.lastPrice),
+      }));
+
+    const closingHoldingsValue = holdingsDeltas.reduce(
+      (total, delta) => total + delta.amount,
+      startingHoldingsValue
+    );
 
     const balanceByAccount = new Map(
       startingBalances.map((account) => [account.id, account.balance])
@@ -235,11 +278,14 @@ const app = new Hono<AuthedEnv>()
       deltas,
       startingDebt: priorDebt,
       debtDeltas,
+      startingHoldingsValue,
+      holdingsDeltas,
     });
 
     return c.json({
       data: {
-        ...buildBalanceSheet(positions, closingDebt),
+        ...buildBalanceSheet(positions, closingDebt, closingHoldingsValue),
+        holdingsValue: closingHoldingsValue,
         change: netWorthChange(series),
         positions,
         days: series,

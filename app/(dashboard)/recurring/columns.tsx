@@ -16,6 +16,7 @@ export type RecurringRow = {
   payee: string;
   amount: number;
   account: string;
+  toAccount: string | null;
   category: string | null;
   frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number;
@@ -106,11 +107,19 @@ export const columns: ColumnDef<typeof tableFeatureSet, RecurringRow>[] = [
   {
     accessorKey: "category",
     header: "Category",
-    cell: ({ row }) => (
-      <span className="copy-13 text-gray-900">
-        {row.original.category ?? "Uncategorised"}
-      </span>
-    ),
+    cell: ({ row }) => {
+      const { toAccount, category } = row.original;
+
+      if (toAccount) {
+        return <Badge variant="info">Transfer to {toAccount}</Badge>;
+      }
+
+      return (
+        <span className="copy-13 text-gray-900">
+          {category ?? "Uncategorised"}
+        </span>
+      );
+    },
   },
   {
     accessorKey: "account",

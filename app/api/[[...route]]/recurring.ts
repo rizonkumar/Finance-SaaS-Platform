@@ -2,6 +2,7 @@ import { clerkMiddleware } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
 import { and, count, eq, inArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -119,14 +120,21 @@ async function loadTemplates(userId: string, templateId?: string) {
 
   if (templateId) filters.push(eq(recurringTransactions.id, templateId));
 
+  const destination = alias(accounts, "destination_account");
+
   const rows = await db
     .select({
       template: recurringTransactions,
       account: accounts.name,
+      toAccount: destination.name,
       category: categories.name,
     })
     .from(recurringTransactions)
     .innerJoin(accounts, eq(recurringTransactions.accountId, accounts.id))
+    .leftJoin(
+      destination,
+      eq(recurringTransactions.toAccountId, destination.id)
+    )
     .leftJoin(categories, eq(recurringTransactions.categoryId, categories.id))
     .where(and(...filters));
 
@@ -148,9 +156,10 @@ async function loadTemplates(userId: string, templateId?: string) {
     counts.map((row) => [row.recurringId, row.generated])
   );
 
-  return rows.map(({ template, account, category }) => ({
+  return rows.map(({ template, account, toAccount, category }) => ({
     ...template,
     account,
+    toAccount,
     category,
     nextOccurrence: nextOccurrence(template),
     generatedCount: generatedById.get(template.id) ?? 0,

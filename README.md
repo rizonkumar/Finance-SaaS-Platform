@@ -104,7 +104,6 @@ erDiagram
     DEBTS ||--o{ DEBT_PAYMENTS : "cleared by"
     ACCOUNTS ||--o{ HOLDINGS : "custodies"
     HOLDINGS ||--o{ TRADES : "built from"
-    TRANSACTIONS ||--o| GOAL_CONTRIBUTIONS : "is the cash movement for"
     TRANSACTIONS ||--o| DEBT_PAYMENTS : "is the cash movement for"
     TRANSACTIONS ||--o| TRADES : "is the cash movement for"
 
@@ -169,7 +168,6 @@ erDiagram
     GOAL_CONTRIBUTIONS {
         text id PK
         text goal_id FK "cascade"
-        text transaction_id FK "cascade"
         integer amount "miliunits, signed"
         timestamp date
     }
@@ -249,13 +247,17 @@ they stay integers, and every projection — payoff date, total interest, the
 snowball and avalanche simulations — is pure maths in `lib/debts.ts`, tested
 without a database.
 
-**`transactions` is the only ledger.** Funding a goal or paying a debt is cash
-leaving an account, so each `goal_contributions` and `debt_payments` row carries a
-`transaction_id` and both are written inside one `db.transaction`; the transaction
-amount is the negation of the entry. Without that link the two tables were parallel
+**`transactions` is the only ledger for money that actually moves.** Paying a debt
+is cash leaving an account, so each `debt_payments` row carries a `transaction_id`
+and both are written inside one `db.transaction`; the transaction amount is the
+negation of the payment. A goal contribution is deliberately *not* a movement — it
+earmarks money you already hold, which is why linking a goal to an account is a
+label and nothing more. Without that link the two tables were parallel
 ledgers, and the arithmetic gave it away: net worth is
 `account balances − (principal − payments)`, so a payment shrank the liability
 without shrinking the cash that covered it, inflating net worth by the full amount.
+Goals never had that bug, because goals are not an asset on the balance sheet —
+giving them a transaction would have made an earmark destroy money instead.
 The foreign key cascades — delete the transaction and the entry goes with it, because
 an entry whose money never moved is worse than no entry. The same rule makes budget
 progress derived rather than stored: `spentByBudget` sums outflow transactions by
@@ -265,7 +267,10 @@ each budget card offers **Add spend** rather than a field to type a number into.
 Holdings keep that single ledger honest. Buying a stock is cash leaving the
 account, so a trade writes its `transactions` row and its `trades` row in one
 `db.transaction` — the account's balance stays *cash*, while cost basis lives in
-the trade ledger. Quantity and weighted-average cost are **derived from trades**,
+the trade ledger. A purchase converts cash into an asset rather than consuming
+it, so summaries and budgets skip trade-backed rows for the same reason they skip
+transfer legs; account balances and the forecast still count them, because the
+cash genuinely moved. Quantity and weighted-average cost are **derived from trades**,
 never stored, the same way budget and goal progress are; `lib/holdings.ts` holds
 that arithmetic and is tested without a database. Net worth adds market value to
 assets, and the trend values each day's quantity at the latest recorded price —

@@ -4,10 +4,9 @@ import { PiggyBank, TrendingDown, TrendingUp } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataCard, DataCardLoading } from "@/components/data-card";
+import { StatGroup } from "@/components/stat-group";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { formatDateRange } from "@/lib/utils";
-
-const GRID = "mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3";
 
 export const DataGrid = () => {
   const { data, isLoading } = useGetSummary();
@@ -20,22 +19,24 @@ export const DataGrid = () => {
 
   if (isLoading) {
     return (
-      <div className={GRID}>
+      <StatGroup className="mb-4">
         <DataCardLoading />
         <DataCardLoading />
         <DataCardLoading />
-      </div>
+      </StatGroup>
     );
   }
 
+  const days = data?.days ?? [];
+
   return (
-    <div className={GRID}>
+    <StatGroup caption={dateRangeLabel} className="mb-4">
       <DataCard
         title="Remaining"
         value={data?.remainingAmount}
         percentageChange={data?.remainingChange}
         icon={PiggyBank}
-        dateRange={dateRangeLabel}
+        trend={days.map((day) => day.income - day.expenses)}
       />
       <DataCard
         title="Income"
@@ -43,7 +44,7 @@ export const DataGrid = () => {
         percentageChange={data?.incomeChange}
         icon={TrendingUp}
         variant="success"
-        dateRange={dateRangeLabel}
+        trend={days.map((day) => day.income)}
       />
       <DataCard
         title="Expenses"
@@ -51,8 +52,8 @@ export const DataGrid = () => {
         percentageChange={data?.expensesChange}
         icon={TrendingDown}
         variant="danger"
-        dateRange={dateRangeLabel}
+        trend={days.map((day) => day.expenses)}
       />
-    </div>
+    </StatGroup>
   );
 };

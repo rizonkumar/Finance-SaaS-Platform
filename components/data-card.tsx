@@ -3,18 +3,13 @@ import type { LucideIcon } from "lucide-react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 import { CountUp } from "@/components/count-up";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Sparkline } from "@/components/sparkline";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn, formatCurrency, formatPercentage } from "@/lib/utils";
 
 export const iconBox = cva(
-  "flex size-9 shrink-0 items-center justify-center rounded-sm",
+  "flex shrink-0 items-center justify-center rounded-sm",
   {
     variants: {
       variant: {
@@ -32,13 +27,22 @@ export const iconBox = cva(
 
 export type IconBoxVariants = VariantProps<typeof iconBox>;
 
+const SPARK_COLOR = {
+  default: "var(--blue-700)",
+  success: "var(--green-700)",
+  danger: "var(--red-700)",
+  warning: "var(--amber-700)",
+} as const;
+
+export const DATA_CARD_HEIGHT = 134;
+
 type Props = IconBoxVariants & {
   icon: LucideIcon;
   title: string;
   value?: number;
-  dateRange: string;
   percentageChange?: number;
   subtitle?: string;
+  trend?: number[];
 };
 
 export const DataCard = ({
@@ -46,27 +50,26 @@ export const DataCard = ({
   title,
   value = 0,
   variant,
-  dateRange,
   percentageChange = 0,
   subtitle,
+  trend,
 }: Props) => {
   const TrendIcon = percentageChange < 0 ? TrendingDown : TrendingUp;
 
   return (
-    <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0 gap-x-4">
-        <div className="min-w-0 space-y-1">
-          <CardTitle className="line-clamp-1">{title}</CardTitle>
-          <CardDescription className="line-clamp-1">
-            {dateRange}
-          </CardDescription>
+    <Card
+      className="flex flex-col justify-between gap-y-3 p-4"
+      style={{ height: DATA_CARD_HEIGHT }}
+    >
+      <div className="flex items-start justify-between gap-x-3">
+        <p className="label-13 line-clamp-1 text-gray-900">{title}</p>
+        <div className={cn(iconBox({ variant }), "size-7")}>
+          <Icon className="size-3.5" />
         </div>
-        <div className={cn(iconBox({ variant }))}>
-          <Icon className="size-4" />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <p className="numeric text-gray-1000 line-clamp-1 text-2xl font-semibold break-all">
+      </div>
+
+      <div className="flex items-end justify-between gap-x-3">
+        <p className="numeric heading-24 text-gray-1000 min-w-0 break-all">
           <CountUp
             preserveValue
             start={0}
@@ -76,45 +79,47 @@ export const DataCard = ({
             formattingFn={formatCurrency}
           />
         </p>
-        {subtitle !== undefined ? (
-          <p className="copy-13 line-clamp-1 text-gray-900">{subtitle}</p>
-        ) : (
-          <p
-            className={cn(
-              "copy-13 line-clamp-1 flex items-center gap-x-1",
-              percentageChange > 0 && "text-green-900",
-              percentageChange < 0 && "text-red-900",
-              percentageChange === 0 && "text-gray-900"
-            )}
-          >
-            {percentageChange !== 0 && (
-              <TrendIcon className="size-3.5 shrink-0" />
-            )}
-            <span className="numeric text-xs">
-              {formatPercentage(percentageChange, { addPrefix: true })}
-            </span>
-            <span className="text-gray-900">from last period</span>
-          </p>
+        {trend && (
+          <Sparkline data={trend} color={SPARK_COLOR[variant ?? "default"]} />
         )}
-      </CardContent>
+      </div>
+
+      {subtitle !== undefined ? (
+        <p className="copy-13 line-clamp-1 text-gray-900">{subtitle}</p>
+      ) : (
+        <p
+          className={cn(
+            "copy-13 line-clamp-1 flex items-center gap-x-1",
+            percentageChange > 0 && "text-green-900",
+            percentageChange < 0 && "text-red-900",
+            percentageChange === 0 && "text-gray-900"
+          )}
+        >
+          {percentageChange !== 0 && (
+            <TrendIcon className="size-3.5 shrink-0" />
+          )}
+          <span className="numeric text-xs">
+            {formatPercentage(percentageChange, { addPrefix: true })}
+          </span>
+          <span className="text-gray-900">from last period</span>
+        </p>
+      )}
     </Card>
   );
 };
 
 export const DataCardLoading = () => {
   return (
-    <Card className="h-[168px]">
-      <CardHeader className="flex-row items-start justify-between space-y-0 gap-x-4">
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-4 w-36" />
-        </div>
-        <Skeleton className="size-9 shrink-0" />
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-4 w-40" />
-      </CardContent>
+    <Card
+      className="flex flex-col justify-between gap-y-3 p-4"
+      style={{ height: DATA_CARD_HEIGHT }}
+    >
+      <div className="flex items-start justify-between gap-x-3">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="size-7 shrink-0" />
+      </div>
+      <Skeleton className="h-7 w-32" />
+      <Skeleton className="h-4 w-40" />
     </Card>
   );
 };

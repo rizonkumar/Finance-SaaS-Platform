@@ -12,7 +12,7 @@ import { GoalsGlanceCard } from "@/features/goals/components/goals-glance-card";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Suspense fallback={<CardGridSkeleton count={3} />}>
         <BalanceSheetGrid />
       </Suspense>
@@ -28,7 +28,7 @@ export default function DashboardPage() {
       <Suspense fallback={<CardGridSkeleton count={2} />}>
         <PositionGrid />
       </Suspense>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Suspense fallback={<CardGridSkeleton count={1} />}>
           <GoalsGlanceCard />
         </Suspense>

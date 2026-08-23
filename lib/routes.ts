@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
   CreditCard,
@@ -10,17 +11,43 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-export const NAV_ROUTES = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/forecast", label: "Forecast", icon: TrendingUp },
-  { href: "/budgets", label: "Budgets", icon: PiggyBank },
-  { href: "/goals", label: "Goals", icon: Target },
-  { href: "/debts", label: "Debts", icon: Landmark },
-  { href: "/recurring", label: "Recurring", icon: Repeat },
-  { href: "/accounts", label: "Accounts", icon: CreditCard },
-  { href: "/categories", label: "Categories", icon: Shapes },
-] as const;
+type NavRoute = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+type NavSection = {
+  label: string | null;
+  items: readonly NavRoute[];
+};
+
+export const NAV_SECTIONS: readonly NavSection[] = [
+  {
+    label: null,
+    items: [
+      { href: "/", label: "Overview", icon: LayoutDashboard },
+      { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+    ],
+  },
+  {
+    label: "Planning",
+    items: [
+      { href: "/forecast", label: "Forecast", icon: TrendingUp },
+      { href: "/budgets", label: "Budgets", icon: PiggyBank },
+      { href: "/goals", label: "Goals", icon: Target },
+      { href: "/debts", label: "Debts", icon: Landmark },
+      { href: "/recurring", label: "Recurring", icon: Repeat },
+    ],
+  },
+  {
+    label: "Setup",
+    items: [
+      { href: "/accounts", label: "Accounts", icon: CreditCard },
+      { href: "/categories", label: "Categories", icon: Shapes },
+    ],
+  },
+];
 
 export const PAGE_TITLES: Record<string, string> = {
   "/": "Overview",

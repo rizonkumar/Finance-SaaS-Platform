@@ -5,12 +5,11 @@ import { useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 
 import { DataCard, DataCardLoading } from "@/components/data-card";
+import { StatGroup } from "@/components/stat-group";
 import { useGetNetWorth } from "@/features/net-worth/api/use-get-net-worth";
 import { DAY_PATTERN, DISPLAY_DATE_FORMAT } from "@/lib/constants";
 import { parseDayUTC } from "@/lib/date-utc";
 import { formatCurrency } from "@/lib/utils";
-
-const GRID = "mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3";
 
 const changeLabel = (change: number) => {
   if (change === 0) return "No change over this period";
@@ -31,11 +30,11 @@ export const BalanceSheetGrid = () => {
 
   if (isLoading) {
     return (
-      <div className={GRID}>
+      <StatGroup className="mb-4">
         <DataCardLoading />
         <DataCardLoading />
         <DataCardLoading />
-      </div>
+      </StatGroup>
     );
   }
 
@@ -51,11 +50,10 @@ export const BalanceSheetGrid = () => {
   const owing = positions.filter((position) => position.balance < 0).length;
 
   return (
-    <div className={GRID}>
+    <StatGroup caption={asOf} className="mb-4">
       <DataCard
         title="Net Worth"
         value={data?.netWorth}
-        dateRange={asOf}
         subtitle={changeLabel(data?.change ?? 0)}
         icon={Scale}
         variant={(data?.netWorth ?? 0) < 0 ? "warning" : "default"}
@@ -63,7 +61,6 @@ export const BalanceSheetGrid = () => {
       <DataCard
         title="Assets"
         value={data?.assets}
-        dateRange={asOf}
         subtitle={`Held across ${countLabel(positions.length, "account")}`}
         icon={Wallet}
         variant="success"
@@ -71,7 +68,6 @@ export const BalanceSheetGrid = () => {
       <DataCard
         title="Liabilities"
         value={data?.liabilities}
-        dateRange={asOf}
         subtitle={
           owing === 0
             ? "Outstanding debts only"
@@ -80,6 +76,6 @@ export const BalanceSheetGrid = () => {
         icon={Landmark}
         variant={(data?.liabilities ?? 0) > 0 ? "danger" : "default"}
       />
-    </div>
+    </StatGroup>
   );
 };

@@ -15,7 +15,7 @@ enforces SonarQube-style rules.
 
 | | |
 |---|---|
-| **Accounts** | Bank accounts, cards and wallets, each with a type and an opening balance, so every account carries a live balance |
+| **Accounts** | Savings, cash, wallets, investments, fixed deposits, PPF, EPF, cards and loans — each with an opening balance, so every account carries a live balance |
 | **Net worth** | Assets, liabilities and net worth as of any date, plus a daily trend built from real balances rather than cash flow |
 | **Categories** | Group spending and see where the money actually goes |
 | **Transactions** | Full CRUD, bulk delete, sorting, filtering, pagination |
@@ -26,6 +26,7 @@ enforces SonarQube-style rules.
 | **Transfers** | Move money between your own accounts as one linked pair of entries, kept out of income, expenses and budgets |
 | **Debt payoff** | Loans and cards with APR and minimum payment, projected payoff date and interest, plus a snowball vs avalanche comparison for any extra payment |
 | **Recurring transactions** | Daily, weekly, monthly or yearly schedules that materialise into real transactions — no cron, no queue, no extra infrastructure |
+| **Command palette** | `⌘K` from anywhere to jump between routes, open any create sheet or switch theme |
 | **Theming** | Light, dark and system, on a fully tokenised design system |
 
 ---
@@ -42,7 +43,8 @@ enforces SonarQube-style rules.
 | Tables | **TanStack Table v9** | Opt-in feature set, so only the row models used get bundled |
 | Charts | **Recharts 3** | Every colour bound to a CSS variable, so charts theme with the app |
 | Styling | **Tailwind v4** + shadcn/ui | CSS-first config; all design tokens live in `app/globals.css` |
-| Validation | **Zod 4** | Shared between the API validators and the react-hook-form resolvers |
+| Validation | **Zod 4** | Shared between the API validators and the react-hook-form resolvers, behind a global error map so no internal message reaches a user |
+| Command palette | **cmdk** | Dialog-free: anchored to the topbar search field rather than floating mid-screen |
 | Testing | **Vitest** | Pure logic (recurrence maths, budget periods, CSV mapping) covered without a database |
 
 ---
@@ -99,13 +101,15 @@ erDiagram
     GOALS ||--o{ GOAL_CONTRIBUTIONS : "funded by"
     ACCOUNTS ||--o{ DEBTS : "pays from"
     DEBTS ||--o{ DEBT_PAYMENTS : "cleared by"
+    TRANSACTIONS ||--o| GOAL_CONTRIBUTIONS : "is the cash movement for"
+    TRANSACTIONS ||--o| DEBT_PAYMENTS : "is the cash movement for"
 
     ACCOUNTS {
         text id PK
         text user_id
         text name
         text plaid_id
-        enum type "checking savings cash investment credit"
+        enum type "savings cash wallet investment fixed_deposit ppf epf credit loan"
         integer opening_balance "miliunits, signed"
     }
     CATEGORIES {
@@ -160,6 +164,7 @@ erDiagram
     GOAL_CONTRIBUTIONS {
         text id PK
         text goal_id FK "cascade"
+        text transaction_id FK "cascade"
         integer amount "miliunits, signed"
         timestamp date
     }
@@ -178,6 +183,7 @@ erDiagram
     DEBT_PAYMENTS {
         text id PK
         text debt_id FK "cascade"
+        text transaction_id FK "cascade"
         integer amount "miliunits, + clears, - borrows"
         timestamp date
     }
@@ -193,7 +199,7 @@ zero is an asset, anything below it is a liability, and outstanding debt is adde
 to the liability side. An overdrawn current account is then a real liability and
 an overpaid card is real money owed back to you, with no special cases. The type
 only decides how a row reads and which way the opening balance is signed, so a
-card is entered as the amount owed and stored below zero. The trend walks the
+card or loan is entered as the amount owed and stored below zero. The trend walks the
 window forward one day at a time carrying a running balance per account, so every
 point is a balance sheet rather than a cumulative sum of cash flow — all of it
 pure maths in `lib/net-worth.ts`, tested without a database.
@@ -216,6 +222,19 @@ as a negative amount, anything freshly borrowed). Rates live in basis points so
 they stay integers, and every projection — payoff date, total interest, the
 snowball and avalanche simulations — is pure maths in `lib/debts.ts`, tested
 without a database.
+
+**`transactions` is the only ledger.** Funding a goal or paying a debt is cash
+leaving an account, so each `goal_contributions` and `debt_payments` row carries a
+`transaction_id` and both are written inside one `db.transaction`; the transaction
+amount is the negation of the entry. Without that link the two tables were parallel
+ledgers, and the arithmetic gave it away: net worth is
+`account balances − (principal − payments)`, so a payment shrank the liability
+without shrinking the cash that covered it, inflating net worth by the full amount.
+The foreign key cascades — delete the transaction and the entry goes with it, because
+an entry whose money never moved is worse than no entry. The same rule makes budget
+progress derived rather than stored: `spentByBudget` sums outflow transactions by
+category, so the only way to move a budget is to record a transaction, which is why
+each budget card offers **Add spend** rather than a field to type a number into.
 
 ### A mutation, end to end
 
@@ -309,7 +328,7 @@ db/                    Drizzle schema and connection
 features/<name>/       api/ (React Query hooks) · hooks/ (zustand sheet state) · components/
 lib/                   Domain logic, constants, query keys, formatting
 drizzle/               Generated SQL migrations
-scripts/               migrate and seed
+scripts/               migrate, seed and reset
 ```
 
 Each feature owns its data hooks, sheet state and forms. Shared behaviour is
@@ -363,6 +382,7 @@ Open <http://localhost:3000>.
 | `bun run db:generate` | Generate a migration from the schema |
 | `bun run db:migrate` | Apply migrations |
 | `bun run db:seed` | Seed sample data |
+| `bun run db:reset` | Show what is in the database. `-- --yes` empties every table; `-- --drop --yes` also drops the tables, enum types and migration journal |
 | `bun run db:studio` | Drizzle Studio |
 
 ---
@@ -378,8 +398,11 @@ check, tests and build on every push.
   `noUnusedLocals`, `noUnusedParameters` and `noImplicitOverride`.
 - **No `any`** anywhere in the codebase, and no `@ts-ignore` / `eslint-disable`
   escape hatches.
-- **No comments.** Names and structure carry the meaning; anything that needed a
-  comment to explain got extracted instead.
+- **Comments are rare and load-bearing.** Names and structure carry the meaning,
+  so anything that needed a comment to explain got extracted instead. The handful
+  that remain exist to stop a future reader "fixing" a deliberate choice — why a
+  bar's width and its `aria-valuenow` disagree, why a Tailwind class map must stay
+  literal, why a date picker refuses to clear itself.
 - **Prettier** with Tailwind class sorting, enforced by a `lint-staged` pre-commit hook.
 - **Vitest** covers the logic where bugs actually live: month-end and leap-year
   recurrence, budget period boundaries, miliunit round-tripping and CSV mapping.

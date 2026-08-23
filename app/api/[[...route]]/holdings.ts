@@ -1,7 +1,7 @@
 import { clerkMiddleware } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -18,6 +18,7 @@ import {
 import {
   exceedsHolding,
   marketValue,
+  netQuantity,
   positionFromTrades,
   returnPercentage,
   tradeValue,
@@ -26,7 +27,12 @@ import {
 } from "@/lib/holdings";
 import { API_ERRORS } from "@/lib/messages";
 
-import { assertAccountOwned, requireId } from "./_helpers";
+import {
+  assertAccountOwned,
+  duplicateNameConflict,
+  isDuplicateNameError,
+  requireId,
+} from "./_helpers";
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
 const MAX_HOLDINGS = 200;
@@ -37,9 +43,16 @@ const tradeParam = idParam.extend({ tradeId: z.string().optional() });
 const holdingBody = insertHoldingSchema.omit({
   id: true,
   userId: true,
+  lastPriceAt: true,
   createdAt: true,
   updatedAt: true,
 });
+
+const SYMBOL_INDEX = "holdings_user_account_symbol_idx";
+
+const duplicateSymbol = duplicateNameConflict(
+  "You already track that symbol in this account"
+);
 
 const priceBody = z.object({ lastPrice: z.coerce.number().int().min(0) });
 
@@ -172,18 +185,23 @@ const app = new Hono<AuthedEnv>()
 
     await assertAccountOwned(userId, values.accountId);
 
-    const [data] = await db
-      .insert(holdings)
-      .values({
-        ...values,
-        symbol: values.symbol.toUpperCase(),
-        lastPriceAt: values.lastPrice ? new Date() : null,
-        id: createId(),
-        userId,
-      })
-      .returning();
+    try {
+      const [data] = await db
+        .insert(holdings)
+        .values({
+          ...values,
+          symbol: values.symbol.toUpperCase(),
+          lastPriceAt: values.lastPrice ? new Date() : null,
+          id: createId(),
+          userId,
+        })
+        .returning();
 
-    return c.json({ data });
+      return c.json({ data });
+    } catch (error) {
+      if (isDuplicateNameError(error, SYMBOL_INDEX)) throw duplicateSymbol;
+      throw error;
+    }
   })
   .patch(
     "/:id",
@@ -199,17 +217,25 @@ const app = new Hono<AuthedEnv>()
 
       await assertAccountOwned(userId, values.accountId);
 
-      const [data] = await db
-        .update(holdings)
-        .set({
-          ...values,
-          symbol: values.symbol.toUpperCase(),
-          updatedAt: new Date(),
-        })
-        .where(eq(holdings.id, holding.id))
-        .returning();
+      const repriced = values.lastPrice !== holding.lastPrice;
 
-      return c.json({ data });
+      try {
+        const [data] = await db
+          .update(holdings)
+          .set({
+            ...values,
+            symbol: values.symbol.toUpperCase(),
+            ...(repriced ? { lastPriceAt: new Date() } : {}),
+            updatedAt: new Date(),
+          })
+          .where(eq(holdings.id, holding.id))
+          .returning();
+
+        return c.json({ data });
+      } catch (error) {
+        if (isDuplicateNameError(error, SYMBOL_INDEX)) throw duplicateSymbol;
+        throw error;
+      }
     }
   )
   .patch(
@@ -243,10 +269,31 @@ const app = new Hono<AuthedEnv>()
       requireId(c.req.valid("param").id)
     );
 
-    const [data] = await db
-      .delete(holdings)
-      .where(eq(holdings.id, holding.id))
-      .returning({ id: holdings.id });
+    const data = await db.transaction(async (tx) => {
+      const rows = await tx
+        .select({ transactionId: trades.transactionId })
+        .from(trades)
+        .where(
+          and(eq(trades.userId, userId), eq(trades.holdingId, holding.id))
+        );
+
+      const movementIds = rows
+        .map((row) => row.transactionId)
+        .filter((value): value is string => Boolean(value));
+
+      if (movementIds.length > 0) {
+        await tx
+          .delete(transactions)
+          .where(inArray(transactions.id, movementIds));
+      }
+
+      const [removed] = await tx
+        .delete(holdings)
+        .where(eq(holdings.id, holding.id))
+        .returning({ id: holdings.id });
+
+      return removed ?? null;
+    });
 
     return c.json({ data });
   })
@@ -305,11 +352,15 @@ const app = new Hono<AuthedEnv>()
           })
           .returning();
 
+        const isLatest =
+          !holding.lastPriceAt || values.date >= holding.lastPriceAt;
+
         await tx
           .update(holdings)
           .set({
-            lastPrice: values.price,
-            lastPriceAt: new Date(),
+            ...(isLatest
+              ? { lastPrice: values.price, lastPriceAt: values.date }
+              : {}),
             updatedAt: new Date(),
           })
           .where(eq(holdings.id, holding.id));
@@ -329,6 +380,24 @@ const app = new Hono<AuthedEnv>()
       const holding = await requireHolding(userId, requireId(id));
 
       const data = await db.transaction(async (tx) => {
+        const remaining = await tx
+          .select({ side: trades.side, quantity: trades.quantity })
+          .from(trades)
+          .where(
+            and(
+              eq(trades.userId, userId),
+              eq(trades.holdingId, holding.id),
+              ne(trades.id, requireId(tradeId))
+            )
+          );
+
+        if (netQuantity(remaining) < 0) {
+          throw new HTTPException(400, {
+            message:
+              "Removing that purchase would leave more sold than was ever held. Delete the sale first.",
+          });
+        }
+
         const [removed] = await tx
           .delete(trades)
           .where(

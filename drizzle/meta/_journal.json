@@ -71,6 +71,13 @@
       "when": 1787488576276,
       "tag": "0009_old_radioactive_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787489568830,
+      "tag": "0010_flowery_mephisto",
+      "breakpoints": true
     }
   ]
 }

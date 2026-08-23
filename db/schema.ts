@@ -249,15 +249,11 @@ export const goalContributions = pgTable(
     amount: bigInteger("amount").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
-    transactionId: text("transaction_id").references(() => transactions.id, {
-      onDelete: "cascade",
-    }),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
     index("goal_contributions_goal_id_idx").on(table.goalId),
     index("goal_contributions_user_id_idx").on(table.userId),
-    index("goal_contributions_transaction_id_idx").on(table.transactionId),
   ]
 );
 

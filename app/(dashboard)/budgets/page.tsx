@@ -1,16 +1,21 @@
 "use client";
 
-import { PiggyBank, Plus } from "lucide-react";
+import { Suspense } from "react";
+import { AlertTriangle, PiggyBank, Plus } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { Filters } from "@/components/filters";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useGetBudgets } from "@/features/budgets/api/use-get-budgets";
 import { BudgetCard } from "@/features/budgets/components/budget-card";
 import { useNewBudget } from "@/features/budgets/hooks/use-new-budget";
 import { useOpenBudget } from "@/features/budgets/hooks/use-open-budget";
+import { PAGE_META } from "@/lib/routes";
 
 const BudgetsPage = () => {
   const newBudget = useNewBudget();
@@ -32,18 +37,39 @@ const BudgetsPage = () => {
   }
 
   const budgets = budgetsQuery.data ?? [];
+  const overspent = budgets.filter((budget) => budget.status === "over").length;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-x-2">
-        <p className="copy-14 text-gray-900">
-          {budgets.length} {budgets.length === 1 ? "budget" : "budgets"}
-        </p>
-        <Button size="sm" onClick={newBudget.onOpen}>
-          <Plus className="size-4" />
-          Add Budget
-        </Button>
-      </div>
+      <PageHeader
+        title={PAGE_META["/budgets"].title}
+        description={PAGE_META["/budgets"].description}
+        chips={
+          budgets.length > 0
+            ? [
+                {
+                  label: `${budgets.length} ${budgets.length === 1 ? "budget" : "budgets"}`,
+                  icon: PiggyBank,
+                },
+                {
+                  label: `${overspent} over limit`,
+                  icon: AlertTriangle,
+                },
+              ]
+            : undefined
+        }
+        filters={
+          <Suspense fallback={<Skeleton className="h-7 w-64 rounded-full" />}>
+            <Filters />
+          </Suspense>
+        }
+        actions={
+          <Button size="sm" onClick={newBudget.onOpen}>
+            <Plus className="size-4" />
+            Add Budget
+          </Button>
+        }
+      />
 
       {budgets.length === 0 ? (
         <Card>
@@ -58,7 +84,7 @@ const BudgetsPage = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {budgets.map((budget) => (
             <BudgetCard
               key={budget.id}

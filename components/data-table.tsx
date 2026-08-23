@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Trash } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash } from "lucide-react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -12,6 +12,7 @@ import {
   useTable,
 } from "@tanstack/react-table";
 
+import { SearchInput } from "@/components/search-input";
 import {
   Table,
   TableBody,
@@ -20,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/hooks/use-confirm";
 import { Button } from "@/components/ui/button";
 import { tableFeatureSet } from "@/lib/table-features";
@@ -50,6 +50,10 @@ export function DataTable<TData extends RowData, TValue>({
     []
   );
   const [rowSelection, setRowSelection] = React.useState({});
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   const table = useTable({
     features: tableFeatureSet,
@@ -58,46 +62,50 @@ export function DataTable<TData extends RowData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       rowSelection,
+      pagination,
     },
   });
+
+  const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
   return (
     <div>
       <ConfirmDialog />
-      <div className="flex items-center py-4">
-        <Input
-          placeholder={`Filter ${filterKey}...`}
-          value={(table.getColumn(filterKey)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(filterKey)?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        {table.getFilteredSelectedRowModel().rows.length > 0 && (
-          <Button
-            disabled={disabled}
-            size="sm"
-            variant="outline"
-            className="ml-auto text-xs font-normal"
-            onClick={async () => {
-              const ok = await confirm();
+      <div className="flex flex-col-reverse gap-2 pb-4 sm:flex-row sm:items-center sm:justify-end">
+        <div className="min-h-9 sm:mr-auto">
+          {selectedCount > 0 && (
+            <Button
+              disabled={disabled}
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                const ok = await confirm();
 
-              if (ok) {
-                onDelete(table.getFilteredSelectedRowModel().rows);
-                table.resetRowSelection();
-              }
-            }}
-          >
-            <Trash className="mr-2 size-4" />
-            Delete ({table.getFilteredSelectedRowModel().rows.length})
-          </Button>
-        )}
+                if (ok) {
+                  onDelete(table.getFilteredSelectedRowModel().rows);
+                  table.resetRowSelection();
+                }
+              }}
+            >
+              <Trash className="size-4" />
+              Delete ({selectedCount})
+            </Button>
+          )}
+        </div>
+        <SearchInput
+          placeholder={`Search ${filterKey}...`}
+          value={(table.getColumn(filterKey)?.getFilterValue() as string) ?? ""}
+          onChange={(value) =>
+            table.getColumn(filterKey)?.setFilterValue(value)
+          }
+        />
       </div>
-      <div className="rounded-md border">
+      <div>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -147,26 +155,32 @@ export function DataTable<TData extends RowData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
+      <div className="flex items-center gap-x-2 pt-4">
+        <p className="copy-13 mr-auto text-gray-900">
+          {selectedCount > 0
+            ? `${selectedCount} of ${table.getFilteredRowModel().rows.length} selected`
+            : `${table.getFilteredRowModel().rows.length} rows`}
+        </p>
+        <p className="copy-13 numeric text-gray-900">
+          Page {pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
+        </p>
         <Button
           variant="outline"
-          size="sm"
+          size="icon-sm"
+          aria-label="Previous page"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          <ChevronLeft className="size-4" />
         </Button>
         <Button
           variant="outline"
-          size="sm"
+          size="icon-sm"
+          aria-label="Next page"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          <ChevronRight className="size-4" />
         </Button>
       </div>
     </div>

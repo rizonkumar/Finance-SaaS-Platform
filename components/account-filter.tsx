@@ -3,6 +3,9 @@
 import qs from "query-string";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
+import { CreditCard } from "lucide-react";
+
+import { FILTER_CHIP } from "@/components/filter-chip";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 
@@ -54,7 +57,8 @@ export const AccountFilter = () => {
       onValueChange={onChange}
       disabled={isLoadingAccounts || isLoadingSummary}
     >
-      <SelectTrigger className="h-8 w-full font-normal lg:w-auto">
+      <SelectTrigger className={FILTER_CHIP}>
+        <CreditCard className="size-3 shrink-0" />
         <SelectValue placeholder="Select account" />
       </SelectTrigger>
       <SelectContent>

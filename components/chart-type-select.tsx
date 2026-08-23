@@ -1,12 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export type ChartTypeOption = {
   value: string;
@@ -22,23 +16,34 @@ type Props = {
 
 export const ChartTypeSelect = ({ value, options, onChange }: Props) => {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger
-        className="h-8 w-auto px-2.5 text-xs"
-        aria-label="Chart type"
-      >
-        <SelectValue placeholder="Chart type" />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map(({ value: optionValue, label, icon: Icon }) => (
-          <SelectItem key={optionValue} value={optionValue}>
-            <span className="flex items-center gap-x-2">
-              <Icon className="size-3.5 text-gray-800" />
-              {label}
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div
+      role="radiogroup"
+      aria-label="Chart type"
+      className="border-alpha-300 bg-alpha-100 inline-flex shrink-0 items-center gap-0.5 rounded-full border p-0.5"
+    >
+      {options.map(({ value: optionValue, label, icon: Icon }) => {
+        const isActive = value === optionValue;
+
+        return (
+          <button
+            key={optionValue}
+            type="button"
+            role="radio"
+            aria-checked={isActive}
+            aria-label={label}
+            title={label}
+            onClick={() => onChange(optionValue)}
+            className={cn(
+              "flex size-7 items-center justify-center rounded-full transition-colors",
+              isActive
+                ? "bg-surface text-gray-1000 shadow-card"
+                : "hover:text-gray-1000 text-gray-700"
+            )}
+          >
+            <Icon className="size-3.5" />
+          </button>
+        );
+      })}
+    </div>
   );
 };

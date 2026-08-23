@@ -30,9 +30,9 @@ const PERIOD_OPTIONS = [
 const formSchema = z
   .object({
     categoryId: z.string().nullable().optional(),
-    amount: z.string().min(1, "Enter an amount"),
-    period: z.enum(["weekly", "monthly", "yearly", "custom"]),
-    startDate: z.date(),
+    amount: z.string("Enter a limit").min(1, "Enter a limit"),
+    period: z.enum(["weekly", "monthly", "yearly", "custom"], "Pick a period"),
+    startDate: z.date("Pick the date this budget starts applying"),
     endDate: z.date().nullable().optional(),
   })
   .superRefine((value, ctx) => {

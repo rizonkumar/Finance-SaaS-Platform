@@ -313,6 +313,7 @@ export const DebtForm = ({
                     value={field.value ?? undefined}
                     onChange={field.onChange}
                     disabled={disabled}
+                    allowClear
                   />
                 </FormControl>
                 <FormMessage />

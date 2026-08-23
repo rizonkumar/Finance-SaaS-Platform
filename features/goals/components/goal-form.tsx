@@ -225,6 +225,7 @@ export const GoalForm = ({
                     value={field.value ?? undefined}
                     onChange={field.onChange}
                     disabled={disabled}
+                    allowClear
                   />
                 </FormControl>
                 <FormMessage />

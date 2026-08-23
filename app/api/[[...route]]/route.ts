@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import { handle } from "hono/vercel";
 
 import { API_ERRORS } from "@/lib/messages";
+import "@/lib/zod-config";
 
 import accounts from "./accounts";
 import budgets from "./budgets";

@@ -1,16 +1,15 @@
 "use client";
 
 import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
-import { Loader2, Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import { CommandPalette } from "@/components/command-palette";
 import { MobileNav } from "@/components/mobile-nav";
-import { useCommandPalette } from "@/hooks/use-command-palette";
 import { pageMeta } from "@/lib/routes";
 
 export const AppTopbar = () => {
   const pathname = usePathname();
-  const palette = useCommandPalette();
 
   const title = pageMeta(pathname)?.title ?? "Fintrack";
 
@@ -22,17 +21,7 @@ export const AppTopbar = () => {
 
       <h1 className="heading-16 text-gray-1000 mr-auto lg:hidden">{title}</h1>
 
-      <button
-        type="button"
-        onClick={palette.onOpen}
-        className="border-input bg-surface hover:border-alpha-500 label-14 hidden h-9 w-full max-w-md items-center gap-x-2.5 rounded-sm border px-3 text-gray-700 transition-colors lg:flex"
-      >
-        <Search className="size-4 shrink-0" />
-        <span className="mr-auto">Search or jump to...</span>
-        <kbd className="border-alpha-300 bg-alpha-100 rounded-sm border px-1.5 py-0.5 text-xs">
-          ⌘K
-        </kbd>
-      </button>
+      <CommandPalette />
 
       <div className="lg:hidden">
         <ClerkLoaded>

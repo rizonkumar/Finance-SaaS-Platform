@@ -3,17 +3,21 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Monitor, Moon, Plus, Sun } from "lucide-react";
+import { Monitor, Moon, Plus, Search, Sun } from "lucide-react";
 
 import {
-  CommandDialog,
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-  CommandShortcut,
 } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
 import { useNewBudget } from "@/features/budgets/hooks/use-new-budget";
 import { useNewCategory } from "@/features/categories/hooks/use-new-category";
@@ -61,7 +65,7 @@ export const CommandPalette = () => {
   // Sheets are mounted globally by SheetProvider, so every create action works
   // regardless of which route the palette was opened from.
   const CREATE_ACTIONS = [
-    { label: "New transaction", run: newTransaction.onOpen },
+    { label: "New transaction", run: () => newTransaction.onOpen() },
     { label: "New transfer", run: newTransfer.onOpen },
     { label: "New budget", run: newBudget.onOpen },
     { label: "New goal", run: newGoal.onOpen },
@@ -77,49 +81,79 @@ export const CommandPalette = () => {
   };
 
   return (
-    <CommandDialog open={isOpen} onOpenChange={onClose} label="Command palette">
-      <CommandInput placeholder="Jump to a page, or create something..." />
-      <CommandList>
-        <CommandEmpty>No matches.</CommandEmpty>
+    <Popover
+      open={isOpen}
+      onOpenChange={(open) => (open ? onOpen() : onClose())}
+    >
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="border-input bg-surface hover:border-alpha-500 label-14 hidden h-9 w-full max-w-md items-center gap-x-2.5 rounded-sm border px-3 text-gray-700 transition-colors lg:flex"
+        >
+          <Search className="size-4 shrink-0" />
+          <span className="mr-auto">Search or jump to...</span>
+          <kbd className="border-alpha-300 bg-alpha-100 rounded-sm border px-1.5 py-0.5 text-xs">
+            ⌘K
+          </kbd>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        className="p-0"
+        style={{ width: "var(--radix-popover-trigger-width)" }}
+      >
+        <Command loop>
+          <CommandInput
+            autoFocus
+            placeholder="Jump to a page, or create something..."
+          />
+          <CommandList>
+            <CommandEmpty>No matches.</CommandEmpty>
 
-        <CommandGroup heading="Go to">
-          {NAV_SECTIONS.flatMap((section) => section.items).map(
-            ({ href, label, icon: Icon }) => (
-              <CommandItem
-                key={href}
-                value={`go ${label}`}
-                onSelect={() => select(() => router.push(href))}
-              >
-                <Icon />
-                {label}
-              </CommandItem>
-            )
-          )}
-        </CommandGroup>
+            <CommandGroup heading="Go to">
+              {NAV_SECTIONS.flatMap((section) => section.items).map(
+                ({ href, label, icon: Icon }) => (
+                  <CommandItem
+                    key={href}
+                    value={`go ${label}`}
+                    onSelect={() => select(() => router.push(href))}
+                  >
+                    <Icon />
+                    {label}
+                  </CommandItem>
+                )
+              )}
+            </CommandGroup>
 
-        <CommandGroup heading="Create">
-          {CREATE_ACTIONS.map(({ label, run }) => (
-            <CommandItem key={label} value={label} onSelect={() => select(run)}>
-              <Plus />
-              {label}
-            </CommandItem>
-          ))}
-        </CommandGroup>
+            <CommandGroup heading="Create">
+              {CREATE_ACTIONS.map(({ label, run }) => (
+                <CommandItem
+                  key={label}
+                  value={label}
+                  onSelect={() => select(run)}
+                >
+                  <Plus />
+                  {label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
 
-        <CommandGroup heading="Theme">
-          {THEMES.map(({ value, label, icon: Icon }) => (
-            <CommandItem
-              key={value}
-              value={`theme ${label}`}
-              onSelect={() => select(() => setTheme(value))}
-            >
-              <Icon />
-              {label}
-              <CommandShortcut>theme</CommandShortcut>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </CommandDialog>
+            <CommandGroup heading="Theme">
+              {THEMES.map(({ value, label, icon: Icon }) => (
+                <CommandItem
+                  key={value}
+                  value={`theme ${label}`}
+                  onSelect={() => select(() => setTheme(value))}
+                >
+                  <Icon />
+                  {label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };

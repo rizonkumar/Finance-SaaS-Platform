@@ -75,6 +75,9 @@ export const unrealisedGain = (position: HoldingPosition, lastPrice: number) =>
 export const returnPercentage = (gain: number, costBasis: number) =>
   costBasis > 0 ? (gain / costBasis) * 100 : 0;
 
+export const netQuantity = (trades: Pick<Trade, "side" | "quantity">[]) =>
+  trades.reduce((total, trade) => total + signedQuantity(trade), 0);
+
 export const exceedsHolding = (position: HoldingPosition, quantity: number) =>
   quantity > position.quantity;
 

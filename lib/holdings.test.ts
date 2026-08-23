@@ -5,6 +5,7 @@ import {
   exceedsHolding,
   isPriceStale,
   marketValue,
+  netQuantity,
   positionFromTrades,
   returnPercentage,
   signedQuantity,
@@ -153,6 +154,16 @@ describe("returnPercentage", () => {
 
   it("is zero when nothing was invested", () => {
     expect(returnPercentage(rupees(500), 0)).toBe(0);
+  });
+});
+
+describe("netQuantity", () => {
+  it("nets buys against sells", () => {
+    expect(netQuantity([buy(10, 300), sell(4, 320)])).toBe(units(6));
+  });
+
+  it("goes negative when sells outweigh buys, so a bad delete is detectable", () => {
+    expect(netQuantity([sell(4, 320)])).toBe(units(-4));
   });
 });
 

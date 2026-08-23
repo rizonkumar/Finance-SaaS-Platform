@@ -3,7 +3,7 @@ import { Trash } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
-import { AmountInput } from "@/components/amount-input";
+import { MoneyInput } from "@/components/money-input";
 import { DatePicker } from "@/components/date-picker";
 import { Select } from "@/components/select";
 import { Button } from "@/components/ui/button";
@@ -153,12 +153,17 @@ export const BudgetForm = ({
             <FormItem>
               <FormLabel>Limit</FormLabel>
               <FormControl>
-                <AmountInput
-                  {...field}
+                <MoneyInput
+                  value={field.value}
+                  onChange={field.onChange}
                   disabled={disabled}
                   placeholder="0.00"
                 />
               </FormControl>
+              <FormDescription>
+                The most you want to spend in this period. Spending is counted
+                across every account.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -168,7 +173,7 @@ export const BudgetForm = ({
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Starts</FormLabel>
+              <FormLabel>Active from</FormLabel>
               <FormControl>
                 <DatePicker
                   value={field.value ?? undefined}
@@ -176,6 +181,11 @@ export const BudgetForm = ({
                   disabled={disabled}
                 />
               </FormControl>
+              <FormDescription>
+                {period === "custom"
+                  ? "The budget measures the range you pick here."
+                  : "When the budget starts applying. A monthly budget always measures the whole calendar month, a weekly one the calendar week."}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

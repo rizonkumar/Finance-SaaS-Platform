@@ -1,7 +1,8 @@
 import {
   AlertTriangle,
+  CalendarRange,
   CheckCircle2,
-  MoreHorizontal,
+  Pencil,
   TrendingUp,
 } from "lucide-react";
 
@@ -10,13 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetProgress } from "@/features/budgets/components/budget-progress";
 import type { BudgetStatus } from "@/lib/budgets";
-import { formatCurrency, formatPercentage } from "@/lib/utils";
+import { formatCurrency, formatDateRange, formatPercentage } from "@/lib/utils";
 
 type Props = {
   id: string;
   category: string | null;
   period: string;
   amount: number;
+  periodStart: string;
+  periodEnd: string;
   spent: number;
   remaining: number;
   percentage: number;
@@ -36,6 +39,8 @@ export const BudgetCard = ({
   category,
   period,
   amount,
+  periodStart,
+  periodEnd,
   spent,
   remaining,
   percentage,
@@ -57,6 +62,10 @@ export const BudgetCard = ({
             <Badge variant="muted" className="capitalize">
               {period}
             </Badge>
+            <Badge variant="muted">
+              <CalendarRange className="size-3" />
+              {formatDateRange({ from: periodStart, to: periodEnd })}
+            </Badge>
             <Badge variant={meta.variant}>
               <StatusIcon className="size-3" />
               {meta.label}
@@ -70,7 +79,7 @@ export const BudgetCard = ({
           aria-label="Edit budget"
           onClick={() => onEdit(id)}
         >
-          <MoreHorizontal className="size-4" />
+          <Pencil className="size-4" />
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">

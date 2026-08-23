@@ -20,12 +20,14 @@ export const AmountInput = ({
   placeholder,
   disabled,
 }: Props) => {
-  const [preferredSign, setPreferredSign] = useState<1 | -1>(1);
+  const [preferredSign, setPreferredSign] = useState<1 | -1>(-1);
 
   const parsedValue = parseFloat(value);
   const hasValue = value !== "" && !isNaN(parsedValue) && parsedValue !== 0;
-  const isCredit = hasValue && parsedValue > 0;
-  const isDebit = hasValue && parsedValue < 0;
+  // Reflect the pending choice while the field is empty, so the toggle never
+  // shows nothing selected when a sign is already in effect.
+  const isCredit = hasValue ? parsedValue > 0 : preferredSign === 1;
+  const isDebit = hasValue ? parsedValue < 0 : preferredSign === -1;
 
   const selectType = (sign: 1 | -1) => {
     setPreferredSign(sign);
@@ -87,10 +89,9 @@ export const AmountInput = ({
         disabled={disabled}
       />
       <p className="copy-13 text-gray-900">
-        {isCredit && "Credit: money coming in, e.g. a salary payment."}
-        {isDebit && "Debit: money going out, e.g. a subscription charge."}
-        {!hasValue &&
-          "Pick Credit for money in (salary, refunds) or Debit for money out (subscriptions, purchases), then enter the amount."}
+        {isDebit
+          ? "Debit: money going out, e.g. a purchase or subscription charge."
+          : "Credit: money coming in, e.g. a salary payment or refund."}
       </p>
     </div>
   );

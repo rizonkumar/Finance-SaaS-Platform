@@ -76,6 +76,9 @@ export const NewTransactionSheet = () => {
           </div>
         ) : (
           <TransactionForm
+            // defaultValues are only read on mount, and SheetProvider keeps
+            // this sheet mounted — so re-key it whenever the seed changes.
+            key={prefill?.categoryId ?? "unseeded"}
             defaultValues={{
               date: new Date(),
               categoryId: prefill?.categoryId,

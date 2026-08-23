@@ -1,13 +1,8 @@
-import { create } from "zustand";
+import { createPrefillSheetStore } from "@/features/create-sheet-store";
 
-type NewTransactionState = {
-  isOpen: boolean;
-  onOpen: () => void;
-  onClose: () => void;
+export type NewTransactionPrefill = {
+  categoryId?: string | null;
 };
 
-export const useNewTransaction = create<NewTransactionState>((set) => ({
-  isOpen: false,
-  onOpen: () => set({ isOpen: true }),
-  onClose: () => set({ isOpen: false }),
-}));
+export const useNewTransaction =
+  createPrefillSheetStore<NewTransactionPrefill>();

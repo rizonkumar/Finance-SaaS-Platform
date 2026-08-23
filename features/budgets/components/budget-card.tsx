@@ -1,8 +1,11 @@
+"use client";
+
 import {
   AlertTriangle,
   CalendarRange,
   CheckCircle2,
   Pencil,
+  Plus,
   TrendingUp,
 } from "lucide-react";
 
@@ -10,11 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BudgetProgress } from "@/features/budgets/components/budget-progress";
+import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
 import type { BudgetStatus } from "@/lib/budgets";
 import { formatCurrency, formatDateRange, formatPercentage } from "@/lib/utils";
 
 type Props = {
   id: string;
+  categoryId: string | null;
   category: string | null;
   period: string;
   amount: number;
@@ -36,6 +41,7 @@ const STATUS_META = {
 
 export const BudgetCard = ({
   id,
+  categoryId,
   category,
   period,
   amount,
@@ -50,6 +56,7 @@ export const BudgetCard = ({
 }: Props) => {
   const meta = STATUS_META[status];
   const StatusIcon = meta.icon;
+  const newTransaction = useNewTransaction();
 
   return (
     <Card>
@@ -73,14 +80,24 @@ export const BudgetCard = ({
             {!isActiveNow && <Badge variant="outline">Inactive</Badge>}
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Edit budget"
-          onClick={() => onEdit(id)}
-        >
-          <Pencil className="size-4" />
-        </Button>
+        <div className="flex shrink-0 items-center gap-x-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => newTransaction.onOpen({ categoryId })}
+          >
+            <Plus className="size-4" />
+            Add spend
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Edit budget"
+            onClick={() => onEdit(id)}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <BudgetProgress percentage={percentage} status={status} />

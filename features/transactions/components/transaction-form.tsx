@@ -38,7 +38,7 @@ export type TransactionApiValues = z.input<typeof _apiSchema>;
 
 type Props = {
   id?: string;
-  defaultValues?: FormValues;
+  defaultValues?: Partial<FormValues>;
   onSubmit: (values: TransactionApiValues) => void;
   onDelete?: () => void;
   disabled?: boolean;

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sheet";
 
 export const NewTransactionSheet = () => {
-  const { isOpen, onClose } = useNewTransaction();
+  const { isOpen, onClose, prefill } = useNewTransaction();
 
   const createMutation = useCreateTransaction();
 
@@ -76,6 +76,10 @@ export const NewTransactionSheet = () => {
           </div>
         ) : (
           <TransactionForm
+            defaultValues={{
+              date: new Date(),
+              categoryId: prefill?.categoryId,
+            }}
             onSubmit={onSubmit}
             disabled={isPending}
             categoryOptions={categoryOptions}

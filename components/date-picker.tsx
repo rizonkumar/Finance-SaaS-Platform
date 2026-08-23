@@ -15,11 +15,6 @@ type Props = {
   value?: Date;
   onChange?: OnSelectHandler<Date | undefined>;
   disabled?: boolean;
-  /**
-   * react-day-picker deselects when you click the already-selected day, which
-   * silently empties a required field. Opt in only where an empty date is a
-   * meaningful value, e.g. an optional end date.
-   */
   allowClear?: boolean;
 };
 

@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Registers friendly Zod messages for every client-side form.
 import "@/lib/zod-config";
 
 function makeQueryClient() {

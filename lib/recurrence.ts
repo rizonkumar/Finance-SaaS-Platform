@@ -5,12 +5,18 @@ import {
   dateKeyUTC,
   toUtcNoon,
 } from "@/lib/date-utc";
+import { buildTransferLegs } from "@/lib/transfers";
 
 export const MAX_OCCURRENCES_PER_TEMPLATE = 60;
 export const MAX_INSERTS_PER_RUN = 300;
 export const MAX_BACKFILL_AT_CREATE = 500;
 
 export type RecurringTemplate = typeof recurringTransactions.$inferSelect;
+
+export type PlannableTemplate = RecurringTemplate & {
+  accountName: string;
+  toAccountName: string | null;
+};
 
 export type RecurrenceRule = Pick<
   RecurringTemplate,
@@ -115,6 +121,9 @@ export function projectedBackfill(
 export const generatedTransactionId = (recurringId: string, occurrence: Date) =>
   `rt_${recurringId}_${dateKeyUTC(occurrence)}`;
 
+export const generatedTransferId = (recurringId: string, occurrence: Date) =>
+  `rtr_${recurringId}_${dateKeyUTC(occurrence)}`;
+
 type PlannedRow = typeof transactions.$inferInsert;
 
 type TemplatePlan = {
@@ -122,8 +131,48 @@ type TemplatePlan = {
   latest: Date | null;
 };
 
+function occurrenceRows(
+  template: PlannableTemplate,
+  occurrence: Date
+): PlannedRow[] {
+  const occurrenceId = generatedTransactionId(template.id, occurrence);
+
+  if (!template.toAccountId || !template.toAccountName) {
+    return [
+      {
+        id: occurrenceId,
+        amount: template.amount,
+        payee: template.payee,
+        notes: template.notes,
+        date: occurrence,
+        accountId: template.accountId,
+        categoryId: template.categoryId,
+        recurringId: template.id,
+      },
+    ];
+  }
+
+  const [outgoing, incoming] = buildTransferLegs({
+    amount: template.amount,
+    date: occurrence,
+    notes: template.notes,
+    source: { id: template.accountId, name: template.accountName },
+    destination: { id: template.toAccountId, name: template.toAccountName },
+  });
+
+  const shared = {
+    recurringId: template.id,
+    transferId: generatedTransferId(template.id, occurrence),
+  };
+
+  return [
+    { ...outgoing, ...shared, id: `${occurrenceId}_out` },
+    { ...incoming, ...shared, id: `${occurrenceId}_in` },
+  ];
+}
+
 function planTemplate(
-  template: RecurringTemplate,
+  template: PlannableTemplate,
   today: Date,
   budget: number
 ): TemplatePlan {
@@ -133,28 +182,23 @@ function planTemplate(
     ? toUtcNoon(template.lastGeneratedAt)
     : null;
 
-  const limit = Math.min(budget, MAX_OCCURRENCES_PER_TEMPLATE);
   const rows: PlannedRow[] = [];
   let index = seekIndex(template, watermark);
+  let occurrences = 0;
   let latest: Date | null = null;
 
-  while (rows.length < limit) {
+  while (occurrences < MAX_OCCURRENCES_PER_TEMPLATE) {
     const occurrence = occurrenceAt(template, index);
 
     if (occurrence > horizon) break;
 
-    rows.push({
-      id: generatedTransactionId(template.id, occurrence),
-      amount: template.amount,
-      payee: template.payee,
-      notes: template.notes,
-      date: occurrence,
-      accountId: template.accountId,
-      categoryId: template.categoryId,
-      recurringId: template.id,
-    });
+    const planned = occurrenceRows(template, occurrence);
 
+    if (rows.length + planned.length > budget) break;
+
+    rows.push(...planned);
     latest = occurrence;
+    occurrences++;
     index++;
   }
 
@@ -162,7 +206,7 @@ function planTemplate(
 }
 
 export function planOccurrences(
-  templates: RecurringTemplate[],
+  templates: PlannableTemplate[],
   today: Date
 ): { rows: PlannedRow[]; watermarks: { id: string; date: Date }[] } {
   const rows: PlannedRow[] = [];

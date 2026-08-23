@@ -22,6 +22,11 @@ export const useDeleteRecurring = (id?: string) => {
         query: { deleteTransactions: String(deleteTransactions) },
       });
 
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        throw new Error(body.error ?? messages.deleteError);
+      }
+
       return await response.json();
     },
     onSuccess: () => {

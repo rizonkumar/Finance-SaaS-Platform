@@ -2,6 +2,7 @@ import { clerkMiddleware } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
 import { and, count, eq, inArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -36,9 +37,33 @@ const recurringBody = insertRecurringTransactionSchema
     createdAt: true,
     updatedAt: true,
   })
-  .extend({ skipMissed: z.boolean().optional() });
+  .extend({ skipMissed: z.boolean().optional() })
+  .superRefine((value, ctx) => {
+    if (value.toAccountId && value.toAccountId === value.accountId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["toAccountId"],
+        message: "Pick a different account to transfer into",
+      });
+    }
+  });
 
-const SCHEDULE_FIELDS = ["startDate", "frequency", "interval"] as const;
+const SCHEDULE_FIELDS = [
+  "startDate",
+  "frequency",
+  "interval",
+  "accountId",
+  "toAccountId",
+] as const;
+
+type RecurringBody = z.infer<typeof recurringBody>;
+
+const toRow = (values: Omit<RecurringBody, "skipMissed">) => ({
+  ...values,
+  endDate: values.endDate ?? null,
+  toAccountId: values.toAccountId ?? null,
+  categoryId: values.toAccountId ? null : (values.categoryId ?? null),
+});
 
 const requireId = (id?: string) => {
   if (!id) throw new HTTPException(400, { message: API_ERRORS.missingId });
@@ -53,18 +78,31 @@ async function safeMaterialize(userId: string) {
   }
 }
 
-async function assertOwnedRefs(
-  userId: string,
-  accountId: string,
-  categoryId?: string | null
-) {
-  const [account] = await db
+type OwnedRefs = {
+  accountId: string;
+  toAccountId?: string | null;
+  categoryId?: string | null;
+};
+
+async function assertOwnedRefs(userId: string, refs: OwnedRefs) {
+  const { categoryId } = refs;
+  const accountIds = [
+    ...new Set(
+      [refs.accountId, refs.toAccountId].filter((id): id is string =>
+        Boolean(id)
+      )
+    ),
+  ];
+
+  const owned = await db
     .select({ id: accounts.id })
     .from(accounts)
-    .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)));
+    .where(and(eq(accounts.userId, userId), inArray(accounts.id, accountIds)));
 
-  if (!account) {
-    throw new HTTPException(400, { message: "Unknown account" });
+  if (owned.length !== accountIds.length) {
+    throw new HTTPException(400, {
+      message: "That account could not be found",
+    });
   }
 
   if (!categoryId) return;
@@ -75,7 +113,9 @@ async function assertOwnedRefs(
     .where(and(eq(categories.userId, userId), eq(categories.id, categoryId)));
 
   if (!category) {
-    throw new HTTPException(400, { message: "Unknown category" });
+    throw new HTTPException(400, {
+      message: "That category could not be found",
+    });
   }
 }
 
@@ -84,14 +124,21 @@ async function loadTemplates(userId: string, templateId?: string) {
 
   if (templateId) filters.push(eq(recurringTransactions.id, templateId));
 
+  const destination = alias(accounts, "destination_account");
+
   const rows = await db
     .select({
       template: recurringTransactions,
       account: accounts.name,
+      toAccount: destination.name,
       category: categories.name,
     })
     .from(recurringTransactions)
     .innerJoin(accounts, eq(recurringTransactions.accountId, accounts.id))
+    .leftJoin(
+      destination,
+      eq(recurringTransactions.toAccountId, destination.id)
+    )
     .leftJoin(categories, eq(recurringTransactions.categoryId, categories.id))
     .where(and(...filters));
 
@@ -113,9 +160,10 @@ async function loadTemplates(userId: string, templateId?: string) {
     counts.map((row) => [row.recurringId, row.generated])
   );
 
-  return rows.map(({ template, account, category }) => ({
+  return rows.map(({ template, account, toAccount, category }) => ({
     ...template,
     account,
+    toAccount,
     category,
     nextOccurrence: nextOccurrence(template),
     generatedCount: generatedById.get(template.id) ?? 0,
@@ -143,21 +191,22 @@ const app = new Hono<AuthedEnv>()
     const userId = c.get("userId");
     const { skipMissed, ...values } = c.req.valid("json");
 
-    await assertOwnedRefs(userId, values.accountId, values.categoryId);
+    await assertOwnedRefs(userId, values);
 
     const projected = projectedBackfill(values, values.endDate ?? null);
 
     if (projected > MAX_BACKFILL_AT_CREATE) {
+      const rows = values.toAccountId ? projected * 2 : projected;
+
       throw new HTTPException(400, {
-        message: `That schedule would create ${projected} past transactions. Move the start date closer or widen the interval.`,
+        message: `That schedule would create ${rows} past transactions. Move the start date closer or widen the interval.`,
       });
     }
 
     const [data] = await db
       .insert(recurringTransactions)
       .values({
-        ...values,
-        endDate: values.endDate ?? null,
+        ...toRow(values),
         id: createId(),
         userId,
         lastGeneratedAt: skipMissed ? new Date() : null,
@@ -197,7 +246,7 @@ const app = new Hono<AuthedEnv>()
       const userId = c.get("userId");
       const { skipMissed, ...values } = c.req.valid("json");
 
-      await assertOwnedRefs(userId, values.accountId, values.categoryId);
+      await assertOwnedRefs(userId, values);
 
       const [existing] = await db
         .select()
@@ -213,19 +262,20 @@ const app = new Hono<AuthedEnv>()
         throw new HTTPException(404, { message: API_ERRORS.notFound });
       }
 
-      const scheduleChanged = SCHEDULE_FIELDS.some((field) =>
-        field === "startDate"
-          ? existing.startDate.getTime() !== values.startDate.getTime()
-          : existing[field] !== values[field]
-      );
+      const scheduleChanged = SCHEDULE_FIELDS.some((field) => {
+        if (field === "startDate") {
+          return existing.startDate.getTime() !== values.startDate.getTime();
+        }
+
+        return (existing[field] ?? null) !== (values[field] ?? null);
+      });
 
       const purgedTransactions = scheduleChanged ? await purgeGenerated(id) : 0;
 
       const [data] = await db
         .update(recurringTransactions)
         .set({
-          ...values,
-          endDate: values.endDate ?? null,
+          ...toRow(values),
           updatedAt: new Date(),
           ...(skipMissed ? { lastGeneratedAt: new Date() } : {}),
           ...(scheduleChanged && !skipMissed ? { lastGeneratedAt: null } : {}),

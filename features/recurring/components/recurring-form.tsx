@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { AmountInput } from "@/components/amount-input";
+import { MoneyInput } from "@/components/money-input";
 import { DatePicker } from "@/components/date-picker";
 import { Select } from "@/components/select";
 import { Button } from "@/components/ui/button";
@@ -27,20 +28,31 @@ const FREQUENCY_OPTIONS = [
   { label: "Yearly", value: "yearly" },
 ];
 
-const formSchema = z.object({
-  payee: z
-    .string("Enter a name")
-    .min(1, "Enter a name, e.g. Landlord or your employer"),
-  amount: z.string().min(1, "Enter an amount"),
-  accountId: z.string().min(1, "Select an account"),
-  categoryId: z.string().nullable().optional(),
-  frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
-  interval: z.string().min(1, "Enter an interval"),
-  startDate: z.date(),
-  endDate: z.date().nullable().optional(),
-  notes: z.string().nullable().optional(),
-  isActive: z.boolean(),
-});
+const formSchema = z
+  .object({
+    payee: z
+      .string("Enter a name")
+      .min(1, "Enter a name, e.g. Landlord or your employer"),
+    amount: z.string().min(1, "Enter an amount"),
+    accountId: z.string().min(1, "Select an account"),
+    toAccountId: z.string().nullable().optional(),
+    categoryId: z.string().nullable().optional(),
+    frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
+    interval: z.string().min(1, "Enter an interval"),
+    startDate: z.date(),
+    endDate: z.date().nullable().optional(),
+    notes: z.string().nullable().optional(),
+    isActive: z.boolean(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.toAccountId && value.toAccountId === value.accountId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["toAccountId"],
+        message: "Pick a different account to transfer into",
+      });
+    }
+  });
 
 export type RecurringFormValues = z.output<typeof formSchema>;
 
@@ -48,6 +60,7 @@ export type RecurringApiValues = {
   payee: string;
   amount: number;
   accountId: string;
+  toAccountId: string | null;
   categoryId: string | null;
   frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number;
@@ -89,12 +102,20 @@ export const RecurringForm = ({
     defaultValues,
   });
 
+  const toAccountId = useWatch({ control: form.control, name: "toAccountId" });
+  const isTransfer = Boolean(toAccountId);
+
   const handleSubmit = (values: RecurringFormValues) => {
+    const entered = parseFloat(values.amount);
+
     onSubmit({
       payee: values.payee,
-      amount: convertAmountToMiliunits(parseFloat(values.amount)),
+      amount: convertAmountToMiliunits(
+        values.toAccountId ? Math.abs(entered) : entered
+      ),
       accountId: values.accountId,
-      categoryId: values.categoryId ?? null,
+      toAccountId: values.toAccountId ?? null,
+      categoryId: values.toAccountId ? null : (values.categoryId ?? null),
       frequency: values.frequency,
       interval: parseInt(values.interval, 10),
       startDate: values.startDate,
@@ -115,14 +136,23 @@ export const RecurringForm = ({
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Paid to or received from</FormLabel>
+              <FormLabel>
+                {isTransfer ? "Label" : "Paid to or received from"}
+              </FormLabel>
               <FormControl>
                 <Input
                   disabled={disabled}
-                  placeholder="e.g. Rent, Netflix"
+                  placeholder={
+                    isTransfer ? "e.g. Groww SIP" : "e.g. Rent, Netflix"
+                  }
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                {isTransfer
+                  ? "How this schedule is listed. Each entry is named after the account it moves to or from."
+                  : "Who the money goes to, or comes from."}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -134,12 +164,26 @@ export const RecurringForm = ({
             <FormItem>
               <FormLabel>Amount</FormLabel>
               <FormControl>
-                <AmountInput
-                  {...field}
-                  disabled={disabled}
-                  placeholder="0.00"
-                />
+                {isTransfer ? (
+                  <MoneyInput
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={disabled}
+                    placeholder="0.00"
+                  />
+                ) : (
+                  <AmountInput
+                    {...field}
+                    disabled={disabled}
+                    placeholder="0.00"
+                  />
+                )}
               </FormControl>
+              {isTransfer && (
+                <FormDescription>
+                  How much moves across on each run.
+                </FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -165,25 +209,52 @@ export const RecurringForm = ({
           )}
         />
         <FormField
-          name="categoryId"
+          name="toAccountId"
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
+              <FormLabel>Transfer to (optional)</FormLabel>
               <FormControl>
                 <Select
-                  placeholder="Select a category"
-                  options={categoryOptions}
-                  onCreate={onCreateCategory}
+                  placeholder="Not a transfer"
+                  options={accountOptions}
                   value={field.value}
                   onChange={field.onChange}
                   disabled={disabled}
+                  isClearable
                 />
               </FormControl>
+              <FormDescription>
+                Pick a destination to schedule a transfer, such as a monthly
+                SIP. Each run records both sides and is left out of income,
+                expenses and budgets.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+        {!isTransfer && (
+          <FormField
+            name="categoryId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                  <Select
+                    placeholder="Select a category"
+                    options={categoryOptions}
+                    onCreate={onCreateCategory}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={disabled}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           name="frequency"
           control={form.control}

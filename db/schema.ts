@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
 import { relations, sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -14,6 +15,8 @@ import {
 
 import { ACCOUNT_TYPES } from "@/lib/net-worth";
 
+const bigInteger = (name: string) => bigint(name, { mode: "number" });
+
 export const accountTypeEnum = pgEnum("account_type", ACCOUNT_TYPES);
 
 export const accounts = pgTable("accounts", {
@@ -22,7 +25,7 @@ export const accounts = pgTable("accounts", {
   name: text("name").notNull(),
   userId: text("user_id").notNull(),
   type: accountTypeEnum("type").notNull().default("savings"),
-  openingBalance: integer("opening_balance").notNull().default(0),
+  openingBalance: bigInteger("opening_balance").notNull().default(0),
 });
 
 export const accountsRelations = relations(accounts, ({ many }) => ({
@@ -64,12 +67,15 @@ export const recurringTransactions = pgTable(
   {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
-    amount: integer("amount").notNull(),
+    amount: bigInteger("amount").notNull(),
     payee: text("payee").notNull(),
     notes: text("notes"),
     accountId: text("account_id")
       .references(() => accounts.id, { onDelete: "cascade" })
       .notNull(),
+    toAccountId: text("to_account_id").references(() => accounts.id, {
+      onDelete: "cascade",
+    }),
     categoryId: text("category_id").references(() => categories.id, {
       onDelete: "set null",
     }),
@@ -94,7 +100,7 @@ export const transactions = pgTable(
   "transactions",
   {
     id: text("id").primaryKey(),
-    amount: integer("amount").notNull(),
+    amount: bigInteger("amount").notNull(),
     payee: text("payee").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
@@ -179,7 +185,7 @@ export const budgets = pgTable(
     categoryId: text("category_id").references(() => categories.id, {
       onDelete: "cascade",
     }),
-    amount: integer("amount").notNull(),
+    amount: bigInteger("amount").notNull(),
     period: budgetPeriodEnum("period").notNull().default("monthly"),
     startDate: timestamp("start_date", { mode: "date" }).notNull(),
     endDate: timestamp("end_date", { mode: "date" }),
@@ -216,7 +222,7 @@ export const goals = pgTable(
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
     name: text("name").notNull(),
-    targetAmount: integer("target_amount").notNull(),
+    targetAmount: bigInteger("target_amount").notNull(),
     accountId: text("account_id").references(() => accounts.id, {
       onDelete: "set null",
     }),
@@ -240,18 +246,14 @@ export const goalContributions = pgTable(
     goalId: text("goal_id")
       .references(() => goals.id, { onDelete: "cascade" })
       .notNull(),
-    amount: integer("amount").notNull(),
+    amount: bigInteger("amount").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
-    transactionId: text("transaction_id").references(() => transactions.id, {
-      onDelete: "cascade",
-    }),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
     index("goal_contributions_goal_id_idx").on(table.goalId),
     index("goal_contributions_user_id_idx").on(table.userId),
-    index("goal_contributions_transaction_id_idx").on(table.transactionId),
   ]
 );
 
@@ -301,9 +303,9 @@ export const debts = pgTable(
     userId: text("user_id").notNull(),
     name: text("name").notNull(),
     kind: debtKindEnum("kind").notNull().default("loan"),
-    principal: integer("principal").notNull(),
+    principal: bigInteger("principal").notNull(),
     aprBasisPoints: integer("apr_basis_points").notNull().default(0),
-    minimumPayment: integer("minimum_payment").notNull().default(0),
+    minimumPayment: bigInteger("minimum_payment").notNull().default(0),
     accountId: text("account_id").references(() => accounts.id, {
       onDelete: "set null",
     }),
@@ -327,7 +329,7 @@ export const debtPayments = pgTable(
     debtId: text("debt_id")
       .references(() => debts.id, { onDelete: "cascade" })
       .notNull(),
-    amount: integer("amount").notNull(),
+    amount: bigInteger("amount").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
     transactionId: text("transaction_id").references(() => transactions.id, {
@@ -369,4 +371,90 @@ export const insertDebtSchema = createInsertSchema(debts, {
 export const insertDebtPaymentSchema = createInsertSchema(debtPayments, {
   date: z.coerce.date(),
   amount: z.coerce.number().int(),
+});
+
+export const tradeSideEnum = pgEnum("trade_side", ["buy", "sell"]);
+
+export const holdings = pgTable(
+  "holdings",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    accountId: text("account_id")
+      .references(() => accounts.id, { onDelete: "cascade" })
+      .notNull(),
+    symbol: text("symbol").notNull(),
+    name: text("name").notNull(),
+    lastPrice: bigInteger("last_price").notNull().default(0),
+    lastPriceAt: timestamp("last_price_at", { mode: "date" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("holdings_user_id_idx").on(table.userId),
+    index("holdings_account_id_idx").on(table.accountId),
+    uniqueIndex("holdings_user_account_symbol_idx").on(
+      table.userId,
+      table.accountId,
+      table.symbol
+    ),
+  ]
+);
+
+export const trades = pgTable(
+  "trades",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    holdingId: text("holding_id")
+      .references(() => holdings.id, { onDelete: "cascade" })
+      .notNull(),
+    transactionId: text("transaction_id").references(() => transactions.id, {
+      onDelete: "cascade",
+    }),
+    side: tradeSideEnum("side").notNull(),
+    quantity: bigInteger("quantity").notNull(),
+    price: bigInteger("price").notNull(),
+    fees: bigInteger("fees").notNull().default(0),
+    date: timestamp("date", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("trades_holding_id_idx").on(table.holdingId),
+    index("trades_user_id_idx").on(table.userId),
+    index("trades_transaction_id_idx").on(table.transactionId),
+  ]
+);
+
+export const holdingsRelations = relations(holdings, ({ one, many }) => ({
+  account: one(accounts, {
+    fields: [holdings.accountId],
+    references: [accounts.id],
+  }),
+  trades: many(trades),
+}));
+
+export const tradesRelations = relations(trades, ({ one }) => ({
+  holding: one(holdings, {
+    fields: [trades.holdingId],
+    references: [holdings.id],
+  }),
+  transaction: one(transactions, {
+    fields: [trades.transactionId],
+    references: [transactions.id],
+  }),
+}));
+
+export const insertHoldingSchema = createInsertSchema(holdings, {
+  symbol: z.string().trim().min(1, "Enter a symbol"),
+  name: z.string().trim().min(1, "Enter a name"),
+  lastPrice: z.coerce.number().int().min(0),
+  lastPriceAt: z.coerce.date().nullable().optional(),
+});
+
+export const insertTradeSchema = createInsertSchema(trades, {
+  quantity: z.coerce.number().int().positive(),
+  price: z.coerce.number().int().min(0),
+  fees: z.coerce.number().int().min(0),
+  date: z.coerce.date(),
 });

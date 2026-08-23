@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { parse, subDays } from "date-fns";
 import { createId } from "@paralleldrive/cuid2";
 import { zValidator } from "@hono/zod-validator";
@@ -7,6 +8,7 @@ import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
+import { API_ERRORS } from "@/lib/messages";
 import { DATE_FORMAT, DEFAULT_PERIOD_DAYS } from "@/lib/constants";
 import { materializeRecurringTransactions } from "@/lib/recurring";
 import {
@@ -14,10 +16,28 @@ import {
   insertTransactionSchema,
   categories,
   accounts,
+  trades,
 } from "@/db/schema";
 
 const TRANSFER_LEG_ERROR =
   "This is one leg of a transfer. Edit it from the transfer sheet instead.";
+
+const TRADE_BACKED_ERROR =
+  "This is the cash side of a trade. Change it from the Portfolio page instead.";
+
+async function assertNoTradeBacked(userId: string, ids: string[]) {
+  if (ids.length === 0) return;
+
+  const [backed] = await db
+    .select({ id: trades.id })
+    .from(trades)
+    .where(and(eq(trades.userId, userId), inArray(trades.transactionId, ids)))
+    .limit(1);
+
+  if (backed) {
+    throw new HTTPException(400, { message: TRADE_BACKED_ERROR });
+  }
+}
 
 async function withTransferSiblings(userId: string, ids: string[]) {
   if (ids.length === 0) return [];
@@ -67,7 +87,7 @@ const app = new Hono()
       const { from, to, accountId } = c.req.valid("query");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       try {
@@ -128,11 +148,11 @@ const app = new Hono()
       const { id } = c.req.valid("param");
 
       if (!id) {
-        return c.json({ error: "Missing id" }, 400);
+        return c.json({ error: API_ERRORS.missingId }, 400);
       }
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const [data] = await db
@@ -151,7 +171,7 @@ const app = new Hono()
         .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)));
 
       if (!data) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
 
       return c.json({ data });
@@ -173,7 +193,7 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const [data] = await db
@@ -205,7 +225,7 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const data = await db
@@ -235,7 +255,7 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const ids = await withTransferSiblings(auth.userId, values.ids);
@@ -243,6 +263,8 @@ const app = new Hono()
       if (ids.length === 0) {
         return c.json({ data: [] });
       }
+
+      await assertNoTradeBacked(auth.userId, ids);
 
       const data = await db
         .delete(transactions)
@@ -277,11 +299,11 @@ const app = new Hono()
       const values = c.req.valid("json");
 
       if (!id) {
-        return c.json({ error: "Missing id" }, 400);
+        return c.json({ error: API_ERRORS.missingId }, 400);
       }
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const [existing] = await db
@@ -291,12 +313,14 @@ const app = new Hono()
         .where(and(eq(transactions.id, id), eq(accounts.userId, auth.userId)));
 
       if (!existing) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
 
       if (existing.transferId) {
         return c.json({ error: TRANSFER_LEG_ERROR }, 400);
       }
+
+      await assertNoTradeBacked(auth.userId, [id]);
 
       const transactionsToUpdate = db.$with("transactions_to_update").as(
         db
@@ -319,7 +343,7 @@ const app = new Hono()
         .returning();
 
       if (!data) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
 
       return c.json({ data });
@@ -339,18 +363,20 @@ const app = new Hono()
       const { id } = c.req.valid("param");
 
       if (!id) {
-        return c.json({ error: "Missing id" }, 400);
+        return c.json({ error: API_ERRORS.missingId }, 400);
       }
 
       if (!auth?.userId) {
-        return c.json({ error: "Unauthorized" }, 401);
+        return c.json({ error: API_ERRORS.unauthorized }, 401);
       }
 
       const ids = await withTransferSiblings(auth.userId, [id]);
 
       if (ids.length === 0) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: API_ERRORS.notFound }, 404);
       }
+
+      await assertNoTradeBacked(auth.userId, ids);
 
       await db.delete(transactions).where(inArray(transactions.id, ids));
 

@@ -11,6 +11,7 @@ import categories from "./categories";
 import debts from "./debts";
 import forecast from "./forecast";
 import goals from "./goals";
+import holdings from "./holdings";
 import netWorth from "./net-worth";
 import recurring from "./recurring";
 import summary from "./summary";
@@ -42,7 +43,8 @@ const _routes = app
   .route("/recurring", recurring)
   .route("/goals", goals)
   .route("/debts", debts)
-  .route("/transfers", transfers);
+  .route("/transfers", transfers)
+  .route("/holdings", holdings);
 
 export const GET = handle(app);
 export const POST = handle(app);

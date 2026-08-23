@@ -2,7 +2,6 @@ import { format } from "date-fns";
 import { Loader2, Trash } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -24,12 +23,6 @@ import { cn, formatCurrency } from "@/lib/utils";
 
 export const ContributeGoalSheet = () => {
   const { isOpen, onClose, id } = useContributeGoal();
-
-  const accountsQuery = useGetAccounts();
-  const accountOptions = (accountsQuery.data ?? []).map((account) => ({
-    label: account.name,
-    value: account.id,
-  }));
 
   const goalQuery = useGetGoal(id);
   const addMutation = useAddContribution(id);
@@ -56,18 +49,13 @@ export const ContributeGoalSheet = () => {
               : "Record money set aside for this goal."}
           </SheetDescription>
         </SheetHeader>
-        {goalQuery.isLoading || accountsQuery.isLoading ? (
+        {goalQuery.isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="size-4 animate-spin text-gray-600" />
           </div>
         ) : (
           <div className="space-y-4">
-            <ContributionForm
-              onSubmit={onSubmit}
-              disabled={isPending}
-              accountOptions={accountOptions}
-              defaultAccountId={goal?.accountId}
-            />
+            <ContributionForm onSubmit={onSubmit} disabled={isPending} />
             <Separator />
             <div className="space-y-2">
               <p className="label-14 text-gray-1000">History</p>

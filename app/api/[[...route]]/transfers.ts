@@ -55,7 +55,9 @@ async function resolveParties(userId: string, values: TransferBody) {
   const destination = byId.get(values.toAccountId);
 
   if (!source || !destination) {
-    throw new HTTPException(400, { message: "Unknown account" });
+    throw new HTTPException(400, {
+      message: "That account could not be found",
+    });
   }
 
   return { source, destination };

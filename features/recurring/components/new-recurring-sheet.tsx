@@ -51,6 +51,7 @@ export const NewRecurringSheet = () => {
               payee: "",
               amount: "",
               accountId: "",
+              toAccountId: null,
               categoryId: null,
               frequency: "monthly",
               interval: "1",

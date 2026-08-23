@@ -25,7 +25,8 @@ enforces SonarQube-style rules.
 | **Savings goals** | A target, a deadline and a contribution ledger, with pace measured against the time elapsed |
 | **Transfers** | Move money between your own accounts as one linked pair of entries, kept out of income, expenses and budgets |
 | **Debt payoff** | Loans and cards with APR and minimum payment, projected payoff date and interest, plus a snowball vs avalanche comparison for any extra payment |
-| **Recurring transactions** | Daily, weekly, monthly or yearly schedules that materialise into real transactions — no cron, no queue, no extra infrastructure |
+| **Recurring transactions** | Daily, weekly, monthly or yearly schedules that materialise into real transactions — no cron, no queue, no extra infrastructure. Give one a destination account and it becomes a scheduled transfer, so a monthly SIP runs itself |
+| **Portfolio** | Stocks and mutual funds per broker account, with weighted-average cost, market value and realised / unrealised P&L from a trade ledger |
 | **Command palette** | `⌘K` from anywhere to jump between routes, open any create sheet or switch theme |
 | **Theming** | Light, dark and system, on a fully tokenised design system |
 
@@ -101,8 +102,10 @@ erDiagram
     GOALS ||--o{ GOAL_CONTRIBUTIONS : "funded by"
     ACCOUNTS ||--o{ DEBTS : "pays from"
     DEBTS ||--o{ DEBT_PAYMENTS : "cleared by"
-    TRANSACTIONS ||--o| GOAL_CONTRIBUTIONS : "is the cash movement for"
+    ACCOUNTS ||--o{ HOLDINGS : "custodies"
+    HOLDINGS ||--o{ TRADES : "built from"
     TRANSACTIONS ||--o| DEBT_PAYMENTS : "is the cash movement for"
+    TRANSACTIONS ||--o| TRADES : "is the cash movement for"
 
     ACCOUNTS {
         text id PK
@@ -145,6 +148,7 @@ erDiagram
         text payee
         text account_id FK "cascade"
         text category_id FK "set null"
+        text to_account_id FK "set = a scheduled transfer"
         enum frequency "daily weekly monthly yearly"
         integer interval
         timestamp start_date "anchor"
@@ -164,7 +168,6 @@ erDiagram
     GOAL_CONTRIBUTIONS {
         text id PK
         text goal_id FK "cascade"
-        text transaction_id FK "cascade"
         integer amount "miliunits, signed"
         timestamp date
     }
@@ -179,6 +182,25 @@ erDiagram
         text account_id FK "set null"
         timestamp start_date
         timestamp target_date
+    }
+    HOLDINGS {
+        text id PK
+        text user_id
+        text account_id FK "cascade"
+        text symbol
+        text name
+        bigint last_price "miliunits per unit"
+        timestamp last_price_at
+    }
+    TRADES {
+        text id PK
+        text holding_id FK "cascade"
+        text transaction_id FK "cascade"
+        enum side "buy sell"
+        bigint quantity "micro-units, fractional funds"
+        bigint price "miliunits per unit"
+        bigint fees "miliunits"
+        timestamp date
     }
     DEBT_PAYMENTS {
         text id PK
@@ -205,7 +227,9 @@ point is a balance sheet rather than a cumulative sum of cash flow — all of it
 pure maths in `lib/net-worth.ts`, tested without a database.
 
 Money is stored as **miliunits** (integer thousandths) so no float ever touches a
-balance. `transactions.recurring_id` is `ON DELETE SET NULL` on purpose: deleting a
+balance, in `bigint` columns — `integer` caps at ₹21,47,483.65, which a single home
+loan clears. Holding quantities use the same trick at **micro-units** (×10⁶) so a
+fractional mutual fund unit stays an integer too. `transactions.recurring_id` is `ON DELETE SET NULL` on purpose: deleting a
 schedule must never erase months of real financial history.
 
 A transfer is not a table. It is a pair of transactions — one negative on the
@@ -223,18 +247,39 @@ they stay integers, and every projection — payoff date, total interest, the
 snowball and avalanche simulations — is pure maths in `lib/debts.ts`, tested
 without a database.
 
-**`transactions` is the only ledger.** Funding a goal or paying a debt is cash
-leaving an account, so each `goal_contributions` and `debt_payments` row carries a
-`transaction_id` and both are written inside one `db.transaction`; the transaction
-amount is the negation of the entry. Without that link the two tables were parallel
+**`transactions` is the only ledger for money that actually moves.** Paying a debt
+is cash leaving an account, so each `debt_payments` row carries a `transaction_id`
+and both are written inside one `db.transaction`; the transaction amount is the
+negation of the payment. A goal contribution is deliberately *not* a movement — it
+earmarks money you already hold, which is why linking a goal to an account is a
+label and nothing more. Without that link the two tables were parallel
 ledgers, and the arithmetic gave it away: net worth is
 `account balances − (principal − payments)`, so a payment shrank the liability
 without shrinking the cash that covered it, inflating net worth by the full amount.
+Goals never had that bug, because goals are not an asset on the balance sheet —
+giving them a transaction would have made an earmark destroy money instead.
 The foreign key cascades — delete the transaction and the entry goes with it, because
 an entry whose money never moved is worse than no entry. The same rule makes budget
 progress derived rather than stored: `spentByBudget` sums outflow transactions by
 category, so the only way to move a budget is to record a transaction, which is why
 each budget card offers **Add spend** rather than a field to type a number into.
+
+Holdings keep that single ledger honest. Buying a stock is cash leaving the
+account, so a trade writes its `transactions` row and its `trades` row in one
+`db.transaction` — the account's balance stays *cash*, while cost basis lives in
+the trade ledger. A purchase converts cash into an asset rather than consuming
+it, so summaries and budgets skip trade-backed rows for the same reason they skip
+transfer legs; account balances and the forecast still count them, because the
+cash genuinely moved. Quantity and weighted-average cost are **derived from trades**,
+never stored, the same way budget and goal progress are; `lib/holdings.ts` holds
+that arithmetic and is tested without a database. Net worth adds market value to
+assets, and the trend values each day's quantity at the latest recorded price —
+"your portfolio at today's prices" — because no price history is stored.
+
+A scheduled transfer reuses the same idempotency trick as any other recurring
+entry. When a template carries a `to_account_id`, each occurrence emits **two**
+rows with deterministic ids (`rt_{id}_{date}_out` / `_in`) sharing a deterministic
+`transferId`, so two tabs loading at once still collapse to one insert.
 
 ### A mutation, end to end
 

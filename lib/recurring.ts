@@ -1,7 +1,17 @@
-import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  getTableColumns,
+  inArray,
+  isNull,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { db } from "@/db/drizzle";
-import { recurringTransactions, transactions } from "@/db/schema";
+import { accounts, recurringTransactions, transactions } from "@/db/schema";
 import { toUtcNoon } from "@/lib/date-utc";
 import { MAX_INSERTS_PER_RUN, planOccurrences } from "@/lib/recurrence";
 
@@ -19,9 +29,20 @@ export async function materializeRecurringTransactions(userId: string) {
 
   const today = toUtcNoon(new Date());
 
+  const destination = alias(accounts, "destination_account");
+
   const templates = await db
-    .select()
+    .select({
+      ...getTableColumns(recurringTransactions),
+      accountName: accounts.name,
+      toAccountName: destination.name,
+    })
     .from(recurringTransactions)
+    .innerJoin(accounts, eq(recurringTransactions.accountId, accounts.id))
+    .leftJoin(
+      destination,
+      eq(recurringTransactions.toAccountId, destination.id)
+    )
     .where(
       and(
         eq(recurringTransactions.userId, userId),
@@ -98,6 +119,7 @@ export async function purgeGenerated(recurringId: string) {
 
 export {
   generatedTransactionId,
+  generatedTransferId,
   nextOccurrence,
   occurrenceAt,
   projectedBackfill,

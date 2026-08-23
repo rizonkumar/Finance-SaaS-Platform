@@ -21,6 +21,9 @@ export const queryKeys = {
   goals: () => ["goals"] as const,
   goal: (id?: string) => ["goal", { id }] as const,
 
+  holdings: () => ["holdings"] as const,
+  holding: (id?: string) => ["holding", { id }] as const,
+
   transfer: (id?: string) => ["transfer", { id }] as const,
 
   debts: () => ["debts"] as const,
@@ -36,6 +39,7 @@ export const MONEY_DEPENDENT_KEYS = [
   queryKeys.accounts(),
   queryKeys.transactions(),
   queryKeys.budgets(),
+  queryKeys.holdings(),
 ];
 
 export const DEBT_DEPENDENT_KEYS = [

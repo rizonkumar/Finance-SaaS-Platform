@@ -30,6 +30,7 @@ const RecurringPage = () => {
     payee: item.payee,
     amount: item.amount,
     account: item.account,
+    toAccount: item.toAccount,
     category: item.category,
     frequency: item.frequency,
     interval: item.interval,

@@ -123,6 +123,28 @@ describe("buildBalanceSheet", () => {
   });
 });
 
+describe("buildBalanceSheet with holdings", () => {
+  it("counts holdings market value as an asset", () => {
+    const sheet = buildBalanceSheet([{ balance: 10_000 }], 0, 3_500);
+
+    expect(sheet).toEqual({
+      assets: 13_500,
+      liabilities: 0,
+      netWorth: 13_500,
+    });
+  });
+
+  it("keeps holdings out of liabilities when debt is also owed", () => {
+    const sheet = buildBalanceSheet([{ balance: 10_000 }], 4_000, 3_500);
+
+    expect(sheet).toEqual({
+      assets: 13_500,
+      liabilities: 4_000,
+      netWorth: 9_500,
+    });
+  });
+});
+
 describe("buildNetWorthSeries", () => {
   it("carries the balance forward through days with no movement", () => {
     const series = buildNetWorthSeries({
@@ -268,5 +290,52 @@ describe("netWorthChange", () => {
 
   it("is zero for an empty series", () => {
     expect(netWorthChange([])).toBe(0);
+  });
+});
+
+describe("buildNetWorthSeries with holdings", () => {
+  const days = [
+    new Date("2026-01-01T00:00:00.000Z"),
+    new Date("2026-01-02T00:00:00.000Z"),
+  ];
+
+  it("carries an opening holdings value across every day", () => {
+    const series = buildNetWorthSeries({
+      days,
+      startingBalances: [{ id: "acc_1", balance: 1_000 }],
+      deltas: [],
+      startingDebt: 0,
+      debtDeltas: [],
+      startingHoldingsValue: 5_000,
+      holdingsDeltas: [],
+    });
+
+    expect(series.map((point) => point.netWorth)).toEqual([6_000, 6_000]);
+  });
+
+  it("applies a holdings delta from the day it happens", () => {
+    const series = buildNetWorthSeries({
+      days,
+      startingBalances: [{ id: "acc_1", balance: 1_000 }],
+      deltas: [],
+      startingDebt: 0,
+      debtDeltas: [],
+      startingHoldingsValue: 0,
+      holdingsDeltas: [{ date: days[1] as Date, amount: 3_500 }],
+    });
+
+    expect(series.map((point) => point.assets)).toEqual([1_000, 4_500]);
+  });
+
+  it("behaves as before when no holdings are supplied", () => {
+    const series = buildNetWorthSeries({
+      days,
+      startingBalances: [{ id: "acc_1", balance: 1_000 }],
+      deltas: [],
+      startingDebt: 0,
+      debtDeltas: [],
+    });
+
+    expect(series.map((point) => point.netWorth)).toEqual([1_000, 1_000]);
   });
 });

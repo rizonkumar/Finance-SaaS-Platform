@@ -11,6 +11,7 @@ type Props = {
   value?: string | null;
   disabled?: boolean;
   placeholder?: string;
+  isClearable?: boolean;
 };
 
 const optionBackground = (state: {
@@ -30,6 +31,7 @@ export const Select = ({
   onCreate,
   options = [],
   placeholder,
+  isClearable,
 }: Props) => {
   const onSelect = (option: SingleValue<{ label: string; value: string }>) => {
     onChange(option?.value);
@@ -85,6 +87,7 @@ export const Select = ({
       options={options}
       onCreateOption={onCreate}
       isDisabled={disabled}
+      isClearable={isClearable}
     />
   );
 };

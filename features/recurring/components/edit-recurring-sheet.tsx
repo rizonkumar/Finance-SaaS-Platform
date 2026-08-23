@@ -80,6 +80,7 @@ export const EditRecurringSheet = () => {
                 payee: data.payee,
                 amount: String(data.amount),
                 accountId: data.accountId,
+                toAccountId: data.toAccountId,
                 categoryId: data.categoryId,
                 frequency: data.frequency,
                 interval: String(data.interval),

@@ -56,7 +56,9 @@ export async function assertAccountOwned(
     .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)));
 
   if (!owned) {
-    throw new HTTPException(400, { message: "Unknown account" });
+    throw new HTTPException(400, {
+      message: "That account could not be found",
+    });
   }
 }
 

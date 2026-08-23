@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
+  LineChart,
   CreditCard,
   Landmark,
   LayoutDashboard,
@@ -34,6 +35,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     label: "Planning",
     items: [
       { href: "/forecast", label: "Forecast", icon: TrendingUp },
+      { href: "/portfolio", label: "Portfolio", icon: LineChart },
       { href: "/budgets", label: "Budgets", icon: PiggyBank },
       { href: "/goals", label: "Goals", icon: Target },
       { href: "/debts", label: "Debts", icon: Landmark },
@@ -63,6 +65,11 @@ export const PAGE_META = {
     title: "Forecast",
     description:
       "Your projected balance, built from scheduled income and expenses.",
+  },
+  "/portfolio": {
+    title: "Portfolio",
+    description:
+      "Stocks and funds you hold, what they cost and what they are worth now.",
   },
   "/budgets": {
     title: "Budgets",

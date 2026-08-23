@@ -8,7 +8,9 @@ type ResourceLabel =
   | "Contribution"
   | "Transfer"
   | "Debt"
-  | "Payment";
+  | "Payment"
+  | "Holding"
+  | "Trade";
 
 export const toastMessages = (resource: ResourceLabel) => ({
   createSuccess: `${resource} created`,
@@ -19,11 +21,13 @@ export const toastMessages = (resource: ResourceLabel) => ({
   deleteError: `Could not delete ${resource.toLowerCase()}`,
   bulkDeleteSuccess: `${resource}s deleted`,
   bulkDeleteError: `Could not delete ${resource.toLowerCase()}s`,
+  bulkCreateSuccess: `${resource}s created`,
+  bulkCreateError: `Could not create ${resource.toLowerCase()}s`,
 });
 
 export const API_ERRORS = {
-  unauthorized: "Unauthorized",
-  missingId: "Missing id",
-  notFound: "Not found",
+  unauthorized: "Your session has expired. Sign in and try again.",
+  missingId: "Something went wrong. Try again.",
+  notFound: "That is no longer there. Refresh the page and try again.",
   internal: "Something went wrong. Try again.",
 } as const;

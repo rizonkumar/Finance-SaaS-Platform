@@ -11,7 +11,9 @@ import {
   debts,
   goalContributions,
   goals,
+  holdings,
   recurringTransactions,
+  trades,
   transactions,
 } from "@/db/schema";
 
@@ -31,8 +33,10 @@ const db = drizzle(client);
 // order means the script does not depend on which FKs happen to be ON DELETE
 // CASCADE today.
 const TABLES = [
+  { name: "trades", table: trades },
   { name: "goal_contributions", table: goalContributions },
   { name: "debt_payments", table: debtPayments },
+  { name: "holdings", table: holdings },
   { name: "transactions", table: transactions },
   { name: "recurring_transactions", table: recurringTransactions },
   { name: "budgets", table: budgets },
@@ -50,6 +54,7 @@ const ENUM_TYPES = [
   "budget_period",
   "debt_kind",
   "recurring_frequency",
+  "trade_side",
 ] as const;
 
 // Never print the full connection string — it carries credentials.

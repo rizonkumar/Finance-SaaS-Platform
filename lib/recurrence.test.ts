@@ -5,12 +5,44 @@ import {
   generatedTransactionId,
   nextOccurrence,
   occurrenceAt,
+  planOccurrences,
   projectedBackfill,
   seekIndex,
+  type PlannableTemplate,
   type RecurringTemplate,
 } from "@/lib/recurrence";
 
 const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+
+const template = (overrides: Partial<RecurringTemplate> = {}) =>
+  ({
+    id: "rec_1",
+    userId: "user_1",
+    amount: -1000,
+    payee: "Rent",
+    notes: null,
+    accountId: "acc_1",
+    toAccountId: null,
+    categoryId: null,
+    frequency: "monthly",
+    interval: 1,
+    startDate: utc("2026-01-01"),
+    endDate: null,
+    lastGeneratedAt: null,
+    isActive: true,
+    createdAt: utc("2026-01-01"),
+    updatedAt: utc("2026-01-01"),
+    ...overrides,
+  }) as RecurringTemplate;
+
+const plannable = (
+  overrides: Partial<PlannableTemplate> = {}
+): PlannableTemplate => ({
+  ...template(),
+  accountName: "IDFC Savings",
+  toAccountName: null,
+  ...overrides,
+});
 
 const rule = (
   startDate: string,
@@ -111,26 +143,6 @@ describe("seekIndex", () => {
 });
 
 describe("nextOccurrence", () => {
-  const template = (overrides: Partial<RecurringTemplate>) =>
-    ({
-      id: "rec_1",
-      userId: "user_1",
-      amount: -1000,
-      payee: "Rent",
-      notes: null,
-      accountId: "acc_1",
-      categoryId: null,
-      frequency: "monthly",
-      interval: 1,
-      startDate: utc("2026-01-01"),
-      endDate: null,
-      lastGeneratedAt: null,
-      isActive: true,
-      createdAt: utc("2026-01-01"),
-      updatedAt: utc("2026-01-01"),
-      ...overrides,
-    }) as RecurringTemplate;
-
   it("returns null when paused", () => {
     expect(
       nextOccurrence(template({ isActive: false }), utc("2026-03-05"))
@@ -185,5 +197,79 @@ describe("generatedTransactionId", () => {
     expect(generatedTransactionId("rec_1", occurrence)).toBe(
       generatedTransactionId("rec_1", occurrence)
     );
+  });
+});
+
+describe("planOccurrences", () => {
+  const sip = (overrides: Partial<PlannableTemplate> = {}) =>
+    plannable({
+      amount: 6_000_000,
+      payee: "Groww SIP",
+      toAccountId: "acc_groww",
+      toAccountName: "Groww",
+      ...overrides,
+    });
+
+  it("keeps a single-leg schedule to one row per occurrence", () => {
+    const { rows } = planOccurrences([plannable()], utc("2026-03-15"));
+
+    expect(rows).toHaveLength(3);
+    expect(rows.every((row) => row.transferId === undefined)).toBe(true);
+  });
+
+  it("emits both legs of a transfer for every occurrence", () => {
+    const { rows } = planOccurrences([sip()], utc("2026-03-15"));
+
+    expect(rows).toHaveLength(6);
+  });
+
+  it("signs the legs in opposite directions on the right accounts", () => {
+    const { rows } = planOccurrences([sip()], utc("2026-01-15"));
+    const [outgoing, incoming] = rows;
+
+    expect(outgoing).toMatchObject({
+      accountId: "acc_1",
+      amount: -6_000_000,
+      payee: "Transfer to Groww",
+    });
+    expect(incoming).toMatchObject({
+      accountId: "acc_groww",
+      amount: 6_000_000,
+      payee: "Transfer from IDFC Savings",
+    });
+  });
+
+  it("links both legs with one shared transfer id", () => {
+    const { rows } = planOccurrences([sip()], utc("2026-02-15"));
+    const grouped = new Set(rows.map((row) => row.transferId));
+
+    expect(rows).toHaveLength(4);
+    expect(grouped.size).toBe(2);
+    expect([...grouped].every(Boolean)).toBe(true);
+  });
+
+  it("derives stable ids so a second run inserts nothing new", () => {
+    const first = planOccurrences([sip()], utc("2026-03-15"));
+    const second = planOccurrences([sip()], utc("2026-03-15"));
+
+    expect(first.rows.map((row) => row.id)).toEqual(
+      second.rows.map((row) => row.id)
+    );
+    expect(new Set(first.rows.map((row) => row.id)).size).toBe(6);
+  });
+
+  it("never puts a category on a transfer leg", () => {
+    const { rows } = planOccurrences(
+      [sip({ categoryId: "cat_1" })],
+      utc("2026-01-15")
+    );
+
+    expect(rows.every((row) => !row.categoryId)).toBe(true);
+  });
+
+  it("reports the latest occurrence as the watermark", () => {
+    const { watermarks } = planOccurrences([sip()], utc("2026-03-15"));
+
+    expect(watermarks).toEqual([{ id: "rec_1", date: occurrenceAt(sip(), 2) }]);
   });
 });

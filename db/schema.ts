@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createInsertSchema } from "drizzle-zod";
 import { relations, sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -14,6 +15,8 @@ import {
 
 import { ACCOUNT_TYPES } from "@/lib/net-worth";
 
+const money = (name: string) => bigint(name, { mode: "number" });
+
 export const accountTypeEnum = pgEnum("account_type", ACCOUNT_TYPES);
 
 export const accounts = pgTable("accounts", {
@@ -22,7 +25,7 @@ export const accounts = pgTable("accounts", {
   name: text("name").notNull(),
   userId: text("user_id").notNull(),
   type: accountTypeEnum("type").notNull().default("savings"),
-  openingBalance: integer("opening_balance").notNull().default(0),
+  openingBalance: money("opening_balance").notNull().default(0),
 });
 
 export const accountsRelations = relations(accounts, ({ many }) => ({
@@ -64,7 +67,7 @@ export const recurringTransactions = pgTable(
   {
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
-    amount: integer("amount").notNull(),
+    amount: money("amount").notNull(),
     payee: text("payee").notNull(),
     notes: text("notes"),
     accountId: text("account_id")
@@ -94,7 +97,7 @@ export const transactions = pgTable(
   "transactions",
   {
     id: text("id").primaryKey(),
-    amount: integer("amount").notNull(),
+    amount: money("amount").notNull(),
     payee: text("payee").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
@@ -179,7 +182,7 @@ export const budgets = pgTable(
     categoryId: text("category_id").references(() => categories.id, {
       onDelete: "cascade",
     }),
-    amount: integer("amount").notNull(),
+    amount: money("amount").notNull(),
     period: budgetPeriodEnum("period").notNull().default("monthly"),
     startDate: timestamp("start_date", { mode: "date" }).notNull(),
     endDate: timestamp("end_date", { mode: "date" }),
@@ -216,7 +219,7 @@ export const goals = pgTable(
     id: text("id").primaryKey(),
     userId: text("user_id").notNull(),
     name: text("name").notNull(),
-    targetAmount: integer("target_amount").notNull(),
+    targetAmount: money("target_amount").notNull(),
     accountId: text("account_id").references(() => accounts.id, {
       onDelete: "set null",
     }),
@@ -240,7 +243,7 @@ export const goalContributions = pgTable(
     goalId: text("goal_id")
       .references(() => goals.id, { onDelete: "cascade" })
       .notNull(),
-    amount: integer("amount").notNull(),
+    amount: money("amount").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
     transactionId: text("transaction_id").references(() => transactions.id, {
@@ -301,9 +304,9 @@ export const debts = pgTable(
     userId: text("user_id").notNull(),
     name: text("name").notNull(),
     kind: debtKindEnum("kind").notNull().default("loan"),
-    principal: integer("principal").notNull(),
+    principal: money("principal").notNull(),
     aprBasisPoints: integer("apr_basis_points").notNull().default(0),
-    minimumPayment: integer("minimum_payment").notNull().default(0),
+    minimumPayment: money("minimum_payment").notNull().default(0),
     accountId: text("account_id").references(() => accounts.id, {
       onDelete: "set null",
     }),
@@ -327,7 +330,7 @@ export const debtPayments = pgTable(
     debtId: text("debt_id")
       .references(() => debts.id, { onDelete: "cascade" })
       .notNull(),
-    amount: integer("amount").notNull(),
+    amount: money("amount").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
     transactionId: text("transaction_id").references(() => transactions.id, {

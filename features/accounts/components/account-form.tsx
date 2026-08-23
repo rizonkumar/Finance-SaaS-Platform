@@ -32,7 +32,7 @@ import {
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   type: z.enum(ACCOUNT_TYPES),
-  openingBalance: z.string(),
+  openingBalance: z.string("Enter a starting balance"),
 });
 
 export type AccountFormValues = z.output<typeof formSchema>;

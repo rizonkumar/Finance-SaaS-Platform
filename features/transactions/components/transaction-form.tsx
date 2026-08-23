@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Trash } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Select } from "@/components/select";
@@ -21,13 +21,24 @@ import {
 } from "@/components/ui/form";
 
 const formSchema = z.object({
-  date: z.coerce.date(),
-  accountId: z.string(),
+  date: z.coerce.date("Pick a date"),
+  accountId: z.string("Choose an account").min(1, "Choose an account"),
   categoryId: z.string().nullable().optional(),
-  payee: z.string(),
-  amount: z.string(),
+  payee: z
+    .string("Enter a name")
+    .min(1, "Enter a name, e.g. Woolworths or your employer"),
+  amount: z.string("Enter an amount").min(1, "Enter an amount"),
   notes: z.string().nullable().optional(),
 });
+
+const EMPTY_VALUES = {
+  date: new Date(),
+  accountId: "",
+  categoryId: null,
+  payee: "",
+  amount: "",
+  notes: "",
+};
 
 const _apiSchema = insertTransactionSchema.omit({
   id: true,
@@ -65,8 +76,11 @@ export const TransactionForm = ({
 }: Props) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultValues,
+    defaultValues: { ...EMPTY_VALUES, ...defaultValues },
   });
+
+  const amount = useWatch({ control: form.control, name: "amount" });
+  const isIncoming = parseFloat(amount) > 0;
 
   const handleSubmit = (values: FormValues) => {
     const amount = parseFloat(values.amount);
@@ -149,11 +163,13 @@ export const TransactionForm = ({
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Payee</FormLabel>
+              <FormLabel>{isIncoming ? "Received from" : "Paid to"}</FormLabel>
               <FormControl>
                 <Input
                   disabled={disabled}
-                  placeholder="Add a payee"
+                  placeholder={
+                    isIncoming ? "e.g. Employer, or a refund" : "e.g. Zomato"
+                  }
                   {...field}
                 />
               </FormControl>

@@ -28,7 +28,9 @@ const FREQUENCY_OPTIONS = [
 ];
 
 const formSchema = z.object({
-  payee: z.string().min(1, "Enter a payee"),
+  payee: z
+    .string("Enter a name")
+    .min(1, "Enter a name, e.g. Landlord or your employer"),
   amount: z.string().min(1, "Enter an amount"),
   accountId: z.string().min(1, "Select an account"),
   categoryId: z.string().nullable().optional(),
@@ -113,7 +115,7 @@ export const RecurringForm = ({
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Payee</FormLabel>
+              <FormLabel>Paid to or received from</FormLabel>
               <FormControl>
                 <Input
                   disabled={disabled}

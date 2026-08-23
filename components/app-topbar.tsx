@@ -12,6 +12,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
+import { useNewBudget } from "@/features/budgets/hooks/use-new-budget";
+import { useNewCategory } from "@/features/categories/hooks/use-new-category";
+import { useNewDebt } from "@/features/debts/hooks/use-new-debt";
+import { useNewGoal } from "@/features/goals/hooks/use-new-goal";
+import { useNewHolding } from "@/features/holdings/hooks/use-new-holding";
+import { useNewRecurring } from "@/features/recurring/hooks/use-new-recurring";
 import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -21,9 +28,44 @@ export const AppTopbar = () => {
   const pathname = usePathname();
   const { isCollapsed, toggleCollapsed } = useSidebar();
   const { onOpen: onOpenCommandPalette } = useCommandPalette();
+
   const newTransaction = useNewTransaction();
+  const newAccount = useNewAccount();
+  const newBudget = useNewBudget();
+  const newCategory = useNewCategory();
+  const newDebt = useNewDebt();
+  const newGoal = useNewGoal();
+  const newHolding = useNewHolding();
+  const newRecurring = useNewRecurring();
 
   const title = pageMeta(pathname)?.title ?? "Fintrack";
+
+  const getRouteAction = () => {
+    switch (pathname) {
+      case "/portfolio":
+        return { label: "Add holding", run: newHolding.onOpen };
+      case "/budgets":
+        return { label: "Add budget", run: newBudget.onOpen };
+      case "/goals":
+        return { label: "Add goal", run: newGoal.onOpen };
+      case "/debts":
+        return { label: "Add debt", run: newDebt.onOpen };
+      case "/recurring":
+        return { label: "Add schedule", run: newRecurring.onOpen };
+      case "/accounts":
+        return { label: "Add account", run: newAccount.onOpen };
+      case "/categories":
+        return { label: "Add category", run: newCategory.onOpen };
+      case "/forecast":
+        return { label: "Add schedule", run: newRecurring.onOpen };
+      case "/transactions":
+      case "/":
+      default:
+        return { label: "New transaction", run: () => newTransaction.onOpen() };
+    }
+  };
+
+  const currentAction = getRouteAction();
 
   return (
     <header className="border-alpha-300 bg-surface/70 z-30 flex min-h-14 shrink-0 items-center justify-between gap-x-3 border-b px-4 py-2.5 backdrop-blur-xl lg:px-6">
@@ -70,9 +112,8 @@ export const AppTopbar = () => {
         <CommandPalette />
       </div>
 
-      {/* Right Section: Mobile Search, Quick Actions & Profile */}
+      {/* Right Section: Mobile Search, Dynamic Route Action & Profile */}
       <div className="flex items-center gap-x-2">
-        {/* Mobile Search Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -83,15 +124,14 @@ export const AppTopbar = () => {
           <Search className="size-4" />
         </Button>
 
-        {/* Quick Create Button */}
+        {/* Dynamic Route Action Button */}
         <Button
           size="sm"
-          variant="outline"
-          onClick={() => newTransaction.onOpen()}
-          className="label-13 border-alpha-300 hover:bg-alpha-100 hidden h-8 items-center gap-x-1.5 px-2.5 text-gray-900 shadow-xs md:inline-flex"
+          onClick={currentAction.run}
+          className="label-13 hidden h-8 items-center gap-x-1.5 px-3 shadow-xs md:inline-flex"
         >
           <Plus className="size-3.5" />
-          <span>New transaction</span>
+          <span>{currentAction.label}</span>
         </Button>
 
         {/* Mobile User Profile (also in drawer) */}

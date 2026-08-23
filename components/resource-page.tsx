@@ -3,13 +3,12 @@
 import type { ColumnDef, Row } from "@tanstack/react-table";
 
 import { type tableFeatureSet } from "@/lib/table-features";
-import { Plus, type LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader, type PageChip } from "@/components/page-header";
 import { TablePageSkeleton } from "@/components/table-page-skeleton";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 type ResourceRow = { id: string };
@@ -53,17 +52,7 @@ export function ResourcePage<TData extends ResourceRow>({
 
   return (
     <>
-      <PageHeader
-        title={title}
-        description={description}
-        chips={chips}
-        actions={
-          <Button onClick={onCreate} size="sm">
-            <Plus className="size-4" />
-            {createLabel}
-          </Button>
-        }
-      />
+      <PageHeader title={title} description={description} chips={chips} />
       <Card>
         <CardContent className="pt-5">
           {data.length === 0 ? (

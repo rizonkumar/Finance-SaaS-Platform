@@ -1,12 +1,11 @@
 "use client";
 
-import { Landmark, Plus, TrendingDown } from "lucide-react";
+import { Landmark, TrendingDown } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_META } from "@/lib/routes";
 import { useGetDebts } from "@/features/debts/api/use-get-debts";
@@ -60,12 +59,6 @@ const DebtsPage = () => {
                 },
               ]
             : undefined
-        }
-        actions={
-          <Button size="sm" onClick={newDebt.onOpen}>
-            <Plus className="size-4" />
-            Add Debt
-          </Button>
         }
       />
 

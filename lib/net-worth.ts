@@ -19,6 +19,13 @@ export const LIABILITY_ACCOUNT_TYPES: readonly AccountType[] = [
   "loan",
 ];
 
+export const INVESTMENT_ACCOUNT_TYPES: readonly AccountType[] = [
+  "investment",
+  "ppf",
+  "epf",
+  "fixed_deposit",
+];
+
 export const isLiabilityAccount = (type: AccountType) =>
   LIABILITY_ACCOUNT_TYPES.includes(type);
 
@@ -41,9 +48,10 @@ export type BalanceSheet = {
 
 export function buildBalanceSheet(
   positions: Position[],
-  debtOwed = 0
+  debtOwed = 0,
+  holdingsValue = 0
 ): BalanceSheet {
-  let assets = 0;
+  let assets = Math.max(holdingsValue, 0);
   let liabilities = Math.max(debtOwed, 0);
 
   for (const position of positions) {
@@ -70,7 +78,7 @@ export type AccountDelta = {
   amount: number;
 };
 
-export type DebtDelta = {
+export type DailyDelta = {
   date: Date;
   amount: number;
 };
@@ -80,7 +88,9 @@ type SeriesInput = {
   startingBalances: { id: string; balance: number }[];
   deltas: AccountDelta[];
   startingDebt: number;
-  debtDeltas: DebtDelta[];
+  debtDeltas: DailyDelta[];
+  startingHoldingsValue?: number;
+  holdingsDeltas?: DailyDelta[];
 };
 
 function groupByDay<T extends { date: Date }>(rows: T[]): Map<string, T[]> {
@@ -107,8 +117,10 @@ export function buildNetWorthSeries(input: SeriesInput): NetWorthPoint[] {
 
   const deltasByDay = groupByDay(input.deltas);
   const debtDeltasByDay = groupByDay(input.debtDeltas);
+  const holdingsDeltasByDay = groupByDay(input.holdingsDeltas ?? []);
 
   let debt = input.startingDebt;
+  let holdingsValue = input.startingHoldingsValue ?? 0;
 
   return input.days.map((day) => {
     const key = dateKeyUTC(day);
@@ -124,9 +136,13 @@ export function buildNetWorthSeries(input: SeriesInput): NetWorthPoint[] {
       debt += delta.amount;
     }
 
+    for (const delta of holdingsDeltasByDay.get(key) ?? []) {
+      holdingsValue += delta.amount;
+    }
+
     const positions = [...balances.values()].map((balance) => ({ balance }));
 
-    return { date: day, ...buildBalanceSheet(positions, debt) };
+    return { date: day, ...buildBalanceSheet(positions, debt, holdingsValue) };
   });
 }
 

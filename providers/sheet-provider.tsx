@@ -9,6 +9,9 @@ import { EditDebtSheet } from "@/features/debts/components/edit-debt-sheet";
 import { NewDebtSheet } from "@/features/debts/components/new-debt-sheet";
 import { PayDebtSheet } from "@/features/debts/components/pay-debt-sheet";
 import { ContributeGoalSheet } from "@/features/goals/components/contribute-goal-sheet";
+import { EditHoldingSheet } from "@/features/holdings/components/edit-holding-sheet";
+import { NewHoldingSheet } from "@/features/holdings/components/new-holding-sheet";
+import { TradeHoldingSheet } from "@/features/holdings/components/trade-holding-sheet";
 import { EditGoalSheet } from "@/features/goals/components/edit-goal-sheet";
 import { NewGoalSheet } from "@/features/goals/components/new-goal-sheet";
 import { EditCategorySheet } from "@/features/categories/components/edit-category-sheet";
@@ -44,6 +47,10 @@ export const SheetProvider = () => {
 
       <NewRecurringSheet />
       <EditRecurringSheet />
+
+      <NewHoldingSheet />
+      <EditHoldingSheet />
+      <TradeHoldingSheet />
 
       <NewGoalSheet />
       <EditGoalSheet />

@@ -8,7 +8,9 @@ type ResourceLabel =
   | "Contribution"
   | "Transfer"
   | "Debt"
-  | "Payment";
+  | "Payment"
+  | "Holding"
+  | "Trade";
 
 export const toastMessages = (resource: ResourceLabel) => ({
   createSuccess: `${resource} created`,

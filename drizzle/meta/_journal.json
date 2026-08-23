@@ -57,6 +57,20 @@
       "when": 1787487839325,
       "tag": "0007_whole_mindworm",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787488178464,
+      "tag": "0008_cultured_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787488576276,
+      "tag": "0009_old_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

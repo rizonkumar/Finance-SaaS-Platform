@@ -73,6 +73,9 @@ export const recurringTransactions = pgTable(
     accountId: text("account_id")
       .references(() => accounts.id, { onDelete: "cascade" })
       .notNull(),
+    toAccountId: text("to_account_id").references(() => accounts.id, {
+      onDelete: "cascade",
+    }),
     categoryId: text("category_id").references(() => categories.id, {
       onDelete: "set null",
     }),

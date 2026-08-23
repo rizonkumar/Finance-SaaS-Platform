@@ -36,9 +36,33 @@ const recurringBody = insertRecurringTransactionSchema
     createdAt: true,
     updatedAt: true,
   })
-  .extend({ skipMissed: z.boolean().optional() });
+  .extend({ skipMissed: z.boolean().optional() })
+  .superRefine((value, ctx) => {
+    if (value.toAccountId && value.toAccountId === value.accountId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["toAccountId"],
+        message: "Pick a different account to transfer into",
+      });
+    }
+  });
 
-const SCHEDULE_FIELDS = ["startDate", "frequency", "interval"] as const;
+const SCHEDULE_FIELDS = [
+  "startDate",
+  "frequency",
+  "interval",
+  "accountId",
+  "toAccountId",
+] as const;
+
+type RecurringBody = z.infer<typeof recurringBody>;
+
+const toRow = (values: Omit<RecurringBody, "skipMissed">) => ({
+  ...values,
+  endDate: values.endDate ?? null,
+  toAccountId: values.toAccountId ?? null,
+  categoryId: values.toAccountId ? null : (values.categoryId ?? null),
+});
 
 const requireId = (id?: string) => {
   if (!id) throw new HTTPException(400, { message: API_ERRORS.missingId });
@@ -53,17 +77,28 @@ async function safeMaterialize(userId: string) {
   }
 }
 
-async function assertOwnedRefs(
-  userId: string,
-  accountId: string,
-  categoryId?: string | null
-) {
-  const [account] = await db
+type OwnedRefs = {
+  accountId: string;
+  toAccountId?: string | null;
+  categoryId?: string | null;
+};
+
+async function assertOwnedRefs(userId: string, refs: OwnedRefs) {
+  const { categoryId } = refs;
+  const accountIds = [
+    ...new Set(
+      [refs.accountId, refs.toAccountId].filter((id): id is string =>
+        Boolean(id)
+      )
+    ),
+  ];
+
+  const owned = await db
     .select({ id: accounts.id })
     .from(accounts)
-    .where(and(eq(accounts.userId, userId), eq(accounts.id, accountId)));
+    .where(and(eq(accounts.userId, userId), inArray(accounts.id, accountIds)));
 
-  if (!account) {
+  if (owned.length !== accountIds.length) {
     throw new HTTPException(400, { message: "Unknown account" });
   }
 
@@ -143,7 +178,7 @@ const app = new Hono<AuthedEnv>()
     const userId = c.get("userId");
     const { skipMissed, ...values } = c.req.valid("json");
 
-    await assertOwnedRefs(userId, values.accountId, values.categoryId);
+    await assertOwnedRefs(userId, values);
 
     const projected = projectedBackfill(values, values.endDate ?? null);
 
@@ -156,8 +191,7 @@ const app = new Hono<AuthedEnv>()
     const [data] = await db
       .insert(recurringTransactions)
       .values({
-        ...values,
-        endDate: values.endDate ?? null,
+        ...toRow(values),
         id: createId(),
         userId,
         lastGeneratedAt: skipMissed ? new Date() : null,
@@ -197,7 +231,7 @@ const app = new Hono<AuthedEnv>()
       const userId = c.get("userId");
       const { skipMissed, ...values } = c.req.valid("json");
 
-      await assertOwnedRefs(userId, values.accountId, values.categoryId);
+      await assertOwnedRefs(userId, values);
 
       const [existing] = await db
         .select()
@@ -213,19 +247,20 @@ const app = new Hono<AuthedEnv>()
         throw new HTTPException(404, { message: API_ERRORS.notFound });
       }
 
-      const scheduleChanged = SCHEDULE_FIELDS.some((field) =>
-        field === "startDate"
-          ? existing.startDate.getTime() !== values.startDate.getTime()
-          : existing[field] !== values[field]
-      );
+      const scheduleChanged = SCHEDULE_FIELDS.some((field) => {
+        if (field === "startDate") {
+          return existing.startDate.getTime() !== values.startDate.getTime();
+        }
+
+        return (existing[field] ?? null) !== (values[field] ?? null);
+      });
 
       const purgedTransactions = scheduleChanged ? await purgeGenerated(id) : 0;
 
       const [data] = await db
         .update(recurringTransactions)
         .set({
-          ...values,
-          endDate: values.endDate ?? null,
+          ...toRow(values),
           updatedAt: new Date(),
           ...(skipMissed ? { lastGeneratedAt: new Date() } : {}),
           ...(scheduleChanged && !skipMissed ? { lastGeneratedAt: null } : {}),

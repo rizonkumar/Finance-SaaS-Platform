@@ -21,6 +21,11 @@ export const useDeleteBudget = (id?: string) => {
         param: { id },
       });
 
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        throw new Error(body.error ?? messages.deleteError);
+      }
+
       return await response.json();
     },
     onSuccess: () => {

@@ -21,6 +21,8 @@ export const toastMessages = (resource: ResourceLabel) => ({
   deleteError: `Could not delete ${resource.toLowerCase()}`,
   bulkDeleteSuccess: `${resource}s deleted`,
   bulkDeleteError: `Could not delete ${resource.toLowerCase()}s`,
+  bulkCreateSuccess: `${resource}s created`,
+  bulkCreateError: `Could not create ${resource.toLowerCase()}s`,
 });
 
 export const API_ERRORS = {

@@ -22,6 +22,11 @@ export const useBulkDeleteBudgets = () => {
     mutationFn: async (json) => {
       const response = await client.api.budgets["bulk-delete"].$post({ json });
 
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        throw new Error(body.error ?? messages.bulkDeleteError);
+      }
+
       return await response.json();
     },
     onSuccess: () => {

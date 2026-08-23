@@ -34,6 +34,7 @@ const balanceColumns = {
     sql`${accounts.openingBalance} + COALESCE(SUM(${transactions.amount}), 0)`.mapWith(
       Number
     ),
+  transactionCount: sql<number>`COALESCE(COUNT(DISTINCT ${transactions.id}), 0)::int`,
 };
 
 function selectAccounts(userId: string, id?: string) {

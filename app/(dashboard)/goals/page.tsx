@@ -1,12 +1,11 @@
 "use client";
 
-import { PiggyBank, Plus, Target } from "lucide-react";
+import { PiggyBank, Target } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_META } from "@/lib/routes";
 import { useGetGoals } from "@/features/goals/api/use-get-goals";
@@ -58,12 +57,6 @@ const GoalsPage = () => {
                 },
               ]
             : undefined
-        }
-        actions={
-          <Button size="sm" onClick={newGoal.onOpen}>
-            <Plus className="size-4" />
-            Add Goal
-          </Button>
         }
       />
 

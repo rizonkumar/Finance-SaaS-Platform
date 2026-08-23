@@ -1,14 +1,13 @@
 "use client";
 
 import { Suspense } from "react";
-import { AlertTriangle, PiggyBank, Plus } from "lucide-react";
+import { AlertTriangle, PiggyBank } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { Filters } from "@/components/filters";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetBudgets } from "@/features/budgets/api/use-get-budgets";
@@ -66,12 +65,6 @@ const BudgetsPage = () => {
           <Suspense fallback={<Skeleton className="h-7 w-64 rounded-full" />}>
             <Filters />
           </Suspense>
-        }
-        actions={
-          <Button size="sm" onClick={newBudget.onOpen}>
-            <Plus className="size-4" />
-            Add Budget
-          </Button>
         }
       />
 

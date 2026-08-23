@@ -28,6 +28,7 @@ import { useNewTransaction } from "@/features/transactions/hooks/use-new-transac
 import { useNewTransfer } from "@/features/transfers/hooks/use-new-transfer";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { NAV_SECTIONS } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
 const THEMES = [
   { value: "light", label: "Light", icon: Sun },
@@ -35,7 +36,7 @@ const THEMES = [
   { value: "system", label: "System", icon: Monitor },
 ] as const;
 
-export const CommandPalette = () => {
+export const CommandPalette = ({ className }: { className?: string }) => {
   const router = useRouter();
   const { setTheme } = useTheme();
   const { isOpen, onOpen, onClose } = useCommandPalette();
@@ -88,20 +89,23 @@ export const CommandPalette = () => {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="border-input bg-surface hover:border-alpha-500 label-14 hidden h-9 w-full max-w-md items-center gap-x-2.5 rounded-sm border px-3 text-gray-700 transition-colors lg:flex"
+          className={cn(
+            "border-alpha-300 bg-surface/80 hover:bg-surface hover:border-alpha-500 label-13 flex h-9 w-full items-center gap-x-2.5 rounded-md border px-3 text-gray-700 shadow-xs transition-all",
+            className
+          )}
+          aria-label="Search or jump to command"
         >
-          <Search className="size-4 shrink-0" />
-          <span className="mr-auto">Search or jump to...</span>
-          <kbd className="border-alpha-300 bg-alpha-100 rounded-sm border px-1.5 py-0.5 text-xs">
+          <Search className="size-4 shrink-0 text-gray-600" />
+          <span className="mr-auto text-gray-700">Search or jump to...</span>
+          <kbd className="border-alpha-300 bg-alpha-100 hidden rounded border px-1.5 py-0.5 text-[11px] font-medium text-gray-700 sm:inline-block">
             ⌘K
           </kbd>
         </button>
       </PopoverTrigger>
       <PopoverContent
-        align="start"
-        sideOffset={6}
-        className="p-0"
-        style={{ width: "var(--radix-popover-trigger-width)" }}
+        align="center"
+        sideOffset={8}
+        className="shadow-modal w-[calc(100vw-32px)] max-w-lg p-0"
       >
         <Command loop>
           <CommandInput

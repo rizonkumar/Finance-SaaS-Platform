@@ -1,13 +1,12 @@
 "use client";
 
-import { LineChart, Plus, TrendingUp } from "lucide-react";
+import { LineChart, TrendingUp } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { CategoryBreakdown } from "@/components/category-breakdown";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetHoldings } from "@/features/holdings/api/use-get-holdings";
 import { HoldingsList } from "@/features/holdings/components/holdings-list";
@@ -67,12 +66,6 @@ const PortfolioPage = () => {
                 },
               ]
             : undefined
-        }
-        actions={
-          <Button size="sm" onClick={newHolding.onOpen}>
-            <Plus className="size-4" />
-            Add Holding
-          </Button>
         }
       />
 

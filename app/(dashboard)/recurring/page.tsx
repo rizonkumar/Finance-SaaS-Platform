@@ -1,13 +1,12 @@
 "use client";
 
-import { Plus, Repeat } from "lucide-react";
+import { Repeat } from "lucide-react";
 
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { TablePageSkeleton } from "@/components/table-page-skeleton";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_META } from "@/lib/routes";
 import { useBulkDeleteRecurring } from "@/features/recurring/api/use-bulk-delete-recurring";
@@ -85,12 +84,6 @@ const RecurringPage = () => {
                 },
               ]
             : undefined
-        }
-        actions={
-          <Button size="sm" onClick={newRecurring.onOpen}>
-            <Plus className="size-4" />
-            Add Schedule
-          </Button>
         }
       />
       <Card>

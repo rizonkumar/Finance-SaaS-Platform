@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { ArrowLeftRight, Plus } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { DataTable } from "@/components/data-table";
@@ -14,7 +14,6 @@ import { useSelectAccount } from "@/features/accounts/hooks/use-select-account";
 import { useBulkCreateTransactions } from "@/features/transactions/api/use-bulk-create-transactions";
 import { useBulkDeleteTransactions } from "@/features/transactions/api/use-bulk-delete-transactions";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
-import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
 import { useNewTransfer } from "@/features/transfers/hooks/use-new-transfer";
 import type { ImportedTransaction } from "@/lib/csv-import";
 import { PAGE_META } from "@/lib/routes";
@@ -47,7 +46,6 @@ const TransactionsPageContent = () => {
   const [variant, setVariant] = useState<VARIANTS>(VARIANTS.LIST);
   const [importResults, setImportResults] = useState(INITIAL_IMPORT_RESULTS);
 
-  const newTransaction = useNewTransaction();
   const newTransfer = useNewTransfer();
   const createTransactions = useBulkCreateTransactions();
   const deleteTransactions = useBulkDeleteTransactions();
@@ -119,10 +117,6 @@ const TransactionsPageContent = () => {
         filters={<Filters />}
         actions={
           <>
-            <Button onClick={() => newTransaction.onOpen()} size="sm">
-              <Plus className="size-4" />
-              Add Transaction
-            </Button>
             <Button onClick={newTransfer.onOpen} size="sm" variant="outline">
               <ArrowLeftRight className="size-4" />
               Transfer

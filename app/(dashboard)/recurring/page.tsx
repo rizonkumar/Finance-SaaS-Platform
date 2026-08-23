@@ -6,8 +6,10 @@ import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { TablePageSkeleton } from "@/components/table-page-skeleton";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { PAGE_META } from "@/lib/routes";
 import { useBulkDeleteRecurring } from "@/features/recurring/api/use-bulk-delete-recurring";
 import { useGetRecurringList } from "@/features/recurring/api/use-get-recurring-list";
 import { useNewRecurring } from "@/features/recurring/hooks/use-new-recurring";
@@ -69,20 +71,31 @@ const RecurringPage = () => {
   };
 
   return (
-    <Card>
-      <CardHeader className="gap-y-2 lg:flex-row lg:items-center lg:justify-between">
-        <CardTitle>Recurring Transactions</CardTitle>
-        <Button
-          size="sm"
-          onClick={newRecurring.onOpen}
-          className="w-full lg:w-auto"
-        >
-          <Plus className="size-4" />
-          Add Schedule
-        </Button>
-      </CardHeader>
-      <CardContent>{renderBody()}</CardContent>
-    </Card>
+    <>
+      <PageHeader
+        title={PAGE_META["/recurring"].title}
+        description={PAGE_META["/recurring"].description}
+        chips={
+          rows.length > 0
+            ? [
+                {
+                  label: `${rows.length} ${rows.length === 1 ? "schedule" : "schedules"}`,
+                  icon: Repeat,
+                },
+              ]
+            : undefined
+        }
+        actions={
+          <Button size="sm" onClick={newRecurring.onOpen}>
+            <Plus className="size-4" />
+            Add Schedule
+          </Button>
+        }
+      />
+      <Card>
+        <CardContent className="pt-5">{renderBody()}</CardContent>
+      </Card>
+    </>
   );
 };
 

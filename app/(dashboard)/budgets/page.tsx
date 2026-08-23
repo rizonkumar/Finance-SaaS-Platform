@@ -51,10 +51,14 @@ const BudgetsPage = () => {
                   label: `${budgets.length} ${budgets.length === 1 ? "budget" : "budgets"}`,
                   icon: PiggyBank,
                 },
-                {
-                  label: `${overspent} over limit`,
-                  icon: AlertTriangle,
-                },
+                ...(overspent > 0
+                  ? [
+                      {
+                        label: `${overspent} over limit`,
+                        icon: AlertTriangle,
+                      },
+                    ]
+                  : []),
               ]
             : undefined
         }

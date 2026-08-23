@@ -1,12 +1,14 @@
 "use client";
 
-import { Plus, Target } from "lucide-react";
+import { PiggyBank, Plus, Target } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { PAGE_META } from "@/lib/routes";
 import { useGetGoals } from "@/features/goals/api/use-get-goals";
 import { GoalCard } from "@/features/goals/components/goal-card";
 import { useContributeGoal } from "@/features/goals/hooks/use-contribute-goal";
@@ -40,25 +42,30 @@ const GoalsPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-x-2">
-        <p className="copy-14 text-gray-900">
-          {goals.length} {goals.length === 1 ? "goal" : "goals"}
-          {goals.length > 0 && (
-            <>
-              {" · "}
-              <span className="numeric">
-                {formatCurrency(totalSaved)}
-              </span> of{" "}
-              <span className="numeric">{formatCurrency(totalTarget)}</span>{" "}
-              saved
-            </>
-          )}
-        </p>
-        <Button size="sm" onClick={newGoal.onOpen}>
-          <Plus className="size-4" />
-          Add Goal
-        </Button>
-      </div>
+      <PageHeader
+        title={PAGE_META["/goals"].title}
+        description={PAGE_META["/goals"].description}
+        chips={
+          goals.length > 0
+            ? [
+                {
+                  label: `${goals.length} ${goals.length === 1 ? "goal" : "goals"}`,
+                  icon: Target,
+                },
+                {
+                  label: `${formatCurrency(totalSaved)} of ${formatCurrency(totalTarget)} saved`,
+                  icon: PiggyBank,
+                },
+              ]
+            : undefined
+        }
+        actions={
+          <Button size="sm" onClick={newGoal.onOpen}>
+            <Plus className="size-4" />
+            Add Goal
+          </Button>
+        }
+      />
 
       {goals.length === 0 ? (
         <Card>
@@ -73,7 +80,7 @@ const GoalsPage = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {goals.map((goal) => (
             <GoalCard
               key={goal.id}

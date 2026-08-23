@@ -49,21 +49,50 @@ export const NAV_SECTIONS: readonly NavSection[] = [
   },
 ];
 
-export const PAGE_TITLES: Record<string, string> = {
-  "/": "Overview",
-  "/transactions": "Transactions",
-  "/forecast": "Forecast",
-  "/budgets": "Budgets",
-  "/goals": "Goals",
-  "/debts": "Debts",
-  "/recurring": "Recurring",
-  "/accounts": "Accounts",
-  "/categories": "Categories",
-};
+export const PAGE_META = {
+  "/": {
+    title: "Overview",
+    description:
+      "Where your money stands right now, and what changed over the period.",
+  },
+  "/transactions": {
+    title: "Transactions",
+    description: "Every inflow and outflow, with CSV import and bulk editing.",
+  },
+  "/forecast": {
+    title: "Forecast",
+    description:
+      "Your projected balance, built from scheduled income and expenses.",
+  },
+  "/budgets": {
+    title: "Budgets",
+    description:
+      "Spending limits per category, and how much of each you have used.",
+  },
+  "/goals": {
+    title: "Goals",
+    description: "What you are saving toward, and whether you are on pace.",
+  },
+  "/debts": {
+    title: "Debts",
+    description:
+      "What you owe, what you have cleared, and how fast it is shrinking.",
+  },
+  "/recurring": {
+    title: "Recurring",
+    description:
+      "Rent, salary and subscriptions, entered for you on a schedule.",
+  },
+  "/accounts": {
+    title: "Accounts",
+    description: "The accounts your transactions are attributed to.",
+  },
+  "/categories": {
+    title: "Categories",
+    description: "Labels used to group spending across budgets and reports.",
+  },
+} as const;
 
-export const FILTERED_ROUTES: string[] = [
-  "/",
-  "/transactions",
-  "/forecast",
-  "/budgets",
-];
+export const pageMeta = (pathname: string) =>
+  PAGE_META[pathname as keyof typeof PAGE_META] as
+    { title: string; description: string } | undefined;

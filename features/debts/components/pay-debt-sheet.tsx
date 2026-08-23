@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Loader2, Trash } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -23,6 +24,12 @@ import { cn, formatCurrency } from "@/lib/utils";
 
 export const PayDebtSheet = () => {
   const { isOpen, onClose, id } = usePayDebt();
+
+  const accountsQuery = useGetAccounts();
+  const accountOptions = (accountsQuery.data ?? []).map((account) => ({
+    label: account.name,
+    value: account.id,
+  }));
 
   const debtQuery = useGetDebt(id);
   const addMutation = useAddPayment(id);
@@ -49,7 +56,7 @@ export const PayDebtSheet = () => {
               : "Record a payment against this debt."}
           </SheetDescription>
         </SheetHeader>
-        {debtQuery.isLoading ? (
+        {debtQuery.isLoading || accountsQuery.isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="size-4 animate-spin text-gray-600" />
           </div>
@@ -59,6 +66,8 @@ export const PayDebtSheet = () => {
               onSubmit={onSubmit}
               disabled={isPending}
               isSubmitting={addMutation.isPending}
+              accountOptions={accountOptions}
+              defaultAccountId={debt?.accountId}
             />
             <Separator />
             <div className="space-y-2">

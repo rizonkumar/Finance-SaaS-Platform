@@ -243,11 +243,15 @@ export const goalContributions = pgTable(
     amount: integer("amount").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
+    transactionId: text("transaction_id").references(() => transactions.id, {
+      onDelete: "cascade",
+    }),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
     index("goal_contributions_goal_id_idx").on(table.goalId),
     index("goal_contributions_user_id_idx").on(table.userId),
+    index("goal_contributions_transaction_id_idx").on(table.transactionId),
   ]
 );
 
@@ -326,11 +330,15 @@ export const debtPayments = pgTable(
     amount: integer("amount").notNull(),
     notes: text("notes"),
     date: timestamp("date", { mode: "date" }).notNull(),
+    transactionId: text("transaction_id").references(() => transactions.id, {
+      onDelete: "cascade",
+    }),
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
     index("debt_payments_debt_id_idx").on(table.debtId),
     index("debt_payments_user_id_idx").on(table.userId),
+    index("debt_payments_transaction_id_idx").on(table.transactionId),
   ]
 );
 

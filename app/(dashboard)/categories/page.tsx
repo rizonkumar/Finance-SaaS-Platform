@@ -31,6 +31,8 @@ const CategoriesPage = () => {
       columns={columns}
       data={categories}
       isLoading={categoriesQuery.isLoading}
+      isError={categoriesQuery.isError}
+      onRetry={() => categoriesQuery.refetch()}
       disabled={categoriesQuery.isLoading || deleteCategories.isPending}
       onCreate={newCategory.onOpen}
       onDelete={(ids) => deleteCategories.mutate({ ids })}

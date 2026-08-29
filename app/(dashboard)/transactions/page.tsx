@@ -5,6 +5,8 @@ import { ArrowLeftRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { DataTable } from "@/components/data-table";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { TablePageSkeleton } from "@/components/table-page-skeleton";
 import { Filters } from "@/components/filters";
 import { PageHeader } from "@/components/page-header";
@@ -101,6 +103,16 @@ const TransactionsPageContent = () => {
     );
   }
 
+  if (transactionsQuery.isError) {
+    return (
+      <Card>
+        <CardContent>
+          <ErrorState onRetry={() => transactionsQuery.refetch()} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
       <PageHeader
@@ -133,16 +145,26 @@ const TransactionsPageContent = () => {
       />
       <Card>
         <CardContent className="pt-5">
-          <DataTable
-            filterKey="payee"
-            columns={columns}
-            data={transactions}
-            onDelete={(row) => {
-              const ids = row.map((r) => r.original.id);
-              deleteTransactions.mutate({ ids });
-            }}
-            disabled={isDisabled}
-          />
+          {transactions.length === 0 ? (
+            <EmptyState
+              icon={ArrowLeftRight}
+              title="No transactions yet"
+              description="Add a transaction by hand, record a transfer, or import a CSV from your bank."
+              actionLabel="Add Transaction"
+              onAction={() => newTransaction.onOpen()}
+            />
+          ) : (
+            <DataTable
+              filterKey="payee"
+              columns={columns}
+              data={transactions}
+              onDelete={(row) => {
+                const ids = row.map((r) => r.original.id);
+                deleteTransactions.mutate({ ids });
+              }}
+              disabled={isDisabled}
+            />
+          )}
         </CardContent>
       </Card>
     </>

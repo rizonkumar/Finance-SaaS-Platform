@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 
 import { DataCard, DataCardLoading } from "@/components/data-card";
+import { ErrorState } from "@/components/error-state";
 import { StatGroup } from "@/components/stat-group";
+import { Card } from "@/components/ui/card";
 import { useGetNetWorth } from "@/features/net-worth/api/use-get-net-worth";
 import { DAY_PATTERN, DISPLAY_DATE_FORMAT } from "@/lib/constants";
 import { parseDayUTC } from "@/lib/date-utc";
@@ -23,7 +25,7 @@ const countLabel = (count: number, noun: string) =>
   `${count} ${count === 1 ? noun : `${noun}s`}`;
 
 export const BalanceSheetGrid = () => {
-  const { data, isLoading } = useGetNetWorth();
+  const { data, isLoading, isError, refetch } = useGetNetWorth();
 
   const params = useSearchParams();
   const to = params.get("to");
@@ -35,6 +37,14 @@ export const BalanceSheetGrid = () => {
         <DataCardLoading />
         <DataCardLoading />
       </StatGroup>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="mb-4 px-5">
+        <ErrorState compact onRetry={() => refetch()} />
+      </Card>
     );
   }
 

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { iconBox } from "@/components/data-card";
+import { ErrorState } from "@/components/error-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetBudgets } from "@/features/budgets/api/use-get-budgets";
@@ -44,6 +45,26 @@ export const AttentionCard = () => {
         <CardContent className="space-y-3">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (budgetsQuery.isError || goalsQuery.isError || debtsQuery.isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Needs Attention</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ErrorState
+            compact
+            onRetry={() => {
+              budgetsQuery.refetch();
+              goalsQuery.refetch();
+              debtsQuery.refetch();
+            }}
+          />
         </CardContent>
       </Card>
     );

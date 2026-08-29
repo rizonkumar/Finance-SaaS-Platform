@@ -4,12 +4,14 @@ import { PiggyBank, TrendingDown, TrendingUp } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataCard, DataCardLoading } from "@/components/data-card";
+import { ErrorState } from "@/components/error-state";
 import { StatGroup } from "@/components/stat-group";
+import { Card } from "@/components/ui/card";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { formatDateRange } from "@/lib/utils";
 
 export const DataGrid = () => {
-  const { data, isLoading } = useGetSummary();
+  const { data, isLoading, isError, refetch } = useGetSummary();
 
   const params = useSearchParams();
   const to = params.get("to") || undefined;
@@ -19,11 +21,19 @@ export const DataGrid = () => {
 
   if (isLoading) {
     return (
-      <StatGroup className="mb-4">
+      <StatGroup caption={dateRangeLabel} className="mb-4">
         <DataCardLoading />
         <DataCardLoading />
         <DataCardLoading />
       </StatGroup>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="mb-4 px-5">
+        <ErrorState compact onRetry={() => refetch()} />
+      </Card>
     );
   }
 

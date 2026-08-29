@@ -3,6 +3,7 @@
 import { CreditCard, Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
 import { TablePageSkeleton } from "@/components/table-page-skeleton";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,16 @@ const AccountsPage = () => {
   const accountsQuery = useGetAccounts();
 
   if (accountsQuery.isLoading) return <TablePageSkeleton />;
+
+  if (accountsQuery.isError) {
+    return (
+      <Card>
+        <CardContent>
+          <ErrorState onRetry={() => accountsQuery.refetch()} />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const accounts = accountsQuery.data ?? [];
 

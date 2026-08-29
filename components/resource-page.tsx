@@ -7,6 +7,7 @@ import { Plus, type LucideIcon } from "lucide-react";
 
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { PageHeader, type PageChip } from "@/components/page-header";
 import { TablePageSkeleton } from "@/components/table-page-skeleton";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ type Props<TData extends ResourceRow> = {
   columns: ColumnDef<typeof tableFeatureSet, TData, unknown>[];
   data: TData[];
   isLoading: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   disabled: boolean;
   onCreate: () => void;
   onDelete: (ids: string[]) => void;
@@ -40,6 +43,8 @@ export function ResourcePage<TData extends ResourceRow>({
   columns,
   data,
   isLoading,
+  isError,
+  onRetry,
   disabled,
   onCreate,
   onDelete,
@@ -49,6 +54,16 @@ export function ResourcePage<TData extends ResourceRow>({
 }: Props<TData>) {
   if (isLoading) {
     return <TablePageSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardContent>
+          <ErrorState onRetry={onRetry} />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

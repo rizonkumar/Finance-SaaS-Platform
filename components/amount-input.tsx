@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { MoneyInput } from "@/components/money-input";
-import { cn } from "@/lib/utils";
+import { cn, signedAmount, unsignedAmount } from "@/lib/utils";
 
 type Props = {
   value: string;
@@ -24,30 +24,19 @@ export const AmountInput = ({
 
   const parsedValue = parseFloat(value);
   const hasValue = value !== "" && !isNaN(parsedValue) && parsedValue !== 0;
-  // Reflect the pending choice while the field is empty, so the toggle never
-  // shows nothing selected when a sign is already in effect.
   const isCredit = hasValue ? parsedValue > 0 : preferredSign === 1;
-  const isDebit = hasValue ? parsedValue < 0 : preferredSign === -1;
+  const isDebit = !isCredit;
+
+  const magnitude = unsignedAmount(value);
 
   const selectType = (sign: 1 | -1) => {
     setPreferredSign(sign);
 
-    if (hasValue) {
-      onChange((Math.abs(parsedValue) * sign).toString());
-    }
+    if (magnitude) onChange(signedAmount(magnitude, sign));
   };
 
   const onValueChange = (rawValue: string | undefined) => {
-    if (!rawValue) {
-      onChange(rawValue);
-      return;
-    }
-
-    const currentSign = isDebit ? -1 : 1;
-    const sign = hasValue ? currentSign : preferredSign;
-    const magnitude = Math.abs(parseFloat(rawValue));
-
-    onChange((magnitude * sign).toString());
+    onChange(signedAmount(rawValue, isDebit ? -1 : 1));
   };
 
   return (
@@ -84,7 +73,7 @@ export const AmountInput = ({
       </div>
       <MoneyInput
         placeholder={placeholder}
-        value={value}
+        value={magnitude}
         onChange={onValueChange}
         disabled={disabled}
       />

@@ -34,7 +34,7 @@ import {
 } from "@/lib/debts";
 import { paidByDebt } from "@/lib/debt-ledger";
 import { API_ERRORS } from "@/lib/messages";
-import { nextOccurrence } from "@/lib/recurring";
+import { nextOccurrence, safeMaterialize } from "@/lib/recurring";
 
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
@@ -239,6 +239,9 @@ const app = new Hono<AuthedEnv>()
   .use("*", clerkMiddleware(), requireAuth)
   .get("/", async (c) => {
     const userId = c.get("userId");
+
+    await safeMaterialize(userId);
+
     const rows = await loadDebts(userId);
 
     return c.json({ data: await withProgress(userId, rows) });
@@ -246,6 +249,9 @@ const app = new Hono<AuthedEnv>()
   .get("/plan", zValidator("query", planQuery), async (c) => {
     const userId = c.get("userId");
     const extra = c.req.valid("query").extra ?? 0;
+
+    await safeMaterialize(userId);
+
     const rows = await withProgress(userId, await loadDebts(userId));
 
     const outstanding = rows
@@ -272,6 +278,9 @@ const app = new Hono<AuthedEnv>()
   .get("/:id", zValidator("param", idParam), async (c) => {
     const userId = c.get("userId");
     const id = requireId(c.req.valid("param").id);
+
+    await safeMaterialize(userId);
+
     const rows = await loadDebts(userId, id);
 
     if (rows.length === 0) {

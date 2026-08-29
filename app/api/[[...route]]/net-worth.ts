@@ -34,7 +34,7 @@ import {
   type AccountDelta,
   type DailyDelta,
 } from "@/lib/net-worth";
-import { materializeRecurringTransactions } from "@/lib/recurring";
+import { safeMaterialize } from "@/lib/recurring";
 
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
@@ -179,11 +179,7 @@ const app = new Hono<AuthedEnv>()
     const { from, to } = c.req.valid("query");
     const { days, start, end } = resolveRange(from, to);
 
-    try {
-      await materializeRecurringTransactions(userId);
-    } catch (error) {
-      console.error("[recurring] materialize failed", error);
-    }
+    await safeMaterialize(userId);
 
     const [
       ownedAccounts,

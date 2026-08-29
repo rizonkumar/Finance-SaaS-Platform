@@ -34,7 +34,10 @@ const formSchema = z
     payee: z
       .string("Enter a name")
       .min(1, "Enter a name, e.g. Landlord or your employer"),
-    amount: z.string().min(1, "Enter an amount"),
+    amount: z
+      .string()
+      .min(1, "Enter an amount")
+      .refine((value) => parseFloat(value) !== 0, "Enter an amount"),
     accountId: z.string().min(1, "Select an account"),
     toAccountId: z.string().nullable().optional(),
     categoryId: z.string().nullable().optional(),

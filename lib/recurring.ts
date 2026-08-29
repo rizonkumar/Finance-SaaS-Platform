@@ -165,6 +165,14 @@ export async function materializeRecurringTransactions(
   return { inserted, skipped: false, capped };
 }
 
+export async function safeMaterialize(userId: string, recurringId?: string) {
+  try {
+    await materializeRecurringTransactions(userId, recurringId);
+  } catch (error) {
+    console.error("[recurring] materialize failed", error);
+  }
+}
+
 export async function purgeGenerated(recurringId: string) {
   const deleted = await db
     .delete(transactions)

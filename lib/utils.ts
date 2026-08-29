@@ -102,6 +102,19 @@ export function formatMonths(months: number) {
   return `${years} yr ${remainder} mo`;
 }
 
+export function signedAmount(
+  magnitude: string | undefined,
+  sign: 1 | -1
+): string | undefined {
+  if (!magnitude) return magnitude;
+
+  const bare = magnitude.replace(/^-/, "");
+
+  return sign === -1 ? `-${bare}` : bare;
+}
+
+export const unsignedAmount = (value: string) => value.replace(/^-/, "");
+
 const CADENCE_UNITS = {
   daily: "day",
   weekly: "week",

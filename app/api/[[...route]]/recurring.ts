@@ -23,6 +23,7 @@ import {
   nextOccurrence,
   projectedBackfill,
   purgeGenerated,
+  safeMaterialize,
 } from "@/lib/recurring";
 
 import { requireAuth, type AuthedEnv } from "./_middleware";
@@ -45,6 +46,14 @@ const recurringBody = insertRecurringTransactionSchema
         code: "custom",
         path: ["toAccountId"],
         message: "Pick a different account to transfer into",
+      });
+    }
+
+    if (value.amount === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["amount"],
+        message: "Enter an amount",
       });
     }
 
@@ -80,14 +89,6 @@ const requireId = (id?: string) => {
   if (!id) throw new HTTPException(400, { message: API_ERRORS.missingId });
   return id;
 };
-
-async function safeMaterialize(userId: string, recurringId?: string) {
-  try {
-    await materializeRecurringTransactions(userId, recurringId);
-  } catch (error) {
-    console.error("[recurring] materialize failed", error);
-  }
-}
 
 type OwnedRefs = {
   accountId: string;

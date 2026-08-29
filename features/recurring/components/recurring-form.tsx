@@ -154,6 +154,33 @@ export const RecurringForm = ({
         onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-4 pt-4"
       >
+        {!isTransfer && debtOptions.length > 0 && (
+          <FormField
+            name="debtId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Logs against debt (optional)</FormLabel>
+                <FormControl>
+                  <Select
+                    placeholder="Not a debt payment"
+                    options={debtOptions}
+                    value={field.value}
+                    onChange={onDebtChange}
+                    disabled={disabled}
+                    isClearable
+                  />
+                </FormControl>
+                <FormDescription>
+                  Picking one fills the rest in from the debt, which you can
+                  still change. Each run records a payment against it, so the
+                  balance shrinks on its own, and still counts as an expense.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           name="payee"
           control={form.control}
@@ -252,32 +279,6 @@ export const RecurringForm = ({
                   Pick a destination to schedule a transfer, such as a monthly
                   SIP. Each run records both sides and is left out of income,
                   expenses and budgets.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-        {!isTransfer && debtOptions.length > 0 && (
-          <FormField
-            name="debtId"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Logs against debt (optional)</FormLabel>
-                <FormControl>
-                  <Select
-                    placeholder="Not a debt payment"
-                    options={debtOptions}
-                    value={field.value}
-                    onChange={field.onChange}
-                    disabled={disabled}
-                    isClearable
-                  />
-                </FormControl>
-                <FormDescription>
-                  Each run also records a payment against this debt, so the
-                  balance shrinks on its own. Still counts as an expense.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { clerkMiddleware } from "@hono/clerk-auth";
+import { clerkMiddleware } from "@clerk/hono";
 import { and, eq, gte, lt, lte, sql, sum } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";

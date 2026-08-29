@@ -1,4 +1,4 @@
-import { clerkMiddleware } from "@hono/clerk-auth";
+import { clerkMiddleware } from "@clerk/hono";
 import { zValidator } from "@hono/zod-validator";
 import { and, eq, lt, sum } from "drizzle-orm";
 import { Hono } from "hono";

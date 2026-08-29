@@ -15,6 +15,7 @@ import {
   payoffPercentage,
   projectedPayoffDate,
   requiredPayment,
+  scheduleDefaultsForDebt,
   simulatePayoff,
   totalInterest,
 } from "@/lib/debts";
@@ -67,6 +68,49 @@ describe("payoffPercentage", () => {
 
   it("guards against a non-positive principal", () => {
     expect(payoffPercentage(500, 0)).toBe(0);
+  });
+
+  it("clamps at 100, so a final oversized payment cannot read past cleared", () => {
+    expect(payoffPercentage(120_000, 100_000)).toBe(100);
+  });
+});
+
+describe("scheduleDefaultsForDebt", () => {
+  const bikeLoan = {
+    name: "Bike Loan",
+    balance: 176_000,
+    aprBasisPoints: 1700,
+    minimumPayment: 12_000,
+  };
+
+  it("names the schedule the way a logged payment names its transaction", () => {
+    expect(scheduleDefaultsForDebt(bikeLoan).payee).toBe("Debt: Bike Loan");
+  });
+
+  it("signs the amount as money leaving the account", () => {
+    expect(scheduleDefaultsForDebt(bikeLoan).amount).toBe(-12_000);
+  });
+
+  it("repeats monthly, matching what minimumPayment already means", () => {
+    expect(scheduleDefaultsForDebt(bikeLoan)).toMatchObject({
+      frequency: "monthly",
+      interval: 1,
+    });
+  });
+
+  it("ends the schedule at the projected payoff", () => {
+    const today = new Date("2026-08-29T00:00:00.000Z");
+    const defaults = scheduleDefaultsForDebt(bikeLoan, today);
+
+    expect(defaults.endDate).toEqual(
+      projectedPayoffDate(176_000, 1700, 12_000, today)
+    );
+  });
+
+  it("leaves the end date open when the payment never clears the debt", () => {
+    const stalled = { ...bikeLoan, minimumPayment: 100 };
+
+    expect(scheduleDefaultsForDebt(stalled).endDate).toBeNull();
   });
 });
 

@@ -102,6 +102,24 @@ export function formatMonths(months: number) {
   return `${years} yr ${remainder} mo`;
 }
 
+const CADENCE_UNITS = {
+  daily: "day",
+  weekly: "week",
+  monthly: "month",
+  yearly: "year",
+} as const;
+
+export function formatCadence(cadence: {
+  frequency: keyof typeof CADENCE_UNITS;
+  interval: number;
+}) {
+  const unit = CADENCE_UNITS[cadence.frequency];
+
+  return cadence.interval === 1
+    ? `Every ${unit}`
+    : `Every ${cadence.interval} ${unit}s`;
+}
+
 export function formatPercentage(
   value: number,
   options: { addPrefix?: boolean } = {

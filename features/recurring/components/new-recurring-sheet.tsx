@@ -16,7 +16,7 @@ import { useNewRecurring } from "@/features/recurring/hooks/use-new-recurring";
 import { useRecurringOptions } from "@/features/recurring/hooks/use-recurring-options";
 
 export const NewRecurringSheet = () => {
-  const { isOpen, onClose } = useNewRecurring();
+  const { isOpen, onClose, prefill } = useNewRecurring();
 
   const createMutation = useCreateRecurring();
   const options = useRecurringOptions();
@@ -45,18 +45,20 @@ export const NewRecurringSheet = () => {
             disabled={createMutation.isPending || options.isPending}
             accountOptions={options.accountOptions}
             categoryOptions={options.categoryOptions}
+            debtOptions={options.debtOptions}
             onCreateAccount={options.onCreateAccount}
             onCreateCategory={options.onCreateCategory}
             defaultValues={{
-              payee: "",
-              amount: "",
-              accountId: "",
+              payee: prefill?.payee ?? "",
+              amount: prefill?.amount ?? "",
+              accountId: prefill?.accountId ?? "",
               toAccountId: null,
               categoryId: null,
-              frequency: "monthly",
-              interval: "1",
+              debtId: prefill?.debtId ?? null,
+              frequency: prefill?.frequency ?? "monthly",
+              interval: prefill?.interval ?? "1",
               startDate: new Date(),
-              endDate: null,
+              endDate: prefill?.endDate ?? null,
               notes: null,
               isActive: true,
             }}

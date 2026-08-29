@@ -3,7 +3,11 @@ import type { InferRequestType, InferResponseType } from "hono";
 import { toast } from "sonner";
 
 import { client } from "@/lib/hono";
-import { DEBT_DEPENDENT_KEYS, queryKeys } from "@/lib/query-keys";
+import {
+  DEBT_DEPENDENT_KEYS,
+  MONEY_DEPENDENT_KEYS,
+  queryKeys,
+} from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<
   (typeof client.api.debts)[":id"]["payments"]["$post"]
@@ -36,7 +40,7 @@ export const useAddPayment = (id?: string) => {
         variables.amount < 0 ? "Extra borrowing recorded" : "Payment recorded"
       );
       queryClient.invalidateQueries({ queryKey: queryKeys.debt(id) });
-      DEBT_DEPENDENT_KEYS.forEach((queryKey) =>
+      [...DEBT_DEPENDENT_KEYS, ...MONEY_DEPENDENT_KEYS].forEach((queryKey) =>
         queryClient.invalidateQueries({ queryKey })
       );
     },

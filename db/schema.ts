@@ -79,6 +79,9 @@ export const recurringTransactions = pgTable(
     categoryId: text("category_id").references(() => categories.id, {
       onDelete: "set null",
     }),
+    debtId: text("debt_id").references(() => debts.id, {
+      onDelete: "cascade",
+    }),
     frequency: recurringFrequencyEnum("frequency").notNull(),
     interval: integer("interval").notNull().default(1),
     startDate: timestamp("start_date", { mode: "date" }).notNull(),
@@ -93,6 +96,7 @@ export const recurringTransactions = pgTable(
       table.userId,
       table.isActive
     ),
+    index("recurring_transactions_debt_id_idx").on(table.debtId),
   ]
 );
 
@@ -151,6 +155,10 @@ export const recurringTransactionsRelations = relations(
     category: one(categories, {
       fields: [recurringTransactions.categoryId],
       references: [categories.id],
+    }),
+    debt: one(debts, {
+      fields: [recurringTransactions.debtId],
+      references: [debts.id],
     }),
     transactions: many(transactions),
   })
@@ -350,6 +358,7 @@ export const debtsRelations = relations(debts, ({ one, many }) => ({
     references: [accounts.id],
   }),
   payments: many(debtPayments),
+  schedules: many(recurringTransactions),
 }));
 
 export const debtPaymentsRelations = relations(debtPayments, ({ one }) => ({

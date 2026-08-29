@@ -11,6 +11,7 @@ import { db } from "@/db/drizzle";
 import {
   accounts,
   categories,
+  debts,
   insertRecurringTransactionSchema,
   recurringTransactions,
   transactions,
@@ -46,6 +47,14 @@ const recurringBody = insertRecurringTransactionSchema
         message: "Pick a different account to transfer into",
       });
     }
+
+    if (value.toAccountId && value.debtId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["debtId"],
+        message: "A debt schedule cannot also be a transfer",
+      });
+    }
   });
 
 const SCHEDULE_FIELDS = [
@@ -54,6 +63,7 @@ const SCHEDULE_FIELDS = [
   "interval",
   "accountId",
   "toAccountId",
+  "debtId",
 ] as const;
 
 type RecurringBody = z.infer<typeof recurringBody>;
@@ -63,6 +73,7 @@ const toRow = (values: Omit<RecurringBody, "skipMissed">) => ({
   endDate: values.endDate ?? null,
   toAccountId: values.toAccountId ?? null,
   categoryId: values.toAccountId ? null : (values.categoryId ?? null),
+  debtId: values.toAccountId ? null : (values.debtId ?? null),
 });
 
 const requireId = (id?: string) => {
@@ -70,9 +81,9 @@ const requireId = (id?: string) => {
   return id;
 };
 
-async function safeMaterialize(userId: string) {
+async function safeMaterialize(userId: string, recurringId?: string) {
   try {
-    await materializeRecurringTransactions(userId);
+    await materializeRecurringTransactions(userId, recurringId);
   } catch (error) {
     console.error("[recurring] materialize failed", error);
   }
@@ -82,7 +93,21 @@ type OwnedRefs = {
   accountId: string;
   toAccountId?: string | null;
   categoryId?: string | null;
+  debtId?: string | null;
 };
+
+async function assertOwnedDebt(userId: string, debtId?: string | null) {
+  if (!debtId) return;
+
+  const [debt] = await db
+    .select({ id: debts.id })
+    .from(debts)
+    .where(and(eq(debts.userId, userId), eq(debts.id, debtId)));
+
+  if (!debt) {
+    throw new HTTPException(400, { message: "That debt could not be found" });
+  }
+}
 
 async function assertOwnedRefs(userId: string, refs: OwnedRefs) {
   const { categoryId } = refs;
@@ -104,6 +129,8 @@ async function assertOwnedRefs(userId: string, refs: OwnedRefs) {
       message: "That account could not be found",
     });
   }
+
+  await assertOwnedDebt(userId, refs.debtId);
 
   if (!categoryId) return;
 
@@ -132,6 +159,7 @@ async function loadTemplates(userId: string, templateId?: string) {
       account: accounts.name,
       toAccount: destination.name,
       category: categories.name,
+      debt: debts.name,
     })
     .from(recurringTransactions)
     .innerJoin(accounts, eq(recurringTransactions.accountId, accounts.id))
@@ -140,6 +168,7 @@ async function loadTemplates(userId: string, templateId?: string) {
       eq(recurringTransactions.toAccountId, destination.id)
     )
     .leftJoin(categories, eq(recurringTransactions.categoryId, categories.id))
+    .leftJoin(debts, eq(recurringTransactions.debtId, debts.id))
     .where(and(...filters));
 
   const counts = await db
@@ -160,11 +189,12 @@ async function loadTemplates(userId: string, templateId?: string) {
     counts.map((row) => [row.recurringId, row.generated])
   );
 
-  return rows.map(({ template, account, toAccount, category }) => ({
+  return rows.map(({ template, account, toAccount, category, debt }) => ({
     ...template,
     account,
     toAccount,
     category,
+    debt,
     nextOccurrence: nextOccurrence(template),
     generatedCount: generatedById.get(template.id) ?? 0,
   }));
@@ -213,7 +243,7 @@ const app = new Hono<AuthedEnv>()
       })
       .returning();
 
-    await safeMaterialize(userId);
+    await safeMaterialize(userId, data?.id);
 
     return c.json({ data });
   })
@@ -231,9 +261,9 @@ const app = new Hono<AuthedEnv>()
     return c.json({ data });
   })
   .post("/:id/run", zValidator("param", idParam), async (c) => {
-    requireId(c.req.valid("param").id);
+    const id = requireId(c.req.valid("param").id);
 
-    const result = await materializeRecurringTransactions(c.get("userId"));
+    const result = await materializeRecurringTransactions(c.get("userId"), id);
 
     return c.json({ data: { inserted: result.inserted } });
   })
@@ -288,7 +318,7 @@ const app = new Hono<AuthedEnv>()
         )
         .returning();
 
-      await safeMaterialize(userId);
+      await safeMaterialize(userId, id);
 
       return c.json({ data, purgedTransactions });
     }

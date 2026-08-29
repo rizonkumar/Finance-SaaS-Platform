@@ -11,31 +11,55 @@ import {
 import { alias } from "drizzle-orm/pg-core";
 
 import { db } from "@/db/drizzle";
-import { accounts, recurringTransactions, transactions } from "@/db/schema";
+import {
+  accounts,
+  debtPayments,
+  debts,
+  recurringTransactions,
+  transactions,
+} from "@/db/schema";
 import { toUtcNoon } from "@/lib/date-utc";
-import { MAX_INSERTS_PER_RUN, planOccurrences } from "@/lib/recurrence";
+import { paidByDebt } from "@/lib/debt-ledger";
+import { outstandingBalance } from "@/lib/debts";
+import {
+  MAX_INSERTS_PER_RUN,
+  planOccurrences,
+  type PlannableTemplate,
+} from "@/lib/recurrence";
 
 const THROTTLE_MS = 30_000;
 
 const lastRunByUser = new Map<string, number>();
 
-export async function materializeRecurringTransactions(userId: string) {
-  const startedAt = Date.now();
-  const last = lastRunByUser.get(userId);
+type TemplateRow = Omit<PlannableTemplate, "debtRemaining"> & {
+  debtPrincipal: number | null;
+};
 
-  if (last && startedAt - last < THROTTLE_MS) {
-    return { inserted: 0, skipped: true, capped: false };
-  }
-
-  const today = toUtcNoon(new Date());
-
+async function loadPlannableTemplates(
+  userId: string,
+  today: Date,
+  recurringId?: string
+): Promise<PlannableTemplate[]> {
   const destination = alias(accounts, "destination_account");
 
-  const templates = await db
+  const filters = [
+    eq(recurringTransactions.userId, userId),
+    eq(recurringTransactions.isActive, true),
+    lte(recurringTransactions.startDate, today),
+    or(
+      isNull(recurringTransactions.lastGeneratedAt),
+      lte(recurringTransactions.lastGeneratedAt, today)
+    ),
+  ];
+
+  if (recurringId) filters.push(eq(recurringTransactions.id, recurringId));
+
+  const rows: TemplateRow[] = await db
     .select({
       ...getTableColumns(recurringTransactions),
       accountName: accounts.name,
       toAccountName: destination.name,
+      debtPrincipal: debts.principal,
     })
     .from(recurringTransactions)
     .innerJoin(accounts, eq(recurringTransactions.accountId, accounts.id))
@@ -43,64 +67,102 @@ export async function materializeRecurringTransactions(userId: string) {
       destination,
       eq(recurringTransactions.toAccountId, destination.id)
     )
-    .where(
-      and(
-        eq(recurringTransactions.userId, userId),
-        eq(recurringTransactions.isActive, true),
-        lte(recurringTransactions.startDate, today),
-        or(
-          isNull(recurringTransactions.lastGeneratedAt),
-          lte(recurringTransactions.lastGeneratedAt, today)
-        )
-      )
-    );
+    .leftJoin(debts, eq(recurringTransactions.debtId, debts.id))
+    .where(and(...filters));
+
+  const debtIds = [
+    ...new Set(
+      rows.map((row) => row.debtId).filter((id): id is string => Boolean(id))
+    ),
+  ];
+
+  const paidTotals = await paidByDebt(userId, debtIds);
+
+  return rows.map(({ debtPrincipal, ...row }) => ({
+    ...row,
+    debtRemaining:
+      row.debtId && debtPrincipal !== null
+        ? outstandingBalance(debtPrincipal, paidTotals.get(row.debtId) ?? 0)
+        : null,
+  }));
+}
+
+export async function materializeRecurringTransactions(
+  userId: string,
+  recurringId?: string
+) {
+  const startedAt = Date.now();
+  const last = lastRunByUser.get(userId);
+  const throttled = Boolean(last && startedAt - last < THROTTLE_MS);
+
+  // An explicit run is a direct user action on one schedule, so it bypasses the
+  // throttle that exists only to keep incidental page reads cheap.
+  if (throttled && !recurringId) {
+    return { inserted: 0, skipped: true, capped: false };
+  }
+
+  const today = toUtcNoon(new Date());
+  const templates = await loadPlannableTemplates(userId, today, recurringId);
+
+  const markRun = () => {
+    if (!recurringId) lastRunByUser.set(userId, startedAt);
+  };
 
   if (templates.length === 0) {
-    lastRunByUser.set(userId, startedAt);
+    markRun();
     return { inserted: 0, skipped: false, capped: false };
   }
 
-  const { rows, watermarks } = planOccurrences(templates, today);
+  const { rows, payments, watermarks } = planOccurrences(templates, today);
 
   if (rows.length === 0) {
-    lastRunByUser.set(userId, startedAt);
+    markRun();
     return { inserted: 0, skipped: false, capped: false };
   }
-
-  const inserted = await db
-    .insert(transactions)
-    .values(rows)
-    .onConflictDoNothing({ target: transactions.id })
-    .returning({ id: transactions.id });
 
   const cases = watermarks.map(
     (mark) =>
       sql`when ${recurringTransactions.id} = ${mark.id} then ${mark.date}::timestamp`
   );
 
-  await db
-    .update(recurringTransactions)
-    .set({
-      lastGeneratedAt: sql`greatest(
+  const inserted = await db.transaction(async (tx) => {
+    const written = await tx
+      .insert(transactions)
+      .values(rows)
+      .onConflictDoNothing({ target: transactions.id })
+      .returning({ id: transactions.id });
+
+    if (payments.length > 0) {
+      await tx
+        .insert(debtPayments)
+        .values(payments)
+        .onConflictDoNothing({ target: debtPayments.id });
+    }
+
+    await tx
+      .update(recurringTransactions)
+      .set({
+        lastGeneratedAt: sql`greatest(
         coalesce(${recurringTransactions.lastGeneratedAt}, 'epoch'::timestamp),
         (case ${sql.join(cases, sql` `)} else 'epoch'::timestamp end)
       )`,
-      updatedAt: new Date(),
-    })
-    .where(
-      inArray(
-        recurringTransactions.id,
-        watermarks.map((mark) => mark.id)
-      )
-    );
+        updatedAt: new Date(),
+      })
+      .where(
+        inArray(
+          recurringTransactions.id,
+          watermarks.map((mark) => mark.id)
+        )
+      );
+
+    return written.length;
+  });
 
   const capped = rows.length >= MAX_INSERTS_PER_RUN;
 
-  if (!capped) {
-    lastRunByUser.set(userId, startedAt);
-  }
+  if (!capped) markRun();
 
-  return { inserted: inserted.length, skipped: false, capped };
+  return { inserted, skipped: false, capped };
 }
 
 export async function purgeGenerated(recurringId: string) {
@@ -118,6 +180,7 @@ export async function purgeGenerated(recurringId: string) {
 }
 
 export {
+  generatedDebtPaymentId,
   generatedTransactionId,
   generatedTransferId,
   nextOccurrence,

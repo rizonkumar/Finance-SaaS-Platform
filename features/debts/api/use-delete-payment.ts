@@ -4,7 +4,11 @@ import { toast } from "sonner";
 
 import { client } from "@/lib/hono";
 import { toastMessages } from "@/lib/messages";
-import { DEBT_DEPENDENT_KEYS, queryKeys } from "@/lib/query-keys";
+import {
+  DEBT_DEPENDENT_KEYS,
+  MONEY_DEPENDENT_KEYS,
+  queryKeys,
+} from "@/lib/query-keys";
 
 type ResponseType = InferResponseType<
   (typeof client.api.debts)[":id"]["payments"][":paymentId"]["$delete"]
@@ -31,7 +35,7 @@ export const useDeletePayment = (id?: string) => {
     onSuccess: () => {
       toast.success(messages.deleteSuccess);
       queryClient.invalidateQueries({ queryKey: queryKeys.debt(id) });
-      DEBT_DEPENDENT_KEYS.forEach((queryKey) =>
+      [...DEBT_DEPENDENT_KEYS, ...MONEY_DEPENDENT_KEYS].forEach((queryKey) =>
         queryClient.invalidateQueries({ queryKey })
       );
     },

@@ -1,4 +1,8 @@
-import type { recurringTransactions, transactions } from "@/db/schema";
+import type {
+  debtPayments,
+  recurringTransactions,
+  transactions,
+} from "@/db/schema";
 import {
   addDaysUTC,
   addMonthsUTC,
@@ -16,6 +20,7 @@ export type RecurringTemplate = typeof recurringTransactions.$inferSelect;
 export type PlannableTemplate = RecurringTemplate & {
   accountName: string;
   toAccountName: string | null;
+  debtRemaining: number | null;
 };
 
 export type RecurrenceRule = Pick<
@@ -80,7 +85,7 @@ export function seekIndex(
 }
 
 export function nextOccurrence(
-  template: RecurringTemplate,
+  template: RecurrenceRule & { isActive: boolean; endDate: Date | null },
   from: Date = new Date()
 ): Date | null {
   if (!template.isActive) return null;
@@ -124,10 +129,16 @@ export const generatedTransactionId = (recurringId: string, occurrence: Date) =>
 export const generatedTransferId = (recurringId: string, occurrence: Date) =>
   `rtr_${recurringId}_${dateKeyUTC(occurrence)}`;
 
+export const generatedDebtPaymentId = (recurringId: string, occurrence: Date) =>
+  `rdp_${recurringId}_${dateKeyUTC(occurrence)}`;
+
 type PlannedRow = typeof transactions.$inferInsert;
+
+type PlannedPayment = typeof debtPayments.$inferInsert;
 
 type TemplatePlan = {
   rows: PlannedRow[];
+  payments: PlannedPayment[];
   latest: Date | null;
 };
 
@@ -171,10 +182,58 @@ function occurrenceRows(
   ];
 }
 
+function occurrencePayment(
+  template: PlannableTemplate,
+  occurrence: Date
+): PlannedPayment | null {
+  if (!template.debtId) return null;
+
+  return {
+    id: generatedDebtPaymentId(template.id, occurrence),
+    userId: template.userId,
+    debtId: template.debtId,
+    amount: -template.amount,
+    notes: template.notes,
+    date: occurrence,
+    transactionId: generatedTransactionId(template.id, occurrence),
+  };
+}
+
+type OwedLedger = Map<string, number>;
+
+function seedOwed(templates: PlannableTemplate[]): OwedLedger {
+  const owed: OwedLedger = new Map();
+
+  for (const template of templates) {
+    if (template.debtId && template.debtRemaining !== null) {
+      owed.set(template.debtId, template.debtRemaining);
+    }
+  }
+
+  return owed;
+}
+
+function isCleared(template: PlannableTemplate, owed: OwedLedger): boolean {
+  if (!template.debtId || template.amount >= 0) return false;
+
+  const remaining = owed.get(template.debtId);
+
+  return remaining !== undefined && remaining <= 0;
+}
+
+function drawDown(owed: OwedLedger, payment: PlannedPayment) {
+  const remaining = owed.get(payment.debtId);
+
+  if (remaining === undefined) return;
+
+  owed.set(payment.debtId, remaining - payment.amount);
+}
+
 function planTemplate(
   template: PlannableTemplate,
   today: Date,
-  budget: number
+  budget: number,
+  owed: OwedLedger
 ): TemplatePlan {
   const end = template.endDate ? toUtcNoon(template.endDate) : null;
   const horizon = end && end < today ? end : today;
@@ -183,6 +242,7 @@ function planTemplate(
     : null;
 
   const rows: PlannedRow[] = [];
+  const payments: PlannedPayment[] = [];
   let index = seekIndex(template, watermark);
   let occurrences = 0;
   let latest: Date | null = null;
@@ -191,40 +251,56 @@ function planTemplate(
     const occurrence = occurrenceAt(template, index);
 
     if (occurrence > horizon) break;
+    if (isCleared(template, owed)) break;
 
     const planned = occurrenceRows(template, occurrence);
 
     if (rows.length + planned.length > budget) break;
 
     rows.push(...planned);
+
+    const payment = occurrencePayment(template, occurrence);
+
+    if (payment) {
+      payments.push(payment);
+      drawDown(owed, payment);
+    }
+
     latest = occurrence;
     occurrences++;
     index++;
   }
 
-  return { rows, latest };
+  return { rows, payments, latest };
 }
 
 export function planOccurrences(
   templates: PlannableTemplate[],
   today: Date
-): { rows: PlannedRow[]; watermarks: { id: string; date: Date }[] } {
+): {
+  rows: PlannedRow[];
+  payments: PlannedPayment[];
+  watermarks: { id: string; date: Date }[];
+} {
   const rows: PlannedRow[] = [];
+  const payments: PlannedPayment[] = [];
   const watermarks: { id: string; date: Date }[] = [];
+  const owed = seedOwed(templates);
 
   for (const template of templates) {
     const budget = MAX_INSERTS_PER_RUN - rows.length;
 
     if (budget <= 0) break;
 
-    const plan = planTemplate(template, today, budget);
+    const plan = planTemplate(template, today, budget, owed);
 
     rows.push(...plan.rows);
+    payments.push(...plan.payments);
 
     if (plan.latest) {
       watermarks.push({ id: template.id, date: plan.latest });
     }
   }
 
-  return { rows, watermarks };
+  return { rows, payments, watermarks };
 }

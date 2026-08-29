@@ -14,12 +14,17 @@ import { PayoffPlanCard } from "@/features/debts/components/payoff-plan-card";
 import { useNewDebt } from "@/features/debts/hooks/use-new-debt";
 import { useOpenDebt } from "@/features/debts/hooks/use-open-debt";
 import { usePayDebt } from "@/features/debts/hooks/use-pay-debt";
+import { useNewRecurring } from "@/features/recurring/hooks/use-new-recurring";
+import { useOpenRecurring } from "@/features/recurring/hooks/use-open-recurring";
+import { scheduleDefaultsForDebt } from "@/lib/debts";
 import { formatCurrency } from "@/lib/utils";
 
 const DebtsPage = () => {
   const newDebt = useNewDebt();
   const openDebt = useOpenDebt();
   const payDebt = usePayDebt();
+  const newRecurring = useNewRecurring();
+  const openRecurring = useOpenRecurring();
   const debtsQuery = useGetDebts();
 
   if (debtsQuery.isLoading) {
@@ -37,6 +42,25 @@ const DebtsPage = () => {
   }
 
   const debts = debtsQuery.data ?? [];
+
+  const onAutomate = (id: string) => {
+    const debt = debts.find((row) => row.id === id);
+
+    if (!debt) return;
+
+    const defaults = scheduleDefaultsForDebt(debt);
+
+    newRecurring.onOpen({
+      payee: defaults.payee,
+      amount: String(defaults.amount),
+      accountId: debt.accountId ?? "",
+      debtId: debt.id,
+      frequency: defaults.frequency,
+      interval: String(defaults.interval),
+      endDate: defaults.endDate,
+    });
+  };
+
   const owed = debts.reduce((total, debt) => total + debt.balance, 0);
   const borrowed = debts.reduce((total, debt) => total + debt.principal, 0);
   const hasOutstanding = debts.some((debt) => debt.balance > 0);
@@ -83,6 +107,8 @@ const DebtsPage = () => {
                 {...debt}
                 onEdit={openDebt.onOpen}
                 onPay={payDebt.onOpen}
+                onAutomate={onAutomate}
+                onManageSchedule={openRecurring.onOpen}
               />
             ))}
           </div>

@@ -51,13 +51,13 @@ export const AppTopbar = () => {
       case "/debts":
         return { label: "Add debt", run: newDebt.onOpen };
       case "/recurring":
-        return { label: "Add schedule", run: newRecurring.onOpen };
+        return { label: "Add schedule", run: () => newRecurring.onOpen() };
       case "/accounts":
         return { label: "Add account", run: newAccount.onOpen };
       case "/categories":
         return { label: "Add category", run: newCategory.onOpen };
       case "/forecast":
-        return { label: "Add schedule", run: newRecurring.onOpen };
+        return { label: "Add schedule", run: () => newRecurring.onOpen() };
       case "/transactions":
       case "/":
       default:

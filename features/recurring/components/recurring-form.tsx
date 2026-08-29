@@ -37,6 +37,7 @@ const formSchema = z
     accountId: z.string().min(1, "Select an account"),
     toAccountId: z.string().nullable().optional(),
     categoryId: z.string().nullable().optional(),
+    debtId: z.string().nullable().optional(),
     frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
     interval: z.string().min(1, "Enter an interval"),
     startDate: z.date(),
@@ -62,6 +63,7 @@ export type RecurringApiValues = {
   accountId: string;
   toAccountId: string | null;
   categoryId: string | null;
+  debtId: string | null;
   frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number;
   startDate: Date;
@@ -80,6 +82,7 @@ type Props = {
   isDeleting?: boolean;
   accountOptions: { label: string; value: string }[];
   categoryOptions: { label: string; value: string }[];
+  debtOptions: { label: string; value: string }[];
   onCreateAccount: (name: string) => void;
   onCreateCategory: (name: string) => void;
 };
@@ -94,6 +97,7 @@ export const RecurringForm = ({
   isDeleting,
   accountOptions,
   categoryOptions,
+  debtOptions,
   onCreateAccount,
   onCreateCategory,
 }: Props) => {
@@ -103,7 +107,9 @@ export const RecurringForm = ({
   });
 
   const toAccountId = useWatch({ control: form.control, name: "toAccountId" });
+  const debtId = useWatch({ control: form.control, name: "debtId" });
   const isTransfer = Boolean(toAccountId);
+  const isDebt = Boolean(debtId);
 
   const handleSubmit = (values: RecurringFormValues) => {
     const entered = parseFloat(values.amount);
@@ -116,6 +122,7 @@ export const RecurringForm = ({
       accountId: values.accountId,
       toAccountId: values.toAccountId ?? null,
       categoryId: values.toAccountId ? null : (values.categoryId ?? null),
+      debtId: values.toAccountId ? null : (values.debtId ?? null),
       frequency: values.frequency,
       interval: parseInt(values.interval, 10),
       startDate: values.startDate,
@@ -208,31 +215,59 @@ export const RecurringForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          name="toAccountId"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Transfer to (optional)</FormLabel>
-              <FormControl>
-                <Select
-                  placeholder="Not a transfer"
-                  options={accountOptions}
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={disabled}
-                  isClearable
-                />
-              </FormControl>
-              <FormDescription>
-                Pick a destination to schedule a transfer, such as a monthly
-                SIP. Each run records both sides and is left out of income,
-                expenses and budgets.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isDebt && (
+          <FormField
+            name="toAccountId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Transfer to (optional)</FormLabel>
+                <FormControl>
+                  <Select
+                    placeholder="Not a transfer"
+                    options={accountOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={disabled}
+                    isClearable
+                  />
+                </FormControl>
+                <FormDescription>
+                  Pick a destination to schedule a transfer, such as a monthly
+                  SIP. Each run records both sides and is left out of income,
+                  expenses and budgets.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {!isTransfer && debtOptions.length > 0 && (
+          <FormField
+            name="debtId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Logs against debt (optional)</FormLabel>
+                <FormControl>
+                  <Select
+                    placeholder="Not a debt payment"
+                    options={debtOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={disabled}
+                    isClearable
+                  />
+                </FormControl>
+                <FormDescription>
+                  Each run also records a payment against this debt, so the
+                  balance shrinks on its own. Still counts as an expense.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         {!isTransfer && (
           <FormField
             name="categoryId"

@@ -3,6 +3,7 @@ import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useCreateCategory } from "@/features/categories/api/use-create-category";
 import { useGetCategories } from "@/features/categories/api/use-get-categories";
 import { useGetDebts } from "@/features/debts/api/use-get-debts";
+import { debtSchedulePrefill } from "@/features/recurring/debt-prefill";
 
 export const useRecurringOptions = () => {
   const accountQuery = useGetAccounts();
@@ -23,6 +24,7 @@ export const useRecurringOptions = () => {
     debtOptions: (debtQuery.data ?? []).map((debt) => ({
       label: debt.name,
       value: debt.id,
+      prefill: debtSchedulePrefill(debt),
     })),
     onCreateAccount: (name: string) => accountMutation.mutate({ name }),
     onCreateCategory: (name: string) => categoryMutation.mutate({ name }),

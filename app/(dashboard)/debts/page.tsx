@@ -14,9 +14,9 @@ import { PayoffPlanCard } from "@/features/debts/components/payoff-plan-card";
 import { useNewDebt } from "@/features/debts/hooks/use-new-debt";
 import { useOpenDebt } from "@/features/debts/hooks/use-open-debt";
 import { usePayDebt } from "@/features/debts/hooks/use-pay-debt";
+import { debtSchedulePrefill } from "@/features/recurring/debt-prefill";
 import { useNewRecurring } from "@/features/recurring/hooks/use-new-recurring";
 import { useOpenRecurring } from "@/features/recurring/hooks/use-open-recurring";
-import { scheduleDefaultsForDebt } from "@/lib/debts";
 import { formatCurrency } from "@/lib/utils";
 
 const DebtsPage = () => {
@@ -46,19 +46,7 @@ const DebtsPage = () => {
   const onAutomate = (id: string) => {
     const debt = debts.find((row) => row.id === id);
 
-    if (!debt) return;
-
-    const defaults = scheduleDefaultsForDebt(debt);
-
-    newRecurring.onOpen({
-      payee: defaults.payee,
-      amount: String(defaults.amount),
-      accountId: debt.accountId ?? "",
-      debtId: debt.id,
-      frequency: defaults.frequency,
-      interval: String(defaults.interval),
-      endDate: defaults.endDate,
-    });
+    if (debt) newRecurring.onOpen(debtSchedulePrefill(debt));
   };
 
   const owed = debts.reduce((total, debt) => total + debt.balance, 0);

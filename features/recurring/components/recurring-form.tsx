@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { DebtOption } from "@/features/recurring/debt-prefill";
 import { convertAmountToMiliunits } from "@/lib/utils";
 
 const FREQUENCY_OPTIONS = [
@@ -82,7 +83,7 @@ type Props = {
   isDeleting?: boolean;
   accountOptions: { label: string; value: string }[];
   categoryOptions: { label: string; value: string }[];
-  debtOptions: { label: string; value: string }[];
+  debtOptions: DebtOption[];
   onCreateAccount: (name: string) => void;
   onCreateCategory: (name: string) => void;
 };
@@ -110,6 +111,21 @@ export const RecurringForm = ({
   const debtId = useWatch({ control: form.control, name: "debtId" });
   const isTransfer = Boolean(toAccountId);
   const isDebt = Boolean(debtId);
+
+  const onDebtChange = (value?: string) => {
+    const picked = debtOptions.find((option) => option.value === value);
+
+    form.setValue("debtId", value ?? null, { shouldValidate: true });
+
+    if (!picked) return;
+
+    const { payee, amount, accountId, endDate } = picked.prefill;
+
+    form.setValue("payee", payee, { shouldValidate: true });
+    form.setValue("amount", amount, { shouldValidate: true });
+    form.setValue("accountId", accountId, { shouldValidate: true });
+    form.setValue("endDate", endDate, { shouldValidate: true });
+  };
 
   const handleSubmit = (values: RecurringFormValues) => {
     const entered = parseFloat(values.amount);

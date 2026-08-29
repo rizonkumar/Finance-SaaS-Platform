@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { ProgressBar } from "@/components/progress-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +22,8 @@ type Props = {
   href: string;
   items: GlanceItem[];
   isLoading: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   emptyIcon: LucideIcon;
   emptyTitle: string;
   emptyDescription: string;
@@ -31,6 +34,8 @@ export const GlanceCard = ({
   href,
   items,
   isLoading,
+  isError,
+  onRetry,
   emptyIcon,
   emptyTitle,
   emptyDescription,
@@ -44,6 +49,19 @@ export const GlanceCard = ({
         <CardContent className="space-y-4">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ErrorState onRetry={onRetry} />
         </CardContent>
       </Card>
     );

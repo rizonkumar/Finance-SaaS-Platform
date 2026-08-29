@@ -12,6 +12,7 @@ import {
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
@@ -110,6 +111,16 @@ const CategoriesPage = () => {
 
   if (categoriesQuery.isLoading) {
     return <CardGridSkeleton count={8} />;
+  }
+
+  if (categoriesQuery.isError) {
+    return (
+      <Card>
+        <CardContent>
+          <ErrorState onRetry={() => categoriesQuery.refetch()} />
+        </CardContent>
+      </Card>
+    );
   }
 
   const totalSpentMiliunits = categories.reduce(

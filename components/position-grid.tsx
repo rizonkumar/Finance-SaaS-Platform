@@ -3,7 +3,9 @@
 import { Landmark, Target } from "lucide-react";
 
 import { DataCard, DataCardLoading } from "@/components/data-card";
+import { ErrorState } from "@/components/error-state";
 import { StatGroup } from "@/components/stat-group";
+import { Card } from "@/components/ui/card";
 import { useGetDebts } from "@/features/debts/api/use-get-debts";
 import { useGetGoals } from "@/features/goals/api/use-get-goals";
 import { payoffPercentage } from "@/lib/debts";
@@ -20,6 +22,20 @@ export const PositionGrid = () => {
         <DataCardLoading />
         <DataCardLoading />
       </StatGroup>
+    );
+  }
+
+  if (goalsQuery.isError || debtsQuery.isError) {
+    return (
+      <Card className="mb-4 px-5">
+        <ErrorState
+          compact
+          onRetry={() => {
+            goalsQuery.refetch();
+            debtsQuery.refetch();
+          }}
+        />
+      </Card>
     );
   }
 

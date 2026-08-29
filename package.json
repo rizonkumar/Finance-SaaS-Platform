@@ -23,8 +23,8 @@
   },
   "dependencies": {
     "@clerk/backend": "^3.16.7",
+    "@clerk/hono": "^0.1.74",
     "@clerk/nextjs": "^7.7.7",
-    "@hono/clerk-auth": "^3.1.1",
     "@hono/zod-validator": "^0.9.0",
     "@hookform/resolvers": "^5.9.1",
     "@neondatabase/serverless": "1.1.0",
@@ -70,6 +70,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@clerk/types": "^4.101.20",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26",
     "@types/react": "^19",

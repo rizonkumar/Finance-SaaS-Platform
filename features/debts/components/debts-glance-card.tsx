@@ -25,6 +25,8 @@ export const DebtsGlanceCard = () => {
       href="/debts"
       items={items}
       isLoading={debtsQuery.isLoading}
+      isError={debtsQuery.isError}
+      onRetry={() => debtsQuery.refetch()}
       emptyIcon={Landmark}
       emptyTitle="No debts yet"
       emptyDescription="Track a loan or card to see it clear over time."

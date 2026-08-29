@@ -25,6 +25,8 @@ export const GoalsGlanceCard = () => {
       href="/goals"
       items={items}
       isLoading={goalsQuery.isLoading}
+      isError={goalsQuery.isError}
+      onRetry={() => goalsQuery.refetch()}
       emptyIcon={Target}
       emptyTitle="No goals yet"
       emptyDescription="Set a target to save towards."

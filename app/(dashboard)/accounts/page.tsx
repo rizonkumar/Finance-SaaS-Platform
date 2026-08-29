@@ -5,6 +5,7 @@ import { CreditCard, Grid, List, Plus, Trash, Wallet } from "lucide-react";
 
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,16 @@ const AccountsPage = () => {
 
   if (accountsQuery.isLoading) {
     return <CardGridSkeleton count={8} />;
+  }
+
+  if (accountsQuery.isError) {
+    return (
+      <Card>
+        <CardContent>
+          <ErrorState onRetry={() => accountsQuery.refetch()} />
+        </CardContent>
+      </Card>
+    );
   }
 
   const netBalanceMiliunits = accounts.reduce((sum, a) => sum + a.balance, 0);

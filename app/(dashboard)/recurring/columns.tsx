@@ -11,6 +11,8 @@ import { DISPLAY_DATE_FORMAT } from "@/lib/constants";
 import type { tableFeatureSet } from "@/lib/table-features";
 import { formatCurrency } from "@/lib/utils";
 
+import { Actions } from "./actions";
+
 export type RecurringRow = {
   id: string;
   payee: string;
@@ -136,5 +138,9 @@ export const columns: ColumnDef<typeof tableFeatureSet, RecurringRow>[] = [
         {row.original.generatedCount}
       </span>
     ),
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => <Actions id={row.original.id} />,
   },
 ];

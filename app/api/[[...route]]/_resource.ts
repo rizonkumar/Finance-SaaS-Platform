@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { zValidator } from "@hono/zod-validator";
-import { clerkMiddleware } from "@hono/clerk-auth";
+import { clerkMiddleware } from "@clerk/hono";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 

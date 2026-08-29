@@ -10,6 +10,7 @@ import {
   Landmark,
   Lock,
   PiggyBank,
+  Receipt,
   Trash,
   TrendingUp,
   Wallet,
@@ -20,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete-accounts";
+import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
 import { useConfirm } from "@/hooks/use-confirm";
 import { ACCOUNT_TYPE_LABELS } from "@/lib/constants";
 import type { AccountType } from "@/lib/net-worth";
@@ -44,31 +46,54 @@ type Account = {
   name: string;
   type: AccountType;
   balance: number;
+  openingBalance?: number;
+  transactionCount?: number;
 };
 
 type Props = {
   accounts: Account[];
+  selected?: string[];
+  onToggleSelect?: (id: string, checked: boolean) => void;
+  onToggleSelectAll?: (checked: boolean) => void;
 };
 
-export const AccountList = ({ accounts }: Props) => {
-  const [selected, setSelected] = useState<string[]>([]);
+export const AccountList = ({
+  accounts,
+  selected: externalSelected,
+  onToggleSelect: externalToggleSelect,
+  onToggleSelectAll: externalToggleSelectAll,
+}: Props) => {
+  const [internalSelected, setInternalSelected] = useState<string[]>([]);
   const deleteAccounts = useBulkDeleteAccounts();
+  const openAccount = useOpenAccount();
+
+  const selected = externalSelected ?? internalSelected;
 
   const [ConfirmDialog, confirm] = useConfirm(
     "Are you sure?",
-    "You are about to delete the selected accounts."
+    `You are about to delete ${selected.length} accounts.`
   );
 
   const allSelected =
     accounts.length > 0 && selected.length === accounts.length;
 
-  const toggleAll = (checked: boolean) =>
-    setSelected(checked ? accounts.map((account) => account.id) : []);
+  const toggleAll = (checked: boolean) => {
+    if (externalToggleSelectAll) {
+      externalToggleSelectAll(checked);
+    } else {
+      setInternalSelected(checked ? accounts.map((account) => account.id) : []);
+    }
+  };
 
-  const toggleOne = (id: string, checked: boolean) =>
-    setSelected((current) =>
-      checked ? [...current, id] : current.filter((value) => value !== id)
-    );
+  const toggleOne = (id: string, checked: boolean) => {
+    if (externalToggleSelect) {
+      externalToggleSelect(id, checked);
+    } else {
+      setInternalSelected((current) =>
+        checked ? [...current, id] : current.filter((value) => value !== id)
+      );
+    }
+  };
 
   const onBulkDelete = async () => {
     const ok = await confirm();
@@ -77,7 +102,7 @@ export const AccountList = ({ accounts }: Props) => {
 
     deleteAccounts.mutate(
       { ids: selected },
-      { onSuccess: () => setSelected([]) }
+      { onSuccess: () => toggleAll(false) }
     );
   };
 
@@ -101,7 +126,7 @@ export const AccountList = ({ accounts }: Props) => {
             disabled={deleteAccounts.isPending}
             onClick={onBulkDelete}
           >
-            <Trash className="size-4" />
+            <Trash className="mr-1.5 size-4" />
             Delete ({selected.length})
           </Button>
         )}
@@ -109,7 +134,7 @@ export const AccountList = ({ accounts }: Props) => {
 
       <ul className="divide-border divide-y">
         {accounts.map((account) => {
-          const Icon = TYPE_ICON[account.type];
+          const Icon = TYPE_ICON[account.type] ?? Landmark;
           const balance = convertAmountFromMiliunits(account.balance);
 
           return (
@@ -130,12 +155,31 @@ export const AccountList = ({ accounts }: Props) => {
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="copy-14 text-gray-1000 line-clamp-1 font-medium">
+                <button
+                  type="button"
+                  onClick={() => openAccount.onOpen(account.id)}
+                  className="copy-14 text-gray-1000 line-clamp-1 text-left font-medium hover:underline"
+                >
                   {account.name}
-                </p>
-                <p className="copy-13 text-gray-900">
-                  {ACCOUNT_TYPE_LABELS[account.type]}
-                </p>
+                </button>
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <span className="copy-13 text-gray-900">
+                    {ACCOUNT_TYPE_LABELS[account.type]}
+                  </span>
+                  {account.transactionCount !== undefined &&
+                    account.transactionCount > 0 && (
+                      <>
+                        <span className="text-gray-400">·</span>
+                        <span className="copy-13 flex items-center text-gray-700">
+                          <Receipt className="mr-1 inline size-3" />
+                          <span className="numeric">
+                            {account.transactionCount}
+                          </span>{" "}
+                          {account.transactionCount === 1 ? "txn" : "txns"}
+                        </span>
+                      </>
+                    )}
+                </div>
               </div>
 
               <Badge variant={balance < 0 ? "expense" : "income"}>

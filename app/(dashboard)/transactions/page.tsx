@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { ArrowLeftRight, Plus } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { DataTable } from "@/components/data-table";
@@ -131,10 +131,6 @@ const TransactionsPageContent = () => {
         filters={<Filters />}
         actions={
           <>
-            <Button onClick={() => newTransaction.onOpen()} size="sm">
-              <Plus className="size-4" />
-              Add Transaction
-            </Button>
             <Button onClick={newTransfer.onOpen} size="sm" variant="outline">
               <ArrowLeftRight className="size-4" />
               Transfer

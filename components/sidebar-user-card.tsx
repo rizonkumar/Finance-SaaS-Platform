@@ -5,15 +5,44 @@ import { Loader2 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
-export const SidebarUserCard = () => {
+type Props = {
+  isCollapsed?: boolean;
+  className?: string;
+};
+
+export const SidebarUserCard = ({ isCollapsed = false, className }: Props) => {
   const { user } = useUser();
 
   const name = user?.fullName ?? user?.username ?? "Your account";
   const secondary = user?.primaryEmailAddress?.emailAddress;
 
+  if (isCollapsed) {
+    return (
+      <div
+        className={cn("flex flex-col items-center gap-y-2.5 py-1", className)}
+      >
+        <div className="flex size-9 items-center justify-center">
+          <ClerkLoaded>
+            <UserButton />
+          </ClerkLoaded>
+          <ClerkLoading>
+            <Loader2 className="size-6 animate-spin text-gray-600" />
+          </ClerkLoading>
+        </div>
+        <ThemeToggle compact />
+      </div>
+    );
+  }
+
   return (
-    <div className="border-alpha-300 bg-alpha-100 flex items-center gap-x-2.5 rounded-md border p-2">
+    <div
+      className={cn(
+        "border-alpha-300 bg-alpha-100 flex items-center gap-x-2.5 rounded-md border p-2",
+        className
+      )}
+    >
       <ClerkLoaded>
         <UserButton />
       </ClerkLoaded>

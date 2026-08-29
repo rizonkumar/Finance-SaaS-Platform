@@ -40,6 +40,8 @@ export const MONEY_DEPENDENT_KEYS = [
   queryKeys.transactions(),
   queryKeys.budgets(),
   queryKeys.holdings(),
+  queryKeys.debts(),
+  queryKeys.debtPlans(),
 ];
 
 export const DEBT_DEPENDENT_KEYS = [

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DISPLAY_DATE_FORMAT } from "@/lib/constants";
 import type { tableFeatureSet } from "@/lib/table-features";
-import { formatCurrency } from "@/lib/utils";
+import { formatCadence, formatCurrency } from "@/lib/utils";
 
 import { Actions } from "./actions";
 
@@ -20,22 +20,12 @@ export type RecurringRow = {
   account: string;
   toAccount: string | null;
   category: string | null;
+  debt: string | null;
   frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number;
   isActive: boolean;
   nextOccurrence: string | null;
   generatedCount: number;
-};
-
-const cadenceLabel = (row: RecurringRow) => {
-  const unit = row.frequency.replace("ly", "");
-  const singular = { dai: "day", week: "week", month: "month", year: "year" }[
-    unit
-  ];
-
-  return row.interval === 1
-    ? `Every ${singular}`
-    : `Every ${row.interval} ${singular}s`;
 };
 
 export const columns: ColumnDef<typeof tableFeatureSet, RecurringRow>[] = [
@@ -89,7 +79,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, RecurringRow>[] = [
     header: "Repeats",
     cell: ({ row }) => (
       <span className="copy-13 text-gray-900">
-        {cadenceLabel(row.original)}
+        {formatCadence(row.original)}
       </span>
     ),
   },
@@ -110,10 +100,14 @@ export const columns: ColumnDef<typeof tableFeatureSet, RecurringRow>[] = [
     accessorKey: "category",
     header: "Category",
     cell: ({ row }) => {
-      const { toAccount, category } = row.original;
+      const { toAccount, category, debt } = row.original;
 
       if (toAccount) {
         return <Badge variant="info">Transfer to {toAccount}</Badge>;
+      }
+
+      if (debt) {
+        return <Badge variant="warning">{debt}</Badge>;
       }
 
       return (

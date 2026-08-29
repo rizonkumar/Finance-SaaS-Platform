@@ -23,7 +23,7 @@ import {
   DEFAULT_PERIOD_DAYS,
   TOP_CATEGORY_COUNT,
 } from "@/lib/constants";
-import { materializeRecurringTransactions } from "@/lib/recurring";
+import { safeMaterialize } from "@/lib/recurring";
 import { accounts, categories, trades, transactions } from "@/db/schema";
 import { calculatePercentageChange, fillMissingDays } from "@/lib/utils";
 
@@ -57,11 +57,7 @@ const app = new Hono().get(
       return c.json({ error: API_ERRORS.unauthorized }, 401);
     }
 
-    try {
-      await materializeRecurringTransactions(auth.userId);
-    } catch (error) {
-      console.error("[recurring] materialize failed", error);
-    }
+    await safeMaterialize(auth.userId);
 
     const defaultTo = new Date();
     const defaultFrom = subDays(defaultTo, DEFAULT_PERIOD_DAYS);

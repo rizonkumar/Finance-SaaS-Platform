@@ -31,6 +31,7 @@ const RecurringPage = () => {
     account: item.account,
     toAccount: item.toAccount,
     category: item.category,
+    debt: item.debt,
     frequency: item.frequency,
     interval: item.interval,
     isActive: item.isActive,
@@ -50,7 +51,7 @@ const RecurringPage = () => {
           title="No recurring transactions yet"
           description="Schedule rent, salary or a subscription once and it is entered for you from then on."
           actionLabel="Add Schedule"
-          onAction={newRecurring.onOpen}
+          onAction={() => newRecurring.onOpen()}
         />
       );
     }

@@ -1,3 +1,4 @@
-import { createNewSheetStore } from "@/features/create-sheet-store";
+import { createPrefillSheetStore } from "@/features/create-sheet-store";
+import type { RecurringPrefill } from "@/features/recurring/debt-prefill";
 
-export const useNewRecurring = createNewSheetStore();
+export const useNewRecurring = createPrefillSheetStore<RecurringPrefill>();

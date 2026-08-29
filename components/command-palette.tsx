@@ -71,7 +71,7 @@ export const CommandPalette = ({ className }: { className?: string }) => {
     { label: "New budget", run: newBudget.onOpen },
     { label: "New goal", run: newGoal.onOpen },
     { label: "New debt", run: newDebt.onOpen },
-    { label: "New recurring schedule", run: newRecurring.onOpen },
+    { label: "New recurring schedule", run: () => newRecurring.onOpen() },
     { label: "New account", run: newAccount.onOpen },
     { label: "New category", run: newCategory.onOpen },
   ];

@@ -74,6 +74,7 @@ export const EditRecurringSheet = () => {
               disabled={isPending}
               accountOptions={options.accountOptions}
               categoryOptions={options.categoryOptions}
+              debtOptions={options.debtOptions}
               onCreateAccount={options.onCreateAccount}
               onCreateCategory={options.onCreateCategory}
               defaultValues={{
@@ -82,6 +83,7 @@ export const EditRecurringSheet = () => {
                 accountId: data.accountId,
                 toAccountId: data.toAccountId,
                 categoryId: data.categoryId,
+                debtId: data.debtId,
                 frequency: data.frequency,
                 interval: String(data.interval),
                 startDate: new Date(data.startDate),

@@ -29,7 +29,7 @@ export const outstandingBalance = (principal: number, paid: number) =>
 export function payoffPercentage(paid: number, principal: number): number {
   if (principal <= 0) return 0;
 
-  return (paid / principal) * 100;
+  return Math.min((paid / principal) * 100, 100);
 }
 
 export const monthlyInterest = (balance: number, aprBasisPoints: number) =>
@@ -119,6 +119,39 @@ export function debtStatus(
   if (months > available + PAYOFF_TOLERANCE_MONTHS) return "behind";
 
   return "on-track";
+}
+
+export type ScheduleDefaults = {
+  payee: string;
+  amount: number;
+  frequency: "monthly";
+  interval: number;
+  endDate: Date | null;
+};
+
+export type SchedulableDebt = {
+  name: string;
+  balance: number;
+  aprBasisPoints: number;
+  minimumPayment: number;
+};
+
+export function scheduleDefaultsForDebt(
+  debt: SchedulableDebt,
+  today: Date = new Date()
+): ScheduleDefaults {
+  return {
+    payee: `Debt: ${debt.name}`,
+    amount: -Math.abs(debt.minimumPayment),
+    frequency: "monthly",
+    interval: 1,
+    endDate: projectedPayoffDate(
+      debt.balance,
+      debt.aprBasisPoints,
+      debt.minimumPayment,
+      today
+    ),
+  };
 }
 
 export type PlanDebt = {

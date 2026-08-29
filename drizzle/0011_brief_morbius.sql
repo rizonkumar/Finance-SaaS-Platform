@@ -1,0 +1,3 @@
+ALTER TABLE "recurring_transactions" ADD COLUMN "debt_id" text;--> statement-breakpoint
+ALTER TABLE "recurring_transactions" ADD CONSTRAINT "recurring_transactions_debt_id_debts_id_fk" FOREIGN KEY ("debt_id") REFERENCES "public"."debts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "recurring_transactions_debt_id_idx" ON "recurring_transactions" USING btree ("debt_id");

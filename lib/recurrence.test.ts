@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { dateKeyUTC } from "@/lib/date-utc";
 import {
+  generatedDebtPaymentId,
   generatedTransactionId,
   nextOccurrence,
   occurrenceAt,
@@ -41,6 +42,7 @@ const plannable = (
   ...template(),
   accountName: "IDFC Savings",
   toAccountName: null,
+  debtRemaining: null,
   ...overrides,
 });
 
@@ -271,5 +273,111 @@ describe("planOccurrences", () => {
     const { watermarks } = planOccurrences([sip()], utc("2026-03-15"));
 
     expect(watermarks).toEqual([{ id: "rec_1", date: occurrenceAt(sip(), 2) }]);
+  });
+});
+
+describe("planOccurrences with a debt-linked schedule", () => {
+  const emi = (overrides: Partial<PlannableTemplate> = {}) =>
+    plannable({
+      amount: -12_000_000,
+      payee: "Debt: Bike Loan",
+      debtId: "debt_1",
+      debtRemaining: 176_000_000,
+      ...overrides,
+    });
+
+  it("emits no payments for a schedule that is not linked to a debt", () => {
+    const { payments } = planOccurrences([plannable()], utc("2026-03-15"));
+
+    expect(payments).toHaveLength(0);
+  });
+
+  it("records one payment per occurrence alongside the transaction", () => {
+    const { rows, payments } = planOccurrences([emi()], utc("2026-03-15"));
+
+    expect(rows).toHaveLength(3);
+    expect(payments).toHaveLength(3);
+  });
+
+  it("points each payment at the transaction that carries the money", () => {
+    const { rows, payments } = planOccurrences([emi()], utc("2026-01-15"));
+
+    expect(payments[0]).toMatchObject({
+      id: generatedDebtPaymentId("rec_1", occurrenceAt(emi(), 0)),
+      transactionId: rows[0]?.id,
+      debtId: "debt_1",
+      userId: "user_1",
+    });
+  });
+
+  it("inverts the sign, because paying a debt is cash out and debt down", () => {
+    const { rows, payments } = planOccurrences([emi()], utc("2026-01-15"));
+
+    expect(rows[0]?.amount).toBe(-12_000_000);
+    expect(payments[0]?.amount).toBe(12_000_000);
+  });
+
+  it("derives stable payment ids so a second run inserts nothing new", () => {
+    const first = planOccurrences([emi()], utc("2026-03-15"));
+    const second = planOccurrences([emi()], utc("2026-03-15"));
+
+    expect(first.payments.map((row) => row.id)).toEqual(
+      second.payments.map((row) => row.id)
+    );
+    expect(new Set(first.payments.map((row) => row.id)).size).toBe(3);
+  });
+
+  it("stops once the debt is cleared rather than overpaying forever", () => {
+    const { rows, payments } = planOccurrences(
+      [emi({ debtRemaining: 24_000_000 })],
+      utc("2026-12-15")
+    );
+
+    expect(rows).toHaveLength(2);
+    expect(payments).toHaveLength(2);
+  });
+
+  it("counts payments already made, so an extra payment shortens the run", () => {
+    const { payments } = planOccurrences(
+      [emi({ debtRemaining: 0 })],
+      utc("2026-12-15")
+    );
+
+    expect(payments).toHaveLength(0);
+  });
+
+  it("draws two schedules on one debt down from a single balance", () => {
+    const { payments } = planOccurrences(
+      [
+        emi({ id: "rec_1", debtRemaining: 24_000_000 }),
+        emi({ id: "rec_2", debtRemaining: 24_000_000 }),
+      ],
+      utc("2026-12-15")
+    );
+
+    expect(payments).toHaveLength(2);
+    expect(payments.map((row) => row.id)).toEqual([
+      generatedDebtPaymentId("rec_1", occurrenceAt(emi(), 0)),
+      generatedDebtPaymentId("rec_1", occurrenceAt(emi(), 1)),
+    ]);
+  });
+
+  it("keeps adding to a cleared debt when the schedule is extra borrowing", () => {
+    const { payments } = planOccurrences(
+      [emi({ amount: 5_000_000, debtRemaining: 0 })],
+      utc("2026-03-15")
+    );
+
+    expect(payments).toHaveLength(3);
+    expect(payments[0]?.amount).toBe(-5_000_000);
+  });
+
+  it("still generates when the linked debt balance is unknown", () => {
+    const { payments } = planOccurrences(
+      [emi({ debtRemaining: null })],
+      utc("2026-03-15")
+    );
+
+    expect(payments).toHaveLength(3);
   });
 });

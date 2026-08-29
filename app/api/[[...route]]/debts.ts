@@ -1,7 +1,7 @@
 import { clerkMiddleware } from "@clerk/hono";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
-import { and, desc, eq, inArray, sum } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import {
   debtPayments,
   debts,
   insertDebtSchema,
+  recurringTransactions,
   transactions,
 } from "@/db/schema";
 import {
@@ -31,7 +32,9 @@ import {
   requiredPayment,
   totalInterest,
 } from "@/lib/debts";
+import { paidByDebt } from "@/lib/debt-ledger";
 import { API_ERRORS } from "@/lib/messages";
+import { nextOccurrence, safeMaterialize } from "@/lib/recurring";
 
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
@@ -75,6 +78,15 @@ const paymentBody = z.object({
   notes: z.string().trim().nullable().optional(),
 });
 
+type DebtSchedule = {
+  id: string;
+  amount: number;
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  interval: number;
+  isActive: boolean;
+  nextOccurrence: Date | null;
+};
+
 type DebtRow = {
   id: string;
   name: string;
@@ -115,24 +127,45 @@ async function loadDebts(userId: string, debtId?: string) {
     .limit(MAX_DEBTS);
 }
 
-async function paidByDebt(userId: string, debtIds: string[]) {
-  if (debtIds.length === 0) return new Map<string, number>();
+async function schedulesByDebt(userId: string, debtIds: string[]) {
+  if (debtIds.length === 0) return new Map<string, DebtSchedule>();
 
   const rows = await db
     .select({
-      debtId: debtPayments.debtId,
-      paid: sum(debtPayments.amount),
+      id: recurringTransactions.id,
+      debtId: recurringTransactions.debtId,
+      amount: recurringTransactions.amount,
+      frequency: recurringTransactions.frequency,
+      interval: recurringTransactions.interval,
+      isActive: recurringTransactions.isActive,
+      startDate: recurringTransactions.startDate,
+      endDate: recurringTransactions.endDate,
     })
-    .from(debtPayments)
+    .from(recurringTransactions)
     .where(
       and(
-        eq(debtPayments.userId, userId),
-        inArray(debtPayments.debtId, debtIds)
+        eq(recurringTransactions.userId, userId),
+        inArray(recurringTransactions.debtId, debtIds)
       )
     )
-    .groupBy(debtPayments.debtId);
+    .orderBy(recurringTransactions.createdAt);
 
-  return new Map(rows.map((row) => [row.debtId, Number(row.paid ?? 0)]));
+  const found = new Map<string, DebtSchedule>();
+
+  for (const { debtId, ...row } of rows) {
+    if (!debtId || found.has(debtId)) continue;
+
+    found.set(debtId, {
+      id: row.id,
+      amount: row.amount,
+      frequency: row.frequency,
+      interval: row.interval,
+      isActive: row.isActive,
+      nextOccurrence: nextOccurrence(row),
+    });
+  }
+
+  return found;
 }
 
 function paymentForTarget(row: DebtRow, balance: number, now: Date) {
@@ -147,10 +180,11 @@ function paymentForTarget(row: DebtRow, balance: number, now: Date) {
 
 async function withProgress(userId: string, rows: DebtRow[]) {
   const now = new Date();
-  const paidTotals = await paidByDebt(
-    userId,
-    rows.map((row) => row.id)
-  );
+  const ids = rows.map((row) => row.id);
+  const [paidTotals, schedules] = await Promise.all([
+    paidByDebt(userId, ids),
+    schedulesByDebt(userId, ids),
+  ]);
 
   return rows.map((row) => {
     const paid = paidTotals.get(row.id) ?? 0;
@@ -159,6 +193,7 @@ async function withProgress(userId: string, rows: DebtRow[]) {
 
     return {
       ...row,
+      schedule: schedules.get(row.id) ?? null,
       paid,
       balance,
       percentage: payoffPercentage(paid, row.principal),
@@ -204,6 +239,9 @@ const app = new Hono<AuthedEnv>()
   .use("*", clerkMiddleware(), requireAuth)
   .get("/", async (c) => {
     const userId = c.get("userId");
+
+    await safeMaterialize(userId);
+
     const rows = await loadDebts(userId);
 
     return c.json({ data: await withProgress(userId, rows) });
@@ -211,6 +249,9 @@ const app = new Hono<AuthedEnv>()
   .get("/plan", zValidator("query", planQuery), async (c) => {
     const userId = c.get("userId");
     const extra = c.req.valid("query").extra ?? 0;
+
+    await safeMaterialize(userId);
+
     const rows = await withProgress(userId, await loadDebts(userId));
 
     const outstanding = rows
@@ -237,6 +278,9 @@ const app = new Hono<AuthedEnv>()
   .get("/:id", zValidator("param", idParam), async (c) => {
     const userId = c.get("userId");
     const id = requireId(c.req.valid("param").id);
+
+    await safeMaterialize(userId);
+
     const rows = await loadDebts(userId, id);
 
     if (rows.length === 0) {

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { DebtOption } from "@/features/recurring/debt-prefill";
 import { convertAmountToMiliunits } from "@/lib/utils";
 
 const FREQUENCY_OPTIONS = [
@@ -33,10 +34,14 @@ const formSchema = z
     payee: z
       .string("Enter a name")
       .min(1, "Enter a name, e.g. Landlord or your employer"),
-    amount: z.string().min(1, "Enter an amount"),
+    amount: z
+      .string()
+      .min(1, "Enter an amount")
+      .refine((value) => parseFloat(value) !== 0, "Enter an amount"),
     accountId: z.string().min(1, "Select an account"),
     toAccountId: z.string().nullable().optional(),
     categoryId: z.string().nullable().optional(),
+    debtId: z.string().nullable().optional(),
     frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
     interval: z.string().min(1, "Enter an interval"),
     startDate: z.date(),
@@ -62,6 +67,7 @@ export type RecurringApiValues = {
   accountId: string;
   toAccountId: string | null;
   categoryId: string | null;
+  debtId: string | null;
   frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number;
   startDate: Date;
@@ -80,6 +86,7 @@ type Props = {
   isDeleting?: boolean;
   accountOptions: { label: string; value: string }[];
   categoryOptions: { label: string; value: string }[];
+  debtOptions: DebtOption[];
   onCreateAccount: (name: string) => void;
   onCreateCategory: (name: string) => void;
 };
@@ -94,6 +101,7 @@ export const RecurringForm = ({
   isDeleting,
   accountOptions,
   categoryOptions,
+  debtOptions,
   onCreateAccount,
   onCreateCategory,
 }: Props) => {
@@ -103,7 +111,24 @@ export const RecurringForm = ({
   });
 
   const toAccountId = useWatch({ control: form.control, name: "toAccountId" });
+  const debtId = useWatch({ control: form.control, name: "debtId" });
   const isTransfer = Boolean(toAccountId);
+  const isDebt = Boolean(debtId);
+
+  const onDebtChange = (value?: string) => {
+    const picked = debtOptions.find((option) => option.value === value);
+
+    form.setValue("debtId", value ?? null, { shouldValidate: true });
+
+    if (!picked) return;
+
+    const { payee, amount, accountId, endDate } = picked.prefill;
+
+    form.setValue("payee", payee, { shouldValidate: true });
+    form.setValue("amount", amount, { shouldValidate: true });
+    form.setValue("accountId", accountId, { shouldValidate: true });
+    form.setValue("endDate", endDate, { shouldValidate: true });
+  };
 
   const handleSubmit = (values: RecurringFormValues) => {
     const entered = parseFloat(values.amount);
@@ -116,6 +141,7 @@ export const RecurringForm = ({
       accountId: values.accountId,
       toAccountId: values.toAccountId ?? null,
       categoryId: values.toAccountId ? null : (values.categoryId ?? null),
+      debtId: values.toAccountId ? null : (values.debtId ?? null),
       frequency: values.frequency,
       interval: parseInt(values.interval, 10),
       startDate: values.startDate,
@@ -131,6 +157,33 @@ export const RecurringForm = ({
         onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-4 pt-4"
       >
+        {!isTransfer && debtOptions.length > 0 && (
+          <FormField
+            name="debtId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Logs against debt (optional)</FormLabel>
+                <FormControl>
+                  <Select
+                    placeholder="Not a debt payment"
+                    options={debtOptions}
+                    value={field.value}
+                    onChange={onDebtChange}
+                    disabled={disabled}
+                    isClearable
+                  />
+                </FormControl>
+                <FormDescription>
+                  Picking one fills the rest in from the debt, which you can
+                  still change. Each run records a payment against it, so the
+                  balance shrinks on its own, and still counts as an expense.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           name="payee"
           control={form.control}
@@ -208,31 +261,33 @@ export const RecurringForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          name="toAccountId"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Transfer to (optional)</FormLabel>
-              <FormControl>
-                <Select
-                  placeholder="Not a transfer"
-                  options={accountOptions}
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={disabled}
-                  isClearable
-                />
-              </FormControl>
-              <FormDescription>
-                Pick a destination to schedule a transfer, such as a monthly
-                SIP. Each run records both sides and is left out of income,
-                expenses and budgets.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isDebt && (
+          <FormField
+            name="toAccountId"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Transfer to (optional)</FormLabel>
+                <FormControl>
+                  <Select
+                    placeholder="Not a transfer"
+                    options={accountOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={disabled}
+                    isClearable
+                  />
+                </FormControl>
+                <FormDescription>
+                  Pick a destination to schedule a transfer, such as a monthly
+                  SIP. Each run records both sides and is left out of income,
+                  expenses and budgets.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         {!isTransfer && (
           <FormField
             name="categoryId"

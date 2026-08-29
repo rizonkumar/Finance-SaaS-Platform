@@ -5,6 +5,7 @@ import {
   Infinity as InfinityIcon,
   MoreHorizontal,
   Plus,
+  Repeat,
   TrendingDown,
 } from "lucide-react";
 
@@ -15,13 +16,28 @@ import { PayoffProgress } from "@/features/debts/components/payoff-progress";
 import { DEBT_KIND_LABELS, type DebtKind } from "@/features/debts/kinds";
 import { DISPLAY_DATE_FORMAT } from "@/lib/constants";
 import { aprFromBasisPoints, type DebtStatus } from "@/lib/debts";
-import { formatCurrency, formatMonths, formatPercentage } from "@/lib/utils";
+import {
+  formatCadence,
+  formatCurrency,
+  formatMonths,
+  formatPercentage,
+} from "@/lib/utils";
+
+export type DebtSchedule = {
+  id: string;
+  amount: number;
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  interval: number;
+  isActive: boolean;
+  nextOccurrence: string | null;
+};
 
 type Props = {
   id: string;
   name: string;
   kind: DebtKind;
   account: string | null;
+  schedule: DebtSchedule | null;
   principal: number;
   paid: number;
   balance: number;
@@ -36,6 +52,8 @@ type Props = {
   targetDate: string | null;
   onEdit: (id: string) => void;
   onPay: (id: string) => void;
+  onAutomate: (id: string) => void;
+  onManageSchedule: (scheduleId: string) => void;
 };
 
 const STATUS_META = {
@@ -59,6 +77,7 @@ export const DebtCard = ({
   name,
   kind,
   account,
+  schedule,
   principal,
   paid,
   balance,
@@ -73,6 +92,8 @@ export const DebtCard = ({
   targetDate,
   onEdit,
   onPay,
+  onAutomate,
+  onManageSchedule,
 }: Props) => {
   const meta = STATUS_META[status];
   const StatusIcon = meta.icon;
@@ -80,6 +101,9 @@ export const DebtCard = ({
   const isStalled = status === "stalled";
   const needsMore =
     requiredPayment !== null && requiredPayment > minimumPayment + 0.01;
+  const scheduleDrifts =
+    schedule !== null &&
+    Math.abs(Math.abs(schedule.amount) - minimumPayment) > 0.01;
 
   return (
     <Card>
@@ -177,16 +201,49 @@ export const DebtCard = ({
               )}
             </p>
           )}
+          {schedule && (
+            <p className="copy-13 text-gray-900">
+              <Repeat className="mr-1 inline size-3" />
+              {formatCadence(schedule)}
+              {schedule.nextOccurrence && (
+                <> · next {displayDate(schedule.nextOccurrence)}</>
+              )}
+              {!schedule.isActive && " · paused"}
+            </p>
+          )}
+          {scheduleDrifts && (
+            <p className="copy-13 text-amber-900">
+              The schedule pays{" "}
+              <span className="numeric">
+                {formatCurrency(Math.abs(schedule.amount))}
+              </span>
+              , not the{" "}
+              <span className="numeric">{formatCurrency(minimumPayment)}</span>{" "}
+              set here.
+            </p>
+          )}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => onPay(id)}
-        >
-          <Plus className="size-4" />
-          {isCleared ? "Adjust Balance" : "Log Payment"}
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" onClick={() => onPay(id)}>
+            <Plus className="size-4" />
+            {isCleared ? "Adjust Balance" : "Log Payment"}
+          </Button>
+          {schedule ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onManageSchedule(schedule.id)}
+            >
+              <Repeat className="size-4" />
+              Manage
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => onAutomate(id)}>
+              <Repeat className="size-4" />
+              Automate
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

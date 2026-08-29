@@ -5,7 +5,10 @@ import {
   convertAmountFromMiliunits,
   convertAmountToMiliunits,
   fillMissingDays,
+  formatCadence,
   formatMonths,
+  signedAmount,
+  unsignedAmount,
 } from "@/lib/utils";
 
 describe("miliunits", () => {
@@ -76,5 +79,56 @@ describe("formatMonths", () => {
 
   it("floors at zero", () => {
     expect(formatMonths(-3)).toBe("0 mo");
+  });
+});
+
+describe("signedAmount", () => {
+  it("applies the debit sign to a bare magnitude", () => {
+    expect(signedAmount("499", -1)).toBe("-499");
+  });
+
+  it("leaves a credit magnitude bare", () => {
+    expect(signedAmount("499", 1)).toBe("499");
+  });
+
+  it("keeps a half-typed decimal intact, so the caret never jumps", () => {
+    expect(signedAmount("499.", -1)).toBe("-499.");
+    expect(signedAmount("0.0", -1)).toBe("-0.0");
+  });
+
+  it("never doubles a sign that is already there", () => {
+    expect(signedAmount("-499", -1)).toBe("-499");
+    expect(signedAmount("-499", 1)).toBe("499");
+  });
+
+  it("passes an empty value straight through", () => {
+    expect(signedAmount("", -1)).toBe("");
+    expect(signedAmount(undefined, -1)).toBeUndefined();
+  });
+});
+
+describe("unsignedAmount", () => {
+  it("strips the sign for display without reparsing the number", () => {
+    expect(unsignedAmount("-499.50")).toBe("499.50");
+    expect(unsignedAmount("499.50")).toBe("499.50");
+    expect(unsignedAmount("")).toBe("");
+  });
+
+  it("round-trips with signedAmount", () => {
+    expect(signedAmount(unsignedAmount("-12000"), -1)).toBe("-12000");
+  });
+});
+
+describe("formatCadence", () => {
+  it("reads naturally at an interval of one", () => {
+    expect(formatCadence({ frequency: "monthly", interval: 1 })).toBe(
+      "Every month"
+    );
+  });
+
+  it("pluralises a wider interval", () => {
+    expect(formatCadence({ frequency: "weekly", interval: 2 })).toBe(
+      "Every 2 weeks"
+    );
   });
 });

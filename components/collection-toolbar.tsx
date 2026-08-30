@@ -1,11 +1,8 @@
 import { ViewToggle, type ViewMode } from "@/components/view-toggle";
 
-// One control width for every filter/sort trigger in a collection toolbar, so
-// adjacent selects line up instead of each picking its own magic number.
 export const TOOLBAR_SELECT = "h-9 w-full sm:w-[170px]";
 
 type Props = {
-  /** Search input plus any filter/sort selects. */
   children: React.ReactNode;
   viewMode: ViewMode;
   onViewModeChange: (value: ViewMode) => void;

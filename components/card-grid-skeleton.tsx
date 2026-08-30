@@ -2,8 +2,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-// Mirrors StatGroup's column map so a skeleton can be given the same shape as
-// the grid that replaces it.
 const COLUMNS = {
   2: "md:grid-cols-2",
   3: "md:grid-cols-2 xl:grid-cols-3",

@@ -194,6 +194,8 @@ const AccountsPage = () => {
               selected={selected}
               onToggleSelect={toggleSelectOne}
               onToggleSelectAll={toggleSelectAll}
+              onBulkDelete={onBulkDelete}
+              isDeleting={deleteAccounts.isPending}
             />
           </CardContent>
         </Card>
@@ -205,6 +207,7 @@ const AccountsPage = () => {
         <BulkSelectionBar
           selectedCount={selected.length}
           totalCount={filteredAccounts.length}
+          itemLabel={`${filteredAccounts.length} ${filteredAccounts.length === 1 ? "account" : "accounts"}`}
           onToggleSelectAll={toggleSelectAll}
           onDelete={onBulkDelete}
           disabled={deleteAccounts.isPending}

@@ -198,6 +198,8 @@ const CategoriesPage = () => {
               onToggleSelect={toggleSelectOne}
               onToggleSelectAll={toggleSelectAll}
               onEdit={openCategory.onOpen}
+              onBulkDelete={onBulkDelete}
+              isDeleting={deleteCategories.isPending}
             />
           </CardContent>
         </Card>
@@ -209,6 +211,7 @@ const CategoriesPage = () => {
         <BulkSelectionBar
           selectedCount={selected.length}
           totalCount={filteredCategories.length}
+          itemLabel={`${filteredCategories.length} ${filteredCategories.length === 1 ? "category" : "categories"}`}
           onToggleSelectAll={toggleSelectAll}
           onDelete={onBulkDelete}
           disabled={deleteCategories.isPending}

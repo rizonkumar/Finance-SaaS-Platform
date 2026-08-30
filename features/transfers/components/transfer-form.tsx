@@ -188,7 +188,7 @@ export const TransferForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
-          {id ? "Save Changes" : "Create Transfer"}
+          {id ? "Save changes" : "Create transfer"}
         </Button>
         {!!id && (
           <Button
@@ -200,7 +200,7 @@ export const TransferForm = ({
             onClick={onDelete}
           >
             <Trash className="size-4" />
-            Delete Transfer
+            Delete transfer
           </Button>
         )}
       </form>

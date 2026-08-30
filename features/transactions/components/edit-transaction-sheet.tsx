@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { SheetFormLoading } from "@/components/sheet-form-loading";
 
 import { useGetTransaction } from "@/features/transactions/api/use-get-transaction";
 import { useOpenTransaction } from "@/features/transactions/hooks/use-open-transaction";
@@ -114,15 +114,13 @@ export const EditTransactionSheet = () => {
     <>
       <ConfirmDialog />
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="space-y-4">
+        <SheetContent>
           <SheetHeader>
             <SheetTitle>Edit Transaction</SheetTitle>
             <SheetDescription>Edit an existing transaction</SheetDescription>
           </SheetHeader>
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="text-muted-foreground size-4 animate-spin" />
-            </div>
+            <SheetFormLoading />
           ) : (
             <TransactionForm
               id={id}
@@ -130,6 +128,8 @@ export const EditTransactionSheet = () => {
               onSubmit={onSubmit}
               onDelete={onDelete}
               disabled={isPending}
+              isSubmitting={editMutation.isPending}
+              isDeleting={deleteMutation.isPending}
               categoryOptions={categoryOptions}
               onCreateCategory={onCreateCategory}
               accountOptions={accountOptions}

@@ -81,7 +81,7 @@ export const CategoryList = ({
             disabled={deleteCategories.isPending}
             onClick={onBulkDelete}
           >
-            <Trash className="mr-1.5 size-4" />
+            <Trash />
             Delete ({selected.length})
           </Button>
         )}
@@ -189,7 +189,12 @@ const CategoryListItem = ({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="size-8 p-0">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="size-8 p-0"
+              aria-label="Category actions"
+            >
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>

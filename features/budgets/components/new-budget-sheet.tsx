@@ -30,7 +30,7 @@ export const NewBudgetSheet = () => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="space-y-4">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>New Budget</SheetTitle>
           <SheetDescription>
@@ -40,6 +40,7 @@ export const NewBudgetSheet = () => {
         <BudgetForm
           onSubmit={onSubmit}
           disabled={mutation.isPending || categoriesQuery.isLoading}
+          isSubmitting={mutation.isPending}
           categoryOptions={categoryOptions}
           defaultValues={{
             categoryId: null,

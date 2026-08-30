@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { SheetFormLoading } from "@/components/sheet-form-loading";
 
 import { useGetAccount } from "@/features/accounts/api/use-get-account";
 import {
@@ -60,15 +60,13 @@ export const EditAccountSheet = () => {
     <>
       <ConfirmDialog />
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="space-y-4">
+        <SheetContent>
           <SheetHeader>
             <SheetTitle>Edit Account</SheetTitle>
             <SheetDescription>Edit an existing account</SheetDescription>
           </SheetHeader>
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="text-muted-foreground size-4 animate-spin" />
-            </div>
+            <SheetFormLoading />
           ) : (
             <AccountForm
               id={id}

@@ -163,7 +163,7 @@ export const HoldingForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
-          {id ? "Save Changes" : "Add Holding"}
+          {id ? "Save changes" : "Add holding"}
         </Button>
         {!!id && (
           <Button
@@ -175,7 +175,7 @@ export const HoldingForm = ({
             onClick={onDelete}
           >
             <Trash className="size-4" />
-            Delete Holding
+            Delete holding
           </Button>
         )}
       </form>

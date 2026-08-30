@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight, Trash } from "lucide-react";
+import { ChevronLeft, ChevronRight, SearchX, Trash } from "lucide-react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -12,6 +12,7 @@ import {
   useTable,
 } from "@tanstack/react-table";
 
+import { EmptyState } from "@/components/empty-state";
 import { SearchInput } from "@/components/search-input";
 import {
   Table,
@@ -144,18 +145,19 @@ export function DataTable<TData extends RowData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
+                <TableCell colSpan={columns.length}>
+                  <EmptyState
+                    icon={SearchX}
+                    title="No results"
+                    description="No rows matched your search. Try a different term."
+                  />
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center gap-x-2 pt-4">
+      <div className="flex flex-wrap items-center gap-2 pt-4">
         <p className="copy-13 mr-auto text-gray-900">
           {selectedCount > 0
             ? `${selectedCount} of ${table.getFilteredRowModel().rows.length} selected`

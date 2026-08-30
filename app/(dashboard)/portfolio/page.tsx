@@ -22,24 +22,6 @@ const PortfolioPage = () => {
   const newHolding = useNewHolding();
   const holdingsQuery = useGetHoldings();
 
-  if (holdingsQuery.isLoading) {
-    return (
-      <div className="space-y-3">
-        <CardGridSkeleton count={3} />
-      </div>
-    );
-  }
-
-  if (holdingsQuery.isError) {
-    return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => holdingsQuery.refetch()} />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const holdings = holdingsQuery.data ?? [];
   const totals = portfolioTotals(holdings);
 
@@ -48,8 +30,63 @@ const PortfolioPage = () => {
     .map((row) => ({ name: row.symbol, value: row.marketValue }))
     .sort((first, second) => second.value - first.value);
 
+  const renderBody = () => {
+    if (holdingsQuery.isLoading) return <CardGridSkeleton count={3} />;
+
+    if (holdingsQuery.isError) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <ErrorState onRetry={() => holdingsQuery.refetch()} />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (holdings.length === 0) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <EmptyState
+              icon={LineChart}
+              title="No holdings yet"
+              description="Add a stock or fund held in a broker account to track its value and return."
+              actionLabel="Add holding"
+              onAction={newHolding.onOpen}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <>
+        <PortfolioSummary totals={totals} />
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-6">
+          <Card className="col-span-1 lg:col-span-4">
+            <CardHeader>
+              <CardTitle>Holdings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <HoldingsList holdings={holdings} />
+            </CardContent>
+          </Card>
+          <Card className="col-span-1 lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Allocation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CategoryBreakdown data={allocation} />
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <PageHeader
         title={PAGE_META["/portfolio"].title}
         description={PAGE_META["/portfolio"].description}
@@ -69,42 +106,7 @@ const PortfolioPage = () => {
         }
       />
 
-      {holdings.length === 0 ? (
-        <Card>
-          <CardContent>
-            <EmptyState
-              icon={LineChart}
-              title="No holdings yet"
-              description="Add a stock or fund held in a broker account to track its value and return."
-              actionLabel="Add Holding"
-              onAction={newHolding.onOpen}
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <PortfolioSummary totals={totals} />
-
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-6">
-            <Card className="col-span-1 lg:col-span-4">
-              <CardHeader>
-                <CardTitle>Holdings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <HoldingsList holdings={holdings} />
-              </CardContent>
-            </Card>
-            <Card className="col-span-1 lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Allocation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CategoryBreakdown data={allocation} />
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      )}
+      {renderBody()}
     </div>
   );
 };

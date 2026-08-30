@@ -2,7 +2,8 @@
 
 import { Building2, CreditCard, Landmark, Wallet } from "lucide-react";
 
-import { iconBox } from "@/components/data-card";
+import { DATA_CARD_HEIGHT, iconBox } from "@/components/data-card";
+import { StatGroup } from "@/components/stat-group";
 import { Card } from "@/components/ui/card";
 import type { AccountType } from "@/lib/net-worth";
 import { cn, convertAmountFromMiliunits, formatCurrency } from "@/lib/utils";
@@ -37,36 +38,53 @@ export const AccountGlanceCards = ({ accounts }: Props) => {
   const net = assets - liabilities;
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Card className="flex flex-col justify-between gap-y-2 p-4">
+    <StatGroup columns={4}>
+      <Card
+        className="flex flex-col justify-between gap-y-3 p-4"
+        style={{ height: DATA_CARD_HEIGHT }}
+      >
         <div className="flex items-start justify-between gap-x-2">
-          <p className="label-13 text-gray-900">Total Assets</p>
+          <p className="label-13 line-clamp-1 text-gray-900">Total Assets</p>
           <div className={cn(iconBox({ variant: "success" }), "size-7")}>
             <Landmark className="size-3.5" />
           </div>
         </div>
-        <p className="numeric heading-24 text-gray-1000">
+        <p className="numeric heading-24 text-gray-1000 min-w-0 break-all">
           {formatCurrency(assets)}
         </p>
-        <p className="copy-13 text-gray-900">Positive balances & cash</p>
+        <p className="copy-13 line-clamp-1 text-gray-900">
+          Positive balances & cash
+        </p>
       </Card>
 
-      <Card className="flex flex-col justify-between gap-y-2 p-4">
+      <Card
+        className="flex flex-col justify-between gap-y-3 p-4"
+        style={{ height: DATA_CARD_HEIGHT }}
+      >
         <div className="flex items-start justify-between gap-x-2">
-          <p className="label-13 text-gray-900">Total Liabilities</p>
+          <p className="label-13 line-clamp-1 text-gray-900">
+            Total Liabilities
+          </p>
           <div className={cn(iconBox({ variant: "danger" }), "size-7")}>
             <CreditCard className="size-3.5" />
           </div>
         </div>
-        <p className="numeric heading-24 text-gray-1000">
+        <p className="numeric heading-24 text-gray-1000 min-w-0 break-all">
           {formatCurrency(liabilities)}
         </p>
-        <p className="copy-13 text-gray-900">Credit cards & loans</p>
+        <p className="copy-13 line-clamp-1 text-gray-900">
+          Credit cards & loans
+        </p>
       </Card>
 
-      <Card className="flex flex-col justify-between gap-y-2 p-4">
+      <Card
+        className="flex flex-col justify-between gap-y-3 p-4"
+        style={{ height: DATA_CARD_HEIGHT }}
+      >
         <div className="flex items-start justify-between gap-x-2">
-          <p className="label-13 text-gray-900">Net Account Balance</p>
+          <p className="label-13 line-clamp-1 text-gray-900">
+            Net Account Balance
+          </p>
           <div
             className={cn(
               iconBox({ variant: net < 0 ? "danger" : "default" }),
@@ -76,26 +94,33 @@ export const AccountGlanceCards = ({ accounts }: Props) => {
             <Wallet className="size-3.5" />
           </div>
         </div>
-        <p className="numeric heading-24 text-gray-1000">
+        <p className="numeric heading-24 text-gray-1000 min-w-0 break-all">
           {formatCurrency(net)}
         </p>
-        <p className="copy-13 text-gray-900">Assets minus liabilities</p>
+        <p className="copy-13 line-clamp-1 text-gray-900">
+          Assets minus liabilities
+        </p>
       </Card>
 
-      <Card className="flex flex-col justify-between gap-y-2 p-4">
+      <Card
+        className="flex flex-col justify-between gap-y-3 p-4"
+        style={{ height: DATA_CARD_HEIGHT }}
+      >
         <div className="flex items-start justify-between gap-x-2">
-          <p className="label-13 text-gray-900">Total Accounts</p>
+          <p className="label-13 line-clamp-1 text-gray-900">Total Accounts</p>
           <div className={cn(iconBox({ variant: "default" }), "size-7")}>
             <Building2 className="size-3.5" />
           </div>
         </div>
-        <p className="numeric heading-24 text-gray-1000">{totalAccounts}</p>
-        <p className="copy-13 text-gray-900">
+        <p className="numeric heading-24 text-gray-1000 min-w-0 break-all">
+          {totalAccounts}
+        </p>
+        <p className="copy-13 line-clamp-1 text-gray-900">
           {totalAccounts === 1
             ? "1 connected account"
             : `${totalAccounts} connected accounts`}
         </p>
       </Card>
-    </div>
+    </StatGroup>
   );
 };

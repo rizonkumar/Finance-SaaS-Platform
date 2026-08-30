@@ -97,10 +97,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
       const amount = parseFloat(row.getValue("amount"));
 
       return (
-        <Badge
-          variant={amount < 0 ? "expense" : "income"}
-          className="px-3.5 py-2.5 text-xs font-medium"
-        >
+        <Badge variant={amount < 0 ? "expense" : "income"}>
           {formatCurrency(amount)}
         </Badge>
       );

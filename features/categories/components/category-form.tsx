@@ -88,7 +88,7 @@ export const CategoryForm = ({
             className="w-full"
             variant="outline"
           >
-            <Trash className="mr-2 size-4" />
+            <Trash />
             Delete category
           </Button>
         )}

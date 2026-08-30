@@ -1,7 +1,8 @@
 "use client";
 
 import { format } from "date-fns";
-import { Loader2, Trash } from "lucide-react";
+import { SheetFormLoading } from "@/components/sheet-form-loading";
+import { Trash } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,7 +40,7 @@ export const TradeHoldingSheet = () => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="space-y-4 overflow-y-auto">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>{holding?.symbol ?? "Record Trade"}</SheetTitle>
           <SheetDescription>
@@ -49,9 +50,7 @@ export const TradeHoldingSheet = () => {
           </SheetDescription>
         </SheetHeader>
         {holdingsQuery.isLoading || !holding ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="size-4 animate-spin text-gray-600" />
-          </div>
+          <SheetFormLoading />
         ) : (
           <div className="space-y-4">
             <TradeForm

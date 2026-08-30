@@ -20,10 +20,6 @@ const RecurringPage = () => {
   const recurringQuery = useGetRecurringList();
   const deleteRecurring = useBulkDeleteRecurring();
 
-  if (recurringQuery.isLoading) {
-    return <TablePageSkeleton />;
-  }
-
   const rows = (recurringQuery.data ?? []).map((item) => ({
     id: item.id,
     payee: item.payee,
@@ -40,6 +36,8 @@ const RecurringPage = () => {
   })) satisfies RecurringRow[];
 
   const renderBody = () => {
+    if (recurringQuery.isLoading) return <TablePageSkeleton />;
+
     if (recurringQuery.isError) {
       return <ErrorState onRetry={() => recurringQuery.refetch()} />;
     }
@@ -50,7 +48,7 @@ const RecurringPage = () => {
           icon={Repeat}
           title="No recurring transactions yet"
           description="Schedule rent, salary or a subscription once and it is entered for you from then on."
-          actionLabel="Add Schedule"
+          actionLabel="Add schedule"
           onAction={() => newRecurring.onOpen()}
         />
       );
@@ -72,7 +70,7 @@ const RecurringPage = () => {
   };
 
   return (
-    <>
+    <div className="space-y-4">
       <PageHeader
         title={PAGE_META["/recurring"].title}
         description={PAGE_META["/recurring"].description}
@@ -90,7 +88,7 @@ const RecurringPage = () => {
       <Card>
         <CardContent className="pt-5">{renderBody()}</CardContent>
       </Card>
-    </>
+    </div>
   );
 };
 

@@ -27,20 +27,6 @@ const DebtsPage = () => {
   const openRecurring = useOpenRecurring();
   const debtsQuery = useGetDebts();
 
-  if (debtsQuery.isLoading) {
-    return <CardGridSkeleton />;
-  }
-
-  if (debtsQuery.isError) {
-    return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => debtsQuery.refetch()} />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const debts = debtsQuery.data ?? [];
 
   const onAutomate = (id: string) => {
@@ -52,6 +38,54 @@ const DebtsPage = () => {
   const owed = debts.reduce((total, debt) => total + debt.balance, 0);
   const borrowed = debts.reduce((total, debt) => total + debt.principal, 0);
   const hasOutstanding = debts.some((debt) => debt.balance > 0);
+
+  const renderBody = () => {
+    if (debtsQuery.isLoading) return <CardGridSkeleton />;
+
+    if (debtsQuery.isError) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <ErrorState onRetry={() => debtsQuery.refetch()} />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (debts.length === 0) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <EmptyState
+              icon={Landmark}
+              title="No debts yet"
+              description="Add a loan or a card to see when it clears at your current payment, and what an extra payment each month would buy you."
+              actionLabel="Add debt"
+              onAction={newDebt.onOpen}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {debts.map((debt) => (
+            <DebtCard
+              key={debt.id}
+              {...debt}
+              onEdit={openDebt.onOpen}
+              onPay={payDebt.onOpen}
+              onAutomate={onAutomate}
+              onManageSchedule={openRecurring.onOpen}
+            />
+          ))}
+        </div>
+        {hasOutstanding && <PayoffPlanCard />}
+      </>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -74,35 +108,7 @@ const DebtsPage = () => {
         }
       />
 
-      {debts.length === 0 ? (
-        <Card>
-          <CardContent>
-            <EmptyState
-              icon={Landmark}
-              title="No debts yet"
-              description="Add a loan or a card to see when it clears at your current payment, and what an extra payment each month would buy you."
-              actionLabel="Add Debt"
-              onAction={newDebt.onOpen}
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {debts.map((debt) => (
-              <DebtCard
-                key={debt.id}
-                {...debt}
-                onEdit={openDebt.onOpen}
-                onPay={payDebt.onOpen}
-                onAutomate={onAutomate}
-                onManageSchedule={openRecurring.onOpen}
-              />
-            ))}
-          </div>
-          {hasOutstanding && <PayoffPlanCard />}
-        </>
-      )}
+      {renderBody()}
     </div>
   );
 };

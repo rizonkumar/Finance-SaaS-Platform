@@ -126,7 +126,7 @@ export const AccountList = ({
             disabled={deleteAccounts.isPending}
             onClick={onBulkDelete}
           >
-            <Trash className="mr-1.5 size-4" />
+            <Trash />
             Delete ({selected.length})
           </Button>
         )}
@@ -170,7 +170,7 @@ export const AccountList = ({
                     account.transactionCount > 0 && (
                       <>
                         <span className="text-gray-400">·</span>
-                        <span className="copy-13 flex items-center text-gray-700">
+                        <span className="copy-13 flex items-center text-gray-900">
                           <Receipt className="mr-1 inline size-3" />
                           <span className="numeric">
                             {account.transactionCount}

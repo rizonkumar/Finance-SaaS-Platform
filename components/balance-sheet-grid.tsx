@@ -30,19 +30,16 @@ export const BalanceSheetGrid = () => {
   const params = useSearchParams();
   const to = params.get("to");
 
-  if (isLoading) {
-    return (
-      <StatGroup className="mb-4">
-        <DataCardLoading />
-        <DataCardLoading />
-        <DataCardLoading />
-      </StatGroup>
-    );
-  }
+  const asOf =
+    to && DAY_PATTERN.test(to)
+      ? `As of ${format(parseDayUTC(to), DISPLAY_DATE_FORMAT)}`
+      : "As of today";
+
+  if (isLoading) return <BalanceSheetGridLoading caption={asOf} />;
 
   if (isError) {
     return (
-      <Card className="mb-4 px-5">
+      <Card className="px-5">
         <ErrorState compact onRetry={() => refetch()} />
       </Card>
     );
@@ -52,15 +49,10 @@ export const BalanceSheetGrid = () => {
 
   if (positions.length === 0) return null;
 
-  const asOf =
-    to && DAY_PATTERN.test(to)
-      ? `As of ${format(parseDayUTC(to), DISPLAY_DATE_FORMAT)}`
-      : "As of today";
-
   const owing = positions.filter((position) => position.balance < 0).length;
 
   return (
-    <StatGroup caption={asOf} className="mb-4">
+    <StatGroup caption={asOf}>
       <DataCard
         title="Net Worth"
         value={data?.netWorth}
@@ -89,3 +81,17 @@ export const BalanceSheetGrid = () => {
     </StatGroup>
   );
 };
+
+// Exported so the dashboard's Suspense boundary can fall back to the same shape
+// this component renders while its own query is in flight.
+export const BalanceSheetGridLoading = ({
+  caption = "As of today",
+}: {
+  caption?: string;
+}) => (
+  <StatGroup caption={caption}>
+    <DataCardLoading />
+    <DataCardLoading />
+    <DataCardLoading />
+  </StatGroup>
+);

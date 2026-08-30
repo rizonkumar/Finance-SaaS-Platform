@@ -1,14 +1,9 @@
 "use client";
 
-import { Edit, MoreHorizontal, Play, Trash } from "lucide-react";
+import { Play } from "lucide-react";
+import { RowActions } from "@/components/row-actions";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useDeleteRecurring } from "@/features/recurring/api/use-delete-recurring";
 import { useRunRecurring } from "@/features/recurring/api/use-run-recurring";
 import { useOpenRecurring } from "@/features/recurring/hooks/use-open-recurring";
@@ -40,30 +35,20 @@ export const Actions = ({ id }: Props) => {
   return (
     <>
       <ConfirmDialog />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Schedule actions">
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem disabled={isPending} onClick={() => onOpen(id)}>
-            <Edit className="mr-2 size-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={isPending}
-            onClick={() => runMutation.mutate()}
-          >
-            <Play className="mr-2 size-4" />
-            Generate Now
-          </DropdownMenuItem>
-          <DropdownMenuItem disabled={isPending} onClick={handleDelete}>
-            <Trash className="mr-2 size-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <RowActions
+        label="Schedule actions"
+        disabled={isPending}
+        onEdit={() => onOpen(id)}
+        onDelete={handleDelete}
+      >
+        <DropdownMenuItem
+          disabled={isPending}
+          onClick={() => runMutation.mutate()}
+        >
+          <Play className="mr-2 size-4" />
+          Generate Now
+        </DropdownMenuItem>
+      </RowActions>
     </>
   );
 };

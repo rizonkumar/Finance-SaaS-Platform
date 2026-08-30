@@ -1,23 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Grid,
-  List,
-  PiggyBank,
-  Shapes,
-  Trash,
-  TrendingDown,
-} from "lucide-react";
+import { PiggyBank, Shapes, TrendingDown } from "lucide-react";
 
+import { BulkSelectionBar } from "@/components/bulk-selection-bar";
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
+import {
+  CollectionToolbar,
+  TOOLBAR_SELECT,
+} from "@/components/collection-toolbar";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
 import { SearchInput } from "@/components/search-input";
-import { Button } from "@/components/ui/button";
+import { type ViewMode } from "@/components/view-toggle";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -65,7 +62,7 @@ const sortCategories = (
 const CategoriesPage = () => {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name-asc");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selected, setSelected] = useState<string[]>([]);
 
   const newCategory = useNewCategory();
@@ -109,20 +106,6 @@ const CategoriesPage = () => {
     );
   };
 
-  if (categoriesQuery.isLoading) {
-    return <CardGridSkeleton count={8} />;
-  }
-
-  if (categoriesQuery.isError) {
-    return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => categoriesQuery.refetch()} />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const totalSpentMiliunits = categories.reduce(
     (sum, cat) => sum + cat.totalExpenses,
     0
@@ -160,6 +143,19 @@ const CategoriesPage = () => {
       : undefined;
 
   const renderContent = () => {
+    if (categoriesQuery.isLoading)
+      return <CardGridSkeleton count={8} columns={4} />;
+
+    if (categoriesQuery.isError) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <ErrorState onRetry={() => categoriesQuery.refetch()} />
+          </CardContent>
+        </Card>
+      );
+    }
+
     if (categories.length === 0) {
       return (
         <Card>
@@ -168,7 +164,7 @@ const CategoriesPage = () => {
               icon={Shapes}
               title="No categories yet"
               description="Group your spending into categories to see where the money actually goes."
-              actionLabel="Add Category"
+              actionLabel="Add category"
               onAction={newCategory.onOpen}
             />
           </CardContent>
@@ -184,7 +180,7 @@ const CategoriesPage = () => {
               icon={Shapes}
               title="No categories found"
               description={`No categories matched "${search}". Try searching for another name.`}
-              actionLabel="Clear Search"
+              actionLabel="Clear search"
               onAction={() => setSearch("")}
             />
           </CardContent>
@@ -209,35 +205,16 @@ const CategoriesPage = () => {
     }
 
     return (
-      <div className="space-y-3">
-        {selected.length > 0 && (
-          <div className="border-border flex items-center justify-between rounded-md border bg-gray-100 p-2.5 px-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={
-                  filteredCategories.length > 0 &&
-                  selected.length === filteredCategories.length
-                }
-                onCheckedChange={(checked) => toggleSelectAll(!!checked)}
-                aria-label="Select all"
-              />
-              <span className="copy-13 text-gray-1000 font-medium">
-                {selected.length} of {filteredCategories.length} selected
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={deleteCategories.isPending}
-              onClick={onBulkDelete}
-            >
-              <Trash className="mr-1 size-3.5" />
-              Delete Selected
-            </Button>
-          </div>
-        )}
+      <div className="space-y-4">
+        <BulkSelectionBar
+          selectedCount={selected.length}
+          totalCount={filteredCategories.length}
+          onToggleSelectAll={toggleSelectAll}
+          onDelete={onBulkDelete}
+          disabled={deleteCategories.isPending}
+        />
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredCategories.map((cat) => (
             <CategoryCard
               key={cat.id}
@@ -270,56 +247,29 @@ const CategoriesPage = () => {
       {categories.length > 0 && <CategoryGlanceCards categories={categories} />}
 
       {categories.length > 0 && (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Search categories..."
-              className="w-full sm:w-64"
-            />
+        <CollectionToolbar viewMode={viewMode} onViewModeChange={setViewMode}>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search categories..."
+            className="w-full sm:w-64"
+          />
 
-            <Select
-              value={sortBy}
-              onValueChange={(val) => setSortBy(val as SortOption)}
-            >
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name-asc">Name (A → Z)</SelectItem>
-                <SelectItem value="name-desc">Name (Z → A)</SelectItem>
-                <SelectItem value="spent-desc">Highest Spend</SelectItem>
-                <SelectItem value="txns-desc">Most Transactions</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <div className="border-border flex items-center rounded-md border p-0.5">
-              <Button
-                type="button"
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon-sm"
-                className="size-7"
-                onClick={() => setViewMode("grid")}
-                aria-label="Grid view"
-              >
-                <Grid className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="icon-sm"
-                className="size-7"
-                onClick={() => setViewMode("list")}
-                aria-label="List view"
-              >
-                <List className="size-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+          <Select
+            value={sortBy}
+            onValueChange={(val) => setSortBy(val as SortOption)}
+          >
+            <SelectTrigger className={TOOLBAR_SELECT}>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">Name (A → Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z → A)</SelectItem>
+              <SelectItem value="spent-desc">Highest Spend</SelectItem>
+              <SelectItem value="txns-desc">Most Transactions</SelectItem>
+            </SelectContent>
+          </Select>
+        </CollectionToolbar>
       )}
 
       {renderContent()}

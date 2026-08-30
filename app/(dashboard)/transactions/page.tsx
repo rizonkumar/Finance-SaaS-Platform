@@ -86,10 +86,6 @@ const TransactionsPageContent = () => {
     });
   };
 
-  if (transactionsQuery.isLoading) {
-    return <TablePageSkeleton />;
-  }
-
   if (variant === VARIANTS.IMPORT) {
     return (
       <>
@@ -103,18 +99,41 @@ const TransactionsPageContent = () => {
     );
   }
 
-  if (transactionsQuery.isError) {
+  const renderBody = () => {
+    if (transactionsQuery.isLoading) return <TablePageSkeleton />;
+
+    if (transactionsQuery.isError) {
+      return <ErrorState onRetry={() => transactionsQuery.refetch()} />;
+    }
+
+    if (transactions.length === 0) {
+      return (
+        <EmptyState
+          icon={ArrowLeftRight}
+          title="No transactions yet"
+          description="Add a transaction by hand, record a transfer, or import a CSV from your bank."
+          actionLabel="Add transaction"
+          onAction={() => newTransaction.onOpen()}
+        />
+      );
+    }
+
     return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => transactionsQuery.refetch()} />
-        </CardContent>
-      </Card>
+      <DataTable
+        filterKey="payee"
+        columns={columns}
+        data={transactions}
+        onDelete={(row) => {
+          const ids = row.map((r) => r.original.id);
+          deleteTransactions.mutate({ ids });
+        }}
+        disabled={isDisabled}
+      />
     );
-  }
+  };
 
   return (
-    <>
+    <div className="space-y-4">
       <PageHeader
         title={PAGE_META["/transactions"].title}
         description={PAGE_META["/transactions"].description}
@@ -140,30 +159,9 @@ const TransactionsPageContent = () => {
         }
       />
       <Card>
-        <CardContent className="pt-5">
-          {transactions.length === 0 ? (
-            <EmptyState
-              icon={ArrowLeftRight}
-              title="No transactions yet"
-              description="Add a transaction by hand, record a transfer, or import a CSV from your bank."
-              actionLabel="Add Transaction"
-              onAction={() => newTransaction.onOpen()}
-            />
-          ) : (
-            <DataTable
-              filterKey="payee"
-              columns={columns}
-              data={transactions}
-              onDelete={(row) => {
-                const ids = row.map((r) => r.original.id);
-                deleteTransactions.mutate({ ids });
-              }}
-              disabled={isDisabled}
-            />
-          )}
-        </CardContent>
+        <CardContent className="pt-5">{renderBody()}</CardContent>
       </Card>
-    </>
+    </div>
   );
 };
 

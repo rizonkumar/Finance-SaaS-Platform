@@ -4,6 +4,7 @@ import { Trash } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 
 type Props = {
   selectedCount: number;
@@ -12,6 +13,13 @@ type Props = {
   onToggleSelectAll: (checked: boolean) => void;
   onDelete: () => void;
   disabled?: boolean;
+  /**
+   * true (default): standalone bordered banner floating above a card grid.
+   * false: a flush header row with no side padding, for direct use above a
+   * `divide-y` list — its checkbox must land at the same x as the row
+   * checkboxes below it, which the bordered/padded treatment breaks.
+   */
+  bordered?: boolean;
 };
 
 export const BulkSelectionBar = ({
@@ -21,9 +29,17 @@ export const BulkSelectionBar = ({
   onToggleSelectAll,
   onDelete,
   disabled,
+  bordered = true,
 }: Props) => (
-  <div className="border-border flex items-center justify-between rounded-md border bg-gray-100 px-3 py-2.5">
-    <div className="flex items-center gap-2">
+  <div
+    className={cn(
+      "flex items-center justify-between",
+      bordered
+        ? "border-border rounded-md border bg-gray-100 px-3 py-2.5"
+        : "border-alpha-300 border-b pb-2.5"
+    )}
+  >
+    <div className="flex items-center gap-x-3">
       <Checkbox
         checked={totalCount > 0 && selectedCount === totalCount}
         onCheckedChange={(checked) => onToggleSelectAll(!!checked)}

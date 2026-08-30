@@ -48,6 +48,7 @@ export const CategoryList = ({
         onToggleSelectAll={onToggleSelectAll}
         onDelete={onBulkDelete}
         disabled={isDeleting}
+        bordered={false}
       />
 
       <ul className="divide-border divide-y">

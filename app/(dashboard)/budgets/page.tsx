@@ -21,22 +21,46 @@ const BudgetsPage = () => {
   const openBudget = useOpenBudget();
   const budgetsQuery = useGetBudgets();
 
-  if (budgetsQuery.isLoading) {
-    return <CardGridSkeleton />;
-  }
-
-  if (budgetsQuery.isError) {
-    return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => budgetsQuery.refetch()} />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const budgets = budgetsQuery.data ?? [];
   const overspent = budgets.filter((budget) => budget.status === "over").length;
+
+  const renderBody = () => {
+    if (budgetsQuery.isLoading) return <CardGridSkeleton />;
+
+    if (budgetsQuery.isError) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <ErrorState onRetry={() => budgetsQuery.refetch()} />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (budgets.length === 0) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <EmptyState
+              icon={PiggyBank}
+              title="No budgets yet"
+              description="Set a monthly limit for a category and track how much of it you have used."
+              actionLabel="Add budget"
+              onAction={newBudget.onOpen}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {budgets.map((budget) => (
+          <BudgetCard key={budget.id} {...budget} onEdit={openBudget.onOpen} />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -68,29 +92,7 @@ const BudgetsPage = () => {
         }
       />
 
-      {budgets.length === 0 ? (
-        <Card>
-          <CardContent>
-            <EmptyState
-              icon={PiggyBank}
-              title="No budgets yet"
-              description="Set a monthly limit for a category and track how much of it you have used."
-              actionLabel="Add Budget"
-              onAction={newBudget.onOpen}
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {budgets.map((budget) => (
-            <BudgetCard
-              key={budget.id}
-              {...budget}
-              onEdit={openBudget.onOpen}
-            />
-          ))}
-        </div>
-      )}
+      {renderBody()}
     </div>
   );
 };

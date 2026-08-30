@@ -1,17 +1,11 @@
 "use client";
 
-import { Edit, MoreHorizontal, PiggyBank, Receipt, Trash } from "lucide-react";
+import { PiggyBank, Receipt } from "lucide-react";
 
+import { BulkSelectionBar } from "@/components/bulk-selection-bar";
+import { RowActions } from "@/components/row-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useBulkDeleteCategories } from "@/features/categories/api/use-bulk-delete-categories";
 import { useDeleteCategory } from "@/features/categories/api/use-delete-category";
 import { useConfirm } from "@/hooks/use-confirm";
 import { getCategoryMeta } from "@/lib/categories";
@@ -32,6 +26,8 @@ type Props = {
   onToggleSelect: (id: string, selected: boolean) => void;
   onToggleSelectAll: (selected: boolean) => void;
   onEdit: (id: string) => void;
+  onBulkDelete: () => void;
+  isDeleting: boolean;
 };
 
 export const CategoryList = ({
@@ -40,52 +36,20 @@ export const CategoryList = ({
   onToggleSelect,
   onToggleSelectAll,
   onEdit,
+  onBulkDelete,
+  isDeleting,
 }: Props) => {
-  const allSelected =
-    categories.length > 0 && selected.length === categories.length;
-
-  const deleteCategories = useBulkDeleteCategories();
-
-  const [BulkConfirmDialog, confirmBulk] = useConfirm(
-    "Are you sure?",
-    `You are about to delete ${selected.length} categories.`
-  );
-
-  const onBulkDelete = async () => {
-    const ok = await confirmBulk();
-    if (!ok) return;
-
-    deleteCategories.mutate(
-      { ids: selected },
-      { onSuccess: () => onToggleSelectAll(false) }
-    );
-  };
-
   return (
     <>
-      <BulkConfirmDialog />
-
-      <div className="border-alpha-300 flex items-center gap-x-3 border-b pb-2.5">
-        <Checkbox
-          checked={allSelected}
-          onCheckedChange={(value) => onToggleSelectAll(!!value)}
-          aria-label="Select all categories"
-        />
-        <p className="label-12 mr-auto font-medium text-gray-800">
-          {selected.length > 0 ? `${selected.length} selected` : "Category"}
-        </p>
-        {selected.length > 0 && (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={deleteCategories.isPending}
-            onClick={onBulkDelete}
-          >
-            <Trash className="mr-1.5 size-4" />
-            Delete ({selected.length})
-          </Button>
-        )}
-      </div>
+      <BulkSelectionBar
+        selectedCount={selected.length}
+        totalCount={categories.length}
+        itemLabel={`${categories.length} ${categories.length === 1 ? "category" : "categories"}`}
+        onToggleSelectAll={onToggleSelectAll}
+        onDelete={onBulkDelete}
+        disabled={isDeleting}
+        bordered={false}
+      />
 
       <ul className="divide-border divide-y">
         {categories.map((category) => (
@@ -187,30 +151,12 @@ const CategoryListItem = ({
           <span className="numeric">{formatCurrency(spent)}</span>
         </Badge>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="size-8 p-0">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              disabled={deleteMutation.isPending}
-              onClick={() => onEdit(category.id)}
-            >
-              <Edit className="mr-2 size-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={deleteMutation.isPending}
-              onClick={handleDelete}
-              className="text-red-900 focus:text-red-900"
-            >
-              <Trash className="mr-2 size-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <RowActions
+          label="Category actions"
+          disabled={deleteMutation.isPending}
+          onEdit={() => onEdit(category.id)}
+          onDelete={handleDelete}
+        />
       </li>
     </>
   );

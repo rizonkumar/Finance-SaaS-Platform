@@ -44,55 +44,63 @@ const ForecastPageContent = () => {
   const params = useSearchParams();
   const forecastQuery = useGetForecast();
 
-  if (forecastQuery.isLoading) {
-    return (
-      <div className="space-y-4">
-        <CardGridSkeleton count={5} />
-        <ChartCardLoading />
-      </div>
-    );
-  }
-
-  if (forecastQuery.isError) {
-    return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => forecastQuery.refetch()} />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const forecast = forecastQuery.data;
   const dateRange = forecastDateRange(
     params.get("from") || undefined,
     params.get("to") || undefined
   );
 
+  const renderBody = () => {
+    if (forecastQuery.isLoading) {
+      return (
+        <>
+          <CardGridSkeleton count={5} />
+          <ChartCardLoading />
+        </>
+      );
+    }
+
+    if (forecastQuery.isError) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <ErrorState onRetry={() => forecastQuery.refetch()} />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <>
+        <ForecastSummaryGrid
+          closingBalance={forecast?.closingBalance ?? 0}
+          projectedChange={forecast?.projectedChange ?? 0}
+          lowestPoint={forecast?.lowestPoint ?? null}
+          upcomingIncome={forecast?.upcomingIncome ?? 0}
+          upcomingExpenses={forecast?.upcomingExpenses ?? 0}
+          dateRange={dateRange}
+        />
+
+        <ChartCard
+          title="Projected Balance"
+          isEmpty={(forecast?.days.length ?? 0) === 0}
+        >
+          {() => <ForecastBalanceChart data={forecast?.days ?? []} />}
+        </ChartCard>
+
+        <ForecastEventsCard events={forecast?.events ?? []} />
+      </>
+    );
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <PageHeader
         title={PAGE_META["/forecast"].title}
         description={PAGE_META["/forecast"].description}
         filters={<Filters />}
       />
-      <ForecastSummaryGrid
-        closingBalance={forecast?.closingBalance ?? 0}
-        projectedChange={forecast?.projectedChange ?? 0}
-        lowestPoint={forecast?.lowestPoint ?? null}
-        upcomingIncome={forecast?.upcomingIncome ?? 0}
-        upcomingExpenses={forecast?.upcomingExpenses ?? 0}
-        dateRange={dateRange}
-      />
-
-      <ChartCard
-        title="Projected Balance"
-        isEmpty={(forecast?.days.length ?? 0) === 0}
-      >
-        {() => <ForecastBalanceChart data={forecast?.days ?? []} />}
-      </ChartCard>
-
-      <ForecastEventsCard events={forecast?.events ?? []} />
+      {renderBody()}
     </div>
   );
 };

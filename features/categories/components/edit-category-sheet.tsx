@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { SheetFormLoading } from "@/components/sheet-form-loading";
 
 import {
   CategoryForm,
@@ -66,20 +66,20 @@ export const EditCategorySheet = () => {
     <>
       <ConfirmDialog />
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="space-y-4">
+        <SheetContent>
           <SheetHeader>
             <SheetTitle>Edit Category</SheetTitle>
             <SheetDescription>Edit an existing category</SheetDescription>
           </SheetHeader>
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="text-muted-foreground size-4 animate-spin" />
-            </div>
+            <SheetFormLoading />
           ) : (
             <CategoryForm
               id={id}
               onSubmit={onSubmit}
               disabled={isPending}
+              isSubmitting={editMutation.isPending}
+              isDeleting={deleteMutation.isPending}
               defaultValues={defaultValues}
               onDelete={onDelete}
             />

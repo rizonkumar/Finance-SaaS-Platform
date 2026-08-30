@@ -136,6 +136,7 @@ export const AccountCard = ({
                 variant="ghost"
                 size="icon-sm"
                 className="size-7 shrink-0 p-0"
+                aria-label="Account actions"
               >
                 <MoreHorizontal className="size-4" />
               </Button>
@@ -182,7 +183,7 @@ export const AccountCard = ({
 
             {transactionCount > 0 && (
               <Badge variant="muted">
-                <Receipt className="mr-1 size-3" />
+                <Receipt className="size-3" />
                 <span className="numeric">{transactionCount}</span>{" "}
                 {transactionCount === 1 ? "txn" : "txns"}
               </Badge>
@@ -205,7 +206,7 @@ export const AccountCard = ({
               className="flex-1 text-xs"
               onClick={() => newTransaction.onOpen({ accountId: id })}
             >
-              <Plus className="mr-1 size-3.5" />
+              <Plus />
               Add spend
             </Button>
             <Button

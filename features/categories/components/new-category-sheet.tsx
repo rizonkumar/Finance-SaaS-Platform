@@ -28,7 +28,7 @@ export const NewCategorySheet = () => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="space-y-4">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>New Category</SheetTitle>
           <SheetDescription>
@@ -38,6 +38,7 @@ export const NewCategorySheet = () => {
         <CategoryForm
           onSubmit={onSubmit}
           disabled={mutation.isPending}
+          isSubmitting={mutation.isPending}
           defaultValues={{
             name: "",
           }}

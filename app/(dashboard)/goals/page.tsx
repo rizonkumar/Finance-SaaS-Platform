@@ -21,23 +21,52 @@ const GoalsPage = () => {
   const contributeGoal = useContributeGoal();
   const goalsQuery = useGetGoals();
 
-  if (goalsQuery.isLoading) {
-    return <CardGridSkeleton />;
-  }
-
-  if (goalsQuery.isError) {
-    return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => goalsQuery.refetch()} />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const goals = goalsQuery.data ?? [];
   const totalSaved = goals.reduce((sum, goal) => sum + goal.saved, 0);
   const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
+
+  const renderBody = () => {
+    if (goalsQuery.isLoading) return <CardGridSkeleton />;
+
+    if (goalsQuery.isError) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <ErrorState onRetry={() => goalsQuery.refetch()} />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (goals.length === 0) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <EmptyState
+              icon={Target}
+              title="No goals yet"
+              description="Set a target to save towards and see whether you are keeping pace with the deadline."
+              actionLabel="Add goal"
+              onAction={newGoal.onOpen}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {goals.map((goal) => (
+          <GoalCard
+            key={goal.id}
+            {...goal}
+            onEdit={openGoal.onOpen}
+            onContribute={contributeGoal.onOpen}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -60,30 +89,7 @@ const GoalsPage = () => {
         }
       />
 
-      {goals.length === 0 ? (
-        <Card>
-          <CardContent>
-            <EmptyState
-              icon={Target}
-              title="No goals yet"
-              description="Set a target to save towards and see whether you are keeping pace with the deadline."
-              actionLabel="Add Goal"
-              onAction={newGoal.onOpen}
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {goals.map((goal) => (
-            <GoalCard
-              key={goal.id}
-              {...goal}
-              onEdit={openGoal.onOpen}
-              onContribute={contributeGoal.onOpen}
-            />
-          ))}
-        </div>
-      )}
+      {renderBody()}
     </div>
   );
 };

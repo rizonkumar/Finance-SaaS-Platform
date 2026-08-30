@@ -1,5 +1,6 @@
 import CurrencyInput from "react-currency-input-field";
 
+import { FIELD_BASE } from "@/components/ui/field-styles";
 import { CURRENCY_SYMBOL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -21,10 +22,7 @@ export const MoneyInput = ({
   return (
     <CurrencyInput
       prefix={CURRENCY_SYMBOL}
-      className={cn(
-        "border-input bg-surface text-gray-1000 hover:border-alpha-500 numeric flex h-10 w-full rounded-sm border px-3 text-sm transition-colors placeholder:text-gray-700 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-700",
-        className
-      )}
+      className={cn(FIELD_BASE, "numeric h-10", className)}
       placeholder={placeholder}
       value={value}
       decimalsLimit={2}

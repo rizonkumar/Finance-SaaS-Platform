@@ -1,16 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CreditCard, Grid, List, Plus, Trash, Wallet } from "lucide-react";
+import { CreditCard, Plus, Wallet } from "lucide-react";
 
+import { BulkSelectionBar } from "@/components/bulk-selection-bar";
 import { CardGridSkeleton } from "@/components/card-grid-skeleton";
+import {
+  CollectionToolbar,
+  TOOLBAR_SELECT,
+} from "@/components/collection-toolbar";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { PageHeader } from "@/components/page-header";
 import { SearchInput } from "@/components/search-input";
+import { type ViewMode } from "@/components/view-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -64,7 +69,7 @@ const AccountsPage = () => {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("balance-desc");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selected, setSelected] = useState<string[]>([]);
 
   const newAccount = useNewAccount();
@@ -114,20 +119,6 @@ const AccountsPage = () => {
     );
   };
 
-  if (accountsQuery.isLoading) {
-    return <CardGridSkeleton count={8} />;
-  }
-
-  if (accountsQuery.isError) {
-    return (
-      <Card>
-        <CardContent>
-          <ErrorState onRetry={() => accountsQuery.refetch()} />
-        </CardContent>
-      </Card>
-    );
-  }
-
   const netBalanceMiliunits = accounts.reduce((sum, a) => sum + a.balance, 0);
   const netBalance = convertAmountFromMiliunits(netBalanceMiliunits);
 
@@ -146,6 +137,19 @@ const AccountsPage = () => {
       : undefined;
 
   const renderContent = () => {
+    if (accountsQuery.isLoading)
+      return <CardGridSkeleton count={8} columns={4} />;
+
+    if (accountsQuery.isError) {
+      return (
+        <Card>
+          <CardContent className="pt-5">
+            <ErrorState onRetry={() => accountsQuery.refetch()} />
+          </CardContent>
+        </Card>
+      );
+    }
+
     if (accounts.length === 0) {
       return (
         <Card>
@@ -154,7 +158,7 @@ const AccountsPage = () => {
               icon={CreditCard}
               title="No accounts yet"
               description="Add a bank account, card or wallet to start tracking transactions against it."
-              actionLabel="Add Account"
+              actionLabel="Add account"
               onAction={newAccount.onOpen}
             />
           </CardContent>
@@ -170,7 +174,7 @@ const AccountsPage = () => {
               icon={CreditCard}
               title="No accounts found"
               description={`No accounts matched "${search}". Try adjusting your filters.`}
-              actionLabel="Clear Filters"
+              actionLabel="Clear filters"
               onAction={() => {
                 setSearch("");
                 setTypeFilter("all");
@@ -190,6 +194,8 @@ const AccountsPage = () => {
               selected={selected}
               onToggleSelect={toggleSelectOne}
               onToggleSelectAll={toggleSelectAll}
+              onBulkDelete={onBulkDelete}
+              isDeleting={deleteAccounts.isPending}
             />
           </CardContent>
         </Card>
@@ -197,35 +203,17 @@ const AccountsPage = () => {
     }
 
     return (
-      <div className="space-y-3">
-        {selected.length > 0 && (
-          <div className="border-border flex items-center justify-between rounded-md border bg-gray-100 p-2.5 px-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={
-                  filteredAccounts.length > 0 &&
-                  selected.length === filteredAccounts.length
-                }
-                onCheckedChange={(checked) => toggleSelectAll(!!checked)}
-                aria-label="Select all"
-              />
-              <span className="copy-13 text-gray-1000 font-medium">
-                {selected.length} of {filteredAccounts.length} selected
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={deleteAccounts.isPending}
-              onClick={onBulkDelete}
-            >
-              <Trash className="mr-1 size-3.5" />
-              Delete Selected
-            </Button>
-          </div>
-        )}
+      <div className="space-y-4">
+        <BulkSelectionBar
+          selectedCount={selected.length}
+          totalCount={filteredAccounts.length}
+          itemLabel={`${filteredAccounts.length} ${filteredAccounts.length === 1 ? "account" : "accounts"}`}
+          onToggleSelectAll={toggleSelectAll}
+          onDelete={onBulkDelete}
+          disabled={deleteAccounts.isPending}
+        />
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredAccounts.map((account) => (
             <AccountCard
               key={account.id}
@@ -254,9 +242,9 @@ const AccountsPage = () => {
         description={PAGE_META["/accounts"].description}
         chips={chips}
         actions={
-          <Button onClick={newAccount.onOpen} size="sm">
-            <Plus className="mr-1 size-4" />
-            Add Account
+          <Button onClick={newAccount.onOpen} size="sm" className="md:hidden">
+            <Plus />
+            Add account
           </Button>
         }
       />
@@ -264,71 +252,44 @@ const AccountsPage = () => {
       {accounts.length > 0 && <AccountGlanceCards accounts={accounts} />}
 
       {accounts.length > 0 && (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Search accounts..."
-              className="w-full sm:w-64"
-            />
+        <CollectionToolbar viewMode={viewMode} onViewModeChange={setViewMode}>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search accounts..."
+            className="w-full sm:w-64"
+          />
 
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-9 w-[160px]">
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {Object.entries(ACCOUNT_TYPE_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className={TOOLBAR_SELECT}>
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {Object.entries(ACCOUNT_TYPE_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            <Select
-              value={sortBy}
-              onValueChange={(val) => setSortBy(val as SortOption)}
-            >
-              <SelectTrigger className="h-9 w-[170px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="balance-desc">Highest Balance</SelectItem>
-                <SelectItem value="balance-asc">Lowest Balance</SelectItem>
-                <SelectItem value="name-asc">Name (A → Z)</SelectItem>
-                <SelectItem value="name-desc">Name (Z → A)</SelectItem>
-                <SelectItem value="type">Account Type</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <div className="border-border flex items-center rounded-md border p-0.5">
-              <Button
-                type="button"
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon-sm"
-                className="size-7"
-                onClick={() => setViewMode("grid")}
-                aria-label="Grid view"
-              >
-                <Grid className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="icon-sm"
-                className="size-7"
-                onClick={() => setViewMode("list")}
-                aria-label="List view"
-              >
-                <List className="size-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+          <Select
+            value={sortBy}
+            onValueChange={(val) => setSortBy(val as SortOption)}
+          >
+            <SelectTrigger className={TOOLBAR_SELECT}>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="balance-desc">Highest Balance</SelectItem>
+              <SelectItem value="balance-asc">Lowest Balance</SelectItem>
+              <SelectItem value="name-asc">Name (A → Z)</SelectItem>
+              <SelectItem value="name-desc">Name (Z → A)</SelectItem>
+              <SelectItem value="type">Account Type</SelectItem>
+            </SelectContent>
+          </Select>
+        </CollectionToolbar>
       )}
 
       {renderContent()}

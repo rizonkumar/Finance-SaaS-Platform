@@ -130,7 +130,7 @@ export const AppTopbar = () => {
           onClick={currentAction.run}
           className="label-13 hidden h-8 items-center gap-x-1.5 px-3 shadow-xs md:inline-flex"
         >
-          <Plus className="size-3.5" />
+          <Plus />
           <span>{currentAction.label}</span>
         </Button>
 

@@ -46,7 +46,7 @@ export const DatePicker = ({
             !value && "text-muted-foreground"
           )}
         >
-          <CalendarIcon className="mr-2 size-4" />
+          <CalendarIcon />
           {value ? format(value, "PPP") : <span>Pick a date</span>}
         </Button>
       </PopoverTrigger>

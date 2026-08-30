@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { SheetFormLoading } from "@/components/sheet-form-loading";
 
 import {
   Sheet,
@@ -56,7 +56,7 @@ export const EditDebtSheet = () => {
     <>
       <ConfirmDialog />
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="space-y-4 overflow-y-auto">
+        <SheetContent>
           <SheetHeader>
             <SheetTitle>Edit Debt</SheetTitle>
             <SheetDescription>
@@ -64,9 +64,7 @@ export const EditDebtSheet = () => {
             </SheetDescription>
           </SheetHeader>
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="size-4 animate-spin text-gray-600" />
-            </div>
+            <SheetFormLoading />
           ) : (
             <DebtForm
               id={id}

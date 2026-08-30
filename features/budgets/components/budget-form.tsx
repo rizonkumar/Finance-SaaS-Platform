@@ -210,7 +210,7 @@ export const BudgetForm = ({
           />
         )}
         <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
-          {id ? "Save Changes" : "Create Budget"}
+          {id ? "Save changes" : "Create budget"}
         </Button>
         {!!id && (
           <Button
@@ -222,7 +222,7 @@ export const BudgetForm = ({
             onClick={onDelete}
           >
             <Trash className="size-4" />
-            Delete Budget
+            Delete budget
           </Button>
         )}
       </form>

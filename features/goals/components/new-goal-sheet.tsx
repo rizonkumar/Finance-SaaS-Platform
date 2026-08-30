@@ -30,7 +30,7 @@ export const NewGoalSheet = () => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="space-y-4 overflow-y-auto">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>New Goal</SheetTitle>
           <SheetDescription>
@@ -40,6 +40,7 @@ export const NewGoalSheet = () => {
         <GoalForm
           onSubmit={onSubmit}
           disabled={mutation.isPending || accountsQuery.isLoading}
+          isSubmitting={mutation.isPending}
           accountOptions={accountOptions}
           defaultValues={{
             name: "",

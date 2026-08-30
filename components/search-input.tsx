@@ -8,6 +8,9 @@ type Props = {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  /** Accessible name. Falls back to the placeholder, which is otherwise the
+   *  only label these inputs have. */
+  label?: string;
 };
 
 export const SearchInput = ({
@@ -15,6 +18,7 @@ export const SearchInput = ({
   onChange,
   placeholder,
   className,
+  label,
 }: Props) => (
   <div className={cn("relative w-full sm:w-64", className)}>
     <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-700" />
@@ -22,6 +26,7 @@ export const SearchInput = ({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
+      aria-label={label ?? placeholder ?? "Search"}
       className="h-9 pl-9"
     />
   </div>

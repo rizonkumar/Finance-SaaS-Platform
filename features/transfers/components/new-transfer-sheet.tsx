@@ -30,7 +30,7 @@ export const NewTransferSheet = () => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="space-y-4 overflow-y-auto">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>New Transfer</SheetTitle>
           <SheetDescription>

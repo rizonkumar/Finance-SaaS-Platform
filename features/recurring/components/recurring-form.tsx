@@ -409,7 +409,7 @@ export const RecurringForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
-          {id ? "Save Changes" : "Create Recurring Transaction"}
+          {id ? "Save changes" : "Create schedule"}
         </Button>
         {!!id && (
           <Button
@@ -421,7 +421,7 @@ export const RecurringForm = ({
             onClick={onDelete}
           >
             <Trash className="size-4" />
-            Delete Recurring Transaction
+            Delete schedule
           </Button>
         )}
       </form>

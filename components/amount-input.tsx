@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { DirectionToggle } from "@/components/direction-toggle";
 import { MoneyInput } from "@/components/money-input";
-import { cn, signedAmount, unsignedAmount } from "@/lib/utils";
+import { signedAmount, unsignedAmount } from "@/lib/utils";
 
 type Props = {
   value: string;
@@ -9,10 +10,6 @@ type Props = {
   placeholder?: string;
   disabled?: boolean;
 };
-
-const TOGGLE_BASE =
-  "flex flex-1 items-center justify-center gap-x-1.5 rounded-sm border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-700";
-const TOGGLE_IDLE = "border-input text-gray-900 hover:bg-alpha-100";
 
 export const AmountInput = ({
   value,
@@ -41,36 +38,13 @@ export const AmountInput = ({
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-x-2">
-        <button
-          type="button"
-          disabled={disabled}
-          aria-pressed={isCredit}
-          onClick={() => selectType(1)}
-          className={cn(
-            TOGGLE_BASE,
-            isCredit
-              ? "border-green-500 bg-green-100 text-green-900"
-              : TOGGLE_IDLE
-          )}
-        >
-          <ArrowUpCircle className="size-4" />
-          Credit
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          aria-pressed={isDebit}
-          onClick={() => selectType(-1)}
-          className={cn(
-            TOGGLE_BASE,
-            isDebit ? "border-red-500 bg-red-100 text-red-900" : TOGGLE_IDLE
-          )}
-        >
-          <ArrowDownCircle className="size-4" />
-          Debit
-        </button>
-      </div>
+      <DirectionToggle
+        value={isCredit ? "credit" : "debit"}
+        onChange={(next) => selectType(next === "credit" ? 1 : -1)}
+        disabled={disabled}
+        positive={{ value: "credit", label: "Credit", icon: ArrowUpCircle }}
+        negative={{ value: "debit", label: "Debit", icon: ArrowDownCircle }}
+      />
       <MoneyInput
         placeholder={placeholder}
         value={magnitude}

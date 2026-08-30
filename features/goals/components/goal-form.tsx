@@ -252,7 +252,7 @@ export const GoalForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
-          {id ? "Save Changes" : "Create Goal"}
+          {id ? "Save changes" : "Create goal"}
         </Button>
         {!!id && (
           <Button
@@ -264,7 +264,7 @@ export const GoalForm = ({
             onClick={onDelete}
           >
             <Trash className="size-4" />
-            Delete Goal
+            Delete goal
           </Button>
         )}
       </form>

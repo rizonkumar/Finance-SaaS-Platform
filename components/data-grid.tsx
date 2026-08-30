@@ -19,19 +19,11 @@ export const DataGrid = () => {
 
   const dateRangeLabel = formatDateRange({ to, from });
 
-  if (isLoading) {
-    return (
-      <StatGroup caption={dateRangeLabel} className="mb-4">
-        <DataCardLoading />
-        <DataCardLoading />
-        <DataCardLoading />
-      </StatGroup>
-    );
-  }
+  if (isLoading) return <DataGridLoading caption={dateRangeLabel} />;
 
   if (isError) {
     return (
-      <Card className="mb-4 px-5">
+      <Card className="px-5">
         <ErrorState compact onRetry={() => refetch()} />
       </Card>
     );
@@ -40,7 +32,7 @@ export const DataGrid = () => {
   const days = data?.days ?? [];
 
   return (
-    <StatGroup caption={dateRangeLabel} className="mb-4">
+    <StatGroup caption={dateRangeLabel}>
       <DataCard
         title="Remaining"
         value={data?.remainingAmount}
@@ -67,3 +59,13 @@ export const DataGrid = () => {
     </StatGroup>
   );
 };
+
+export const DataGridLoading = ({ caption }: { caption?: string }) => (
+  <StatGroup
+    caption={caption ?? formatDateRange({ from: undefined, to: undefined })}
+  >
+    <DataCardLoading />
+    <DataCardLoading />
+    <DataCardLoading />
+  </StatGroup>
+);

@@ -109,6 +109,7 @@ export const CategoryCard = ({
                 variant="ghost"
                 size="icon-sm"
                 className="size-7 shrink-0 p-0"
+                aria-label="Category actions"
               >
                 <MoreHorizontal className="size-4" />
               </Button>
@@ -143,14 +144,14 @@ export const CategoryCard = ({
 
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="muted">
-              <Receipt className="mr-1 size-3" />
+              <Receipt className="size-3" />
               <span className="numeric">{transactionCount}</span>{" "}
               {transactionCount === 1 ? "txn" : "txns"}
             </Badge>
 
             {budget !== null ? (
               <Badge variant="income">
-                <PiggyBank className="mr-1 size-3" />
+                <PiggyBank className="size-3" />
                 <span className="numeric">{formatCurrency(budget)}</span> limit
               </Badge>
             ) : (
@@ -167,7 +168,7 @@ export const CategoryCard = ({
               className="flex-1 text-xs"
               onClick={() => newTransaction.onOpen({ categoryId: id })}
             >
-              <Plus className="mr-1 size-3.5" />
+              <Plus />
               Add spend
             </Button>
             <Button

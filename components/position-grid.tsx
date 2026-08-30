@@ -16,18 +16,12 @@ export const PositionGrid = () => {
   const goalsQuery = useGetGoals();
   const debtsQuery = useGetDebts();
 
-  if (goalsQuery.isLoading || debtsQuery.isLoading) {
-    return (
-      <StatGroup columns={2} className="mb-4">
-        <DataCardLoading />
-        <DataCardLoading />
-      </StatGroup>
-    );
-  }
+  if (goalsQuery.isLoading || debtsQuery.isLoading)
+    return <PositionGridLoading />;
 
   if (goalsQuery.isError || debtsQuery.isError) {
     return (
-      <Card className="mb-4 px-5">
+      <Card className="px-5">
         <ErrorState
           compact
           onRetry={() => {
@@ -60,7 +54,7 @@ export const PositionGrid = () => {
   const clearedPercentage = payoffPercentage(paidTotal, principalTotal);
 
   return (
-    <StatGroup caption="As of today" columns={2} className="mb-4">
+    <StatGroup caption="As of today" columns={2}>
       <DataCard
         title="Saved Toward Goals"
         value={savedTotal}
@@ -85,3 +79,10 @@ export const PositionGrid = () => {
     </StatGroup>
   );
 };
+
+export const PositionGridLoading = () => (
+  <StatGroup caption="As of today" columns={2}>
+    <DataCardLoading />
+    <DataCardLoading />
+  </StatGroup>
+);

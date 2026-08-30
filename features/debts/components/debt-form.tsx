@@ -340,7 +340,7 @@ export const DebtForm = ({
           )}
         />
         <Button className="w-full" disabled={disabled} isLoading={isSubmitting}>
-          {id ? "Save Changes" : "Add Debt"}
+          {id ? "Save changes" : "Add debt"}
         </Button>
         {!!id && (
           <Button
@@ -352,7 +352,7 @@ export const DebtForm = ({
             onClick={onDelete}
           >
             <Trash className="size-4" />
-            Delete Debt
+            Delete debt
           </Button>
         )}
       </form>

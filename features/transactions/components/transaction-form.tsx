@@ -1,16 +1,26 @@
 import { z } from "zod";
-import { Trash } from "lucide-react";
+import { Split, Trash } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Select } from "@/components/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/date-picker";
-import { insertTransactionSchema } from "@/db/schema";
-import { convertAmountToMiliunits } from "@/lib/utils";
+import { type transactionInputSchema } from "@/db/schema";
+import { splitError, splitRemainder, toSplitLines } from "@/lib/splits";
+import {
+  convertAmountFromMiliunits,
+  convertAmountToMiliunits,
+  unsignedAmount,
+} from "@/lib/utils";
 import { AmountInput } from "@/components/amount-input";
+import {
+  EMPTY_SPLIT,
+  SplitFields,
+} from "@/features/transactions/components/split-fields";
 import {
   Form,
   FormControl,
@@ -20,16 +30,35 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-const formSchema = z.object({
-  date: z.coerce.date("Pick a date"),
-  accountId: z.string("Choose an account").min(1, "Choose an account"),
-  categoryId: z.string().nullable().optional(),
-  payee: z
-    .string("Enter a name")
-    .min(1, "Enter a name, e.g. Woolworths or your employer"),
-  amount: z.string("Enter an amount").min(1, "Enter an amount"),
-  notes: z.string().nullable().optional(),
-});
+const toMiliunits = (amount: string) =>
+  convertAmountToMiliunits(Number.parseFloat(amount) || 0);
+
+const formSchema = z
+  .object({
+    date: z.coerce.date("Pick a date"),
+    accountId: z.string("Choose an account").min(1, "Choose an account"),
+    categoryId: z.string().nullable().optional(),
+    payee: z
+      .string("Enter a name")
+      .min(1, "Enter a name, e.g. Woolworths or your employer"),
+    amount: z.string("Enter an amount").min(1, "Enter an amount"),
+    notes: z.string().nullable().optional(),
+    splits: z.array(
+      z.object({
+        categoryId: z.string().nullable().optional(),
+        amount: z.string(),
+      })
+    ),
+  })
+  .superRefine((values, ctx) => {
+    if (values.splits.length === 0) return;
+
+    const total = toMiliunits(values.amount);
+    const error = splitError(total, toSplitLines(total, values.splits));
+
+    if (error)
+      ctx.addIssue({ code: "custom", path: ["splits"], message: error });
+  });
 
 const EMPTY_VALUES = {
   date: new Date(),
@@ -38,14 +67,11 @@ const EMPTY_VALUES = {
   payee: "",
   amount: "",
   notes: "",
+  splits: [],
 };
 
-const _apiSchema = insertTransactionSchema.omit({
-  id: true,
-});
-
 type FormValues = z.input<typeof formSchema>;
-export type TransactionApiValues = z.input<typeof _apiSchema>;
+export type TransactionApiValues = z.input<typeof transactionInputSchema>;
 
 type Props = {
   id?: string;
@@ -79,16 +105,41 @@ export const TransactionForm = ({
     defaultValues: { ...EMPTY_VALUES, ...defaultValues },
   });
 
-  const amount = useWatch({ control: form.control, name: "amount" });
+  const [amount, splits] = useWatch({
+    control: form.control,
+    name: ["amount", "splits"],
+  });
   const isIncoming = parseFloat(amount) > 0;
+  const isSplit = splits.length > 0;
+  const total = toMiliunits(amount);
+  const remainder = convertAmountFromMiliunits(
+    (total < 0 ? -1 : 1) * splitRemainder(total, toSplitLines(total, splits))
+  );
+  const splitsError = form.formState.errors.splits;
+
+  const startSplit = () => {
+    const categoryId = form.getValues("categoryId") ?? null;
+    form.setValue("splits", [
+      { categoryId, amount: unsignedAmount(amount) },
+      EMPTY_SPLIT,
+    ]);
+  };
+
+  const cancelSplit = () => {
+    form.setValue("categoryId", splits[0]?.categoryId ?? null);
+    form.setValue("splits", []);
+    form.clearErrors("splits");
+  };
 
   const handleSubmit = (values: FormValues) => {
-    const amount = parseFloat(values.amount);
-    const amountInMiliunits = convertAmountToMiliunits(amount);
+    const amountInMiliunits = toMiliunits(values.amount);
+    const lines = toSplitLines(amountInMiliunits, values.splits);
 
     onSubmit({
       ...values,
+      categoryId: lines.length > 0 ? null : values.categoryId,
       amount: amountInMiliunits,
+      splits: lines,
     });
   };
 
@@ -138,26 +189,50 @@ export const TransactionForm = ({
             </FormItem>
           )}
         />
-        <FormField
-          name="categoryId"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <FormControl>
-                <Select
-                  placeholder="Select a category"
-                  options={categoryOptions}
-                  onCreate={onCreateCategory}
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={disabled}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>{isSplit ? "Split across" : "Category"}</Label>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={disabled}
+              onClick={isSplit ? cancelSplit : startSplit}
+            >
+              <Split />
+              {isSplit ? "Use one category" : "Split"}
+            </Button>
+          </div>
+          {isSplit ? (
+            <SplitFields
+              remainder={remainder}
+              error={splitsError?.message ?? splitsError?.root?.message}
+              disabled={disabled}
+              categoryOptions={categoryOptions}
+              onCreateCategory={onCreateCategory}
+            />
+          ) : (
+            <FormField
+              name="categoryId"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Select
+                      placeholder="Select a category"
+                      options={categoryOptions}
+                      onCreate={onCreateCategory}
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={disabled}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           )}
-        />
+        </div>
         <FormField
           name="payee"
           control={form.control}

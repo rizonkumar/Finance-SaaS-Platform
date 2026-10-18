@@ -100,6 +100,10 @@ export const EditTransactionSheet = () => {
           : new Date(),
         payee: transactionQuery.data.payee,
         notes: transactionQuery.data.notes,
+        splits: transactionQuery.data.splits.map((split) => ({
+          categoryId: split.categoryId,
+          amount: String(Math.abs(split.amount)),
+        })),
       }
     : {
         accountId: "",
@@ -108,6 +112,7 @@ export const EditTransactionSheet = () => {
         date: new Date(),
         payee: "",
         notes: "",
+        splits: [],
       };
 
   return (

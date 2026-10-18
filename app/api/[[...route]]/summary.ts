@@ -1,57 +1,28 @@
-import { z } from "zod";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { clerkMiddleware, getAuth } from "@clerk/hono";
-import { subDays, parse, differenceInDays } from "date-fns";
-import {
-  and,
-  desc,
-  eq,
-  gte,
-  isNull,
-  lt,
-  lte,
-  notExists,
-  sql,
-  sum,
-} from "drizzle-orm";
+import { subDays, differenceInDays } from "date-fns";
+import { and, desc, eq, gte, lt, lte, sql, sum } from "drizzle-orm";
 
 import { db } from "@/db/drizzle";
 import { API_ERRORS } from "@/lib/messages";
-import {
-  DATE_FORMAT,
-  DEFAULT_PERIOD_DAYS,
-  TOP_CATEGORY_COUNT,
-} from "@/lib/constants";
+import { DEFAULT_PERIOD_DAYS, TOP_CATEGORY_COUNT } from "@/lib/constants";
 import { safeMaterialize } from "@/lib/recurring";
-import { accounts, categories, trades, transactions } from "@/db/schema";
+import { accounts, categories, transactions } from "@/db/schema";
 import { calculatePercentageChange, fillMissingDays } from "@/lib/utils";
 
+import { periodQuery, resolvePeriod } from "./_helpers";
+import { NOT_A_TRADE, NOT_A_TRANSFER, spendingLines } from "./_ledger";
+
 const EMPTY_PERIOD = { income: 0, expenses: 0, remaining: 0 };
-
-const NOT_A_TRANSFER = isNull(transactions.transferId);
-
-const NOT_A_TRADE = notExists(
-  db
-    .select({ one: sql`1` })
-    .from(trades)
-    .where(eq(trades.transactionId, transactions.id))
-);
 
 const app = new Hono().get(
   "/",
   clerkMiddleware(),
-  zValidator(
-    "query",
-    z.object({
-      from: z.string().optional(),
-      to: z.string().optional(),
-      accountId: z.string().optional(),
-    })
-  ),
+  zValidator("query", periodQuery),
   async (c) => {
     const auth = getAuth(c);
-    const { from, to, accountId } = c.req.valid("query");
+    const { accountId, ...period } = c.req.valid("query");
 
     if (!auth?.userId) {
       return c.json({ error: API_ERRORS.unauthorized }, 401);
@@ -59,11 +30,7 @@ const app = new Hono().get(
 
     await safeMaterialize(auth.userId);
 
-    const defaultTo = new Date();
-    const defaultFrom = subDays(defaultTo, DEFAULT_PERIOD_DAYS);
-
-    const startDate = from ? parse(from, DATE_FORMAT, new Date()) : defaultFrom;
-    const endDate = to ? parse(to, DATE_FORMAT, new Date()) : defaultTo;
+    const { startDate, endDate } = resolvePeriod(period, DEFAULT_PERIOD_DAYS);
 
     const periodLength = differenceInDays(endDate, startDate) + 1;
     const lastPeriodStart = subDays(startDate, periodLength);
@@ -93,7 +60,6 @@ const app = new Hono().get(
             accountId ? eq(transactions.accountId, accountId) : undefined,
             eq(accounts.userId, userId),
             NOT_A_TRANSFER,
-            NOT_A_TRADE,
             NOT_A_TRADE,
             gte(transactions.date, startDate),
             lte(transactions.date, endDate)
@@ -128,27 +94,25 @@ const app = new Hono().get(
       previous.remaining
     );
 
+    const lines = spendingLines(auth.userId, accountId);
+    const spent = sql`SUM(ABS(${lines.amount}))`;
+
     const category = await db
       .select({
         name: categories.name,
-        value: sql`SUM(ABS(${transactions.amount}))`.mapWith(Number),
+        value: spent.mapWith(Number),
       })
-      .from(transactions)
-      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .innerJoin(categories, eq(transactions.categoryId, categories.id))
+      .from(lines)
+      .innerJoin(categories, eq(lines.categoryId, categories.id))
       .where(
         and(
-          accountId ? eq(transactions.accountId, accountId) : undefined,
-          eq(accounts.userId, auth.userId),
-          NOT_A_TRANSFER,
-          NOT_A_TRADE,
-          lt(transactions.amount, 0),
-          gte(transactions.date, startDate),
-          lte(transactions.date, endDate)
+          lt(lines.amount, 0),
+          gte(lines.date, startDate),
+          lte(lines.date, endDate)
         )
       )
       .groupBy(categories.name)
-      .orderBy(desc(sql`SUM(ABS(${transactions.amount}))`));
+      .orderBy(desc(spent));
 
     const topCategories = category.slice(0, TOP_CATEGORY_COUNT);
     const otherCategories = category.slice(TOP_CATEGORY_COUNT);

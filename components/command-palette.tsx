@@ -24,6 +24,7 @@ import { useNewCategory } from "@/features/categories/hooks/use-new-category";
 import { useNewDebt } from "@/features/debts/hooks/use-new-debt";
 import { useNewGoal } from "@/features/goals/hooks/use-new-goal";
 import { useNewRecurring } from "@/features/recurring/hooks/use-new-recurring";
+import { useNewRule } from "@/features/rules/hooks/use-new-rule";
 import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
 import { useNewTransfer } from "@/features/transfers/hooks/use-new-transfer";
 import { useCommandPalette } from "@/hooks/use-command-palette";
@@ -49,6 +50,7 @@ export const CommandPalette = ({ className }: { className?: string }) => {
   const newRecurring = useNewRecurring();
   const newAccount = useNewAccount();
   const newCategory = useNewCategory();
+  const newRule = useNewRule();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -74,6 +76,7 @@ export const CommandPalette = ({ className }: { className?: string }) => {
     { label: "New recurring schedule", run: () => newRecurring.onOpen() },
     { label: "New account", run: newAccount.onOpen },
     { label: "New category", run: newCategory.onOpen },
+    { label: "New rule", run: newRule.onOpen },
   ];
 
   const select = (run: () => void) => {

@@ -7,14 +7,18 @@ import {
   accounts,
   budgets,
   categories,
+  categoryRules,
   debtPayments,
   debts,
   goalContributions,
   goals,
   holdings,
   recurringTransactions,
+  savedViews,
   trades,
+  transactionSplits,
   transactions,
+  userSettings,
 } from "@/db/schema";
 
 config({ path: [".env.local", ".env"] });
@@ -33,6 +37,7 @@ const db = drizzle(client);
 // order means the script does not depend on which FKs happen to be ON DELETE
 // CASCADE today.
 const TABLES = [
+  { name: "transaction_splits", table: transactionSplits },
   { name: "trades", table: trades },
   { name: "goal_contributions", table: goalContributions },
   { name: "debt_payments", table: debtPayments },
@@ -43,7 +48,10 @@ const TABLES = [
   { name: "goals", table: goals },
   { name: "debts", table: debts },
   { name: "accounts", table: accounts },
+  { name: "category_rules", table: categoryRules },
   { name: "categories", table: categories },
+  { name: "saved_views", table: savedViews },
+  { name: "user_settings", table: userSettings },
 ] as const;
 
 // Dropping the tables alone is not enough to make `db:migrate` rebuild them:
@@ -54,6 +62,7 @@ const ENUM_TYPES = [
   "budget_period",
   "debt_kind",
   "recurring_frequency",
+  "rule_match",
   "trade_side",
 ] as const;
 

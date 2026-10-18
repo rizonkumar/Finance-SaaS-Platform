@@ -1,29 +1,26 @@
 import { clerkMiddleware } from "@clerk/hono";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lt, lte } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle";
-import {
-  accounts,
-  budgets,
-  categories,
-  insertBudgetSchema,
-  trades,
-  transactions,
-} from "@/db/schema";
+import { budgets, categories, insertBudgetSchema } from "@/db/schema";
 import {
   budgetPercentage,
   budgetStatus,
   isBudgetActiveNow,
   resolveBudgetPeriod,
+  spentInWindow,
+  type BudgetWindow,
+  type DailySpend,
 } from "@/lib/budgets";
 import { API_ERRORS } from "@/lib/messages";
 
-import { requireId } from "./_helpers";
+import { assertCategoriesOwned, loadSettings, requireId } from "./_helpers";
+import { expensesOf, spendingLines } from "./_ledger";
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
 const MAX_BUDGETS = 200;
@@ -83,59 +80,44 @@ async function loadBudgets(userId: string, budgetId?: string) {
     .limit(MAX_BUDGETS);
 }
 
-async function spentByBudget(
+async function dailySpend(
   userId: string,
-  windows: (BudgetRow & { periodStart: Date; periodEnd: Date })[]
-) {
-  if (windows.length === 0) return new Map<string, number>();
+  windows: BudgetWindow[]
+): Promise<DailySpend[]> {
+  if (windows.length === 0) return [];
 
-  const values = sql.join(
-    windows.map(
-      (window) =>
-        sql`(${window.id}::text, ${window.categoryId}::text, ${window.periodStart}::timestamp, ${window.periodEnd}::timestamp)`
-    ),
-    sql`, `
+  const from = new Date(
+    Math.min(...windows.map((window) => window.periodStart.getTime()))
   );
-
-  const result = await db.execute<{ budget_id: string; spent: string }>(sql`
-    with w (budget_id, category_id, period_start, period_end) as (values ${values}),
-         ut as (
-           select t.amount, t.date, t.category_id
-           from ${transactions} t
-           inner join ${accounts} a on a.id = t.account_id
-           where a.user_id = ${userId} and t.amount < 0
-             and t.transfer_id is null
-             and not exists (
-               select 1 from ${trades} tr where tr.transaction_id = t.id
-             )
-         )
-    select w.budget_id as budget_id,
-           coalesce(sum(abs(ut.amount)), 0)::bigint as spent
-    from w
-    left join ut
-      on ut.date >= w.period_start
-     and ut.date <= w.period_end
-     and (w.category_id is null or ut.category_id = w.category_id)
-    group by w.budget_id
-  `);
-
-  return new Map(
-    result.rows.map((row) => [String(row.budget_id), Number(row.spent)])
+  const to = new Date(
+    Math.max(...windows.map((window) => window.periodEnd.getTime()))
   );
+  const lines = spendingLines(userId);
+
+  return db
+    .select({
+      date: lines.date,
+      categoryId: lines.categoryId,
+      spent: expensesOf(lines),
+    })
+    .from(lines)
+    .where(and(lt(lines.amount, 0), gte(lines.date, from), lte(lines.date, to)))
+    .groupBy(lines.date, lines.categoryId);
 }
 
 async function withProgress(userId: string, rows: BudgetRow[]) {
   const now = new Date();
+  const { weekStartsOn } = await loadSettings(userId);
 
   const windows = rows.map((row) => ({
     ...row,
-    ...resolveBudgetPeriod(row, now),
+    ...resolveBudgetPeriod(row, now, weekStartsOn),
   }));
 
-  const spent = await spentByBudget(userId, windows);
+  const daily = await dailySpend(userId, windows);
 
   return windows.map((window) => {
-    const used = spent.get(window.id) ?? 0;
+    const used = spentInWindow(window, daily);
     const percentage = budgetPercentage(used, window.amount);
 
     return {
@@ -147,21 +129,6 @@ async function withProgress(userId: string, rows: BudgetRow[]) {
       isActiveNow: isBudgetActiveNow(window, now),
     };
   });
-}
-
-async function assertCategoryOwned(userId: string, categoryId?: string | null) {
-  if (!categoryId) return;
-
-  const [owned] = await db
-    .select({ id: categories.id })
-    .from(categories)
-    .where(and(eq(categories.userId, userId), eq(categories.id, categoryId)));
-
-  if (!owned) {
-    throw new HTTPException(400, {
-      message: "That category could not be found",
-    });
-  }
 }
 
 const app = new Hono<AuthedEnv>()
@@ -187,7 +154,7 @@ const app = new Hono<AuthedEnv>()
     const userId = c.get("userId");
     const values = c.req.valid("json");
 
-    await assertCategoryOwned(userId, values.categoryId);
+    await assertCategoriesOwned(userId, [values.categoryId]);
 
     try {
       const [data] = await db
@@ -233,7 +200,7 @@ const app = new Hono<AuthedEnv>()
       const userId = c.get("userId");
       const values = c.req.valid("json");
 
-      await assertCategoryOwned(userId, values.categoryId);
+      await assertCategoriesOwned(userId, [values.categoryId]);
 
       try {
         const [data] = await db

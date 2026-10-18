@@ -13,7 +13,11 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import { DEFAULT_WEEK_STARTS_ON } from "@/lib/budgets";
+import { RULE_MATCHES } from "@/lib/category-rules";
+import { CURRENCY_CODES, DEFAULT_CURRENCY_CODE } from "@/lib/currency";
 import { ACCOUNT_TYPES } from "@/lib/net-worth";
+import { MAX_SPLITS } from "@/lib/splits";
 
 const bigInteger = (name: string) => bigint(name, { mode: "number" });
 
@@ -51,6 +55,8 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
   transactions: many(transactions),
   budgets: many(budgets),
   recurring: many(recurringTransactions),
+  rules: many(categoryRules),
+  splits: many(transactionSplits),
 }));
 
 export const insertCategorySchema = createInsertSchema(categories);
@@ -130,20 +136,24 @@ export const transactions = pgTable(
   ]
 );
 
-export const transactionsRelations = relations(transactions, ({ one }) => ({
-  account: one(accounts, {
-    fields: [transactions.accountId],
-    references: [accounts.id],
-  }),
-  categories: one(categories, {
-    fields: [transactions.categoryId],
-    references: [categories.id],
-  }),
-  recurring: one(recurringTransactions, {
-    fields: [transactions.recurringId],
-    references: [recurringTransactions.id],
-  }),
-}));
+export const transactionsRelations = relations(
+  transactions,
+  ({ one, many }) => ({
+    account: one(accounts, {
+      fields: [transactions.accountId],
+      references: [accounts.id],
+    }),
+    categories: one(categories, {
+      fields: [transactions.categoryId],
+      references: [categories.id],
+    }),
+    recurring: one(recurringTransactions, {
+      fields: [transactions.recurringId],
+      references: [recurringTransactions.id],
+    }),
+    splits: many(transactionSplits),
+  })
+);
 
 export const recurringTransactionsRelations = relations(
   recurringTransactions,
@@ -166,6 +176,116 @@ export const recurringTransactionsRelations = relations(
 
 export const insertTransactionSchema = createInsertSchema(transactions, {
   date: z.coerce.date(),
+});
+
+export const transactionSplits = pgTable(
+  "transaction_splits",
+  {
+    id: text("id").primaryKey(),
+    transactionId: text("transaction_id")
+      .references(() => transactions.id, { onDelete: "cascade" })
+      .notNull(),
+    categoryId: text("category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
+    amount: bigInteger("amount").notNull(),
+  },
+  (table) => [
+    index("transaction_splits_transaction_id_idx").on(table.transactionId),
+    index("transaction_splits_category_id_idx").on(table.categoryId),
+  ]
+);
+
+export const splitInputSchema = z.object({
+  categoryId: z.string().nullable(),
+  amount: z.coerce.number().int(),
+});
+
+export const transactionInputSchema = insertTransactionSchema
+  .omit({ id: true, recurringId: true, transferId: true })
+  .extend({ splits: z.array(splitInputSchema).max(MAX_SPLITS).optional() });
+
+export const transactionSplitsRelations = relations(
+  transactionSplits,
+  ({ one }) => ({
+    transaction: one(transactions, {
+      fields: [transactionSplits.transactionId],
+      references: [transactions.id],
+    }),
+    category: one(categories, {
+      fields: [transactionSplits.categoryId],
+      references: [categories.id],
+    }),
+  })
+);
+
+export const ruleMatchEnum = pgEnum("rule_match", RULE_MATCHES);
+
+export const categoryRules = pgTable(
+  "category_rules",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    pattern: text("pattern").notNull(),
+    match: ruleMatchEnum("match").notNull().default("contains"),
+    categoryId: text("category_id")
+      .references(() => categories.id, { onDelete: "cascade" })
+      .notNull(),
+    priority: integer("priority").notNull().default(0),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [index("category_rules_user_id_idx").on(table.userId)]
+);
+
+export const categoryRulesRelations = relations(categoryRules, ({ one }) => ({
+  category: one(categories, {
+    fields: [categoryRules.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const insertCategoryRuleSchema = createInsertSchema(categoryRules, {
+  pattern: z.string().trim().min(1, "Enter the text to look for").max(100),
+  categoryId: z.string("Choose a category").min(1, "Choose a category"),
+  priority: z.coerce.number().int().min(0).max(100),
+});
+
+export const savedViews = pgTable(
+  "saved_views",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    emoji: text("emoji"),
+    route: text("route").notNull(),
+    query: text("query").notNull().default(""),
+    isPinned: boolean("is_pinned").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    lastOpenedAt: timestamp("last_opened_at", { mode: "date" }),
+  },
+  (table) => [index("saved_views_user_id_idx").on(table.userId)]
+);
+
+export const insertSavedViewSchema = createInsertSchema(savedViews, {
+  name: z.string().trim().min(1, "Give the view a name").max(60),
+  emoji: z.string().max(16).nullable().optional(),
+  query: z.string().max(500),
+});
+
+export const userSettings = pgTable("user_settings", {
+  userId: text("user_id").primaryKey(),
+  currency: text("currency", { enum: CURRENCY_CODES })
+    .notNull()
+    .default(DEFAULT_CURRENCY_CODE),
+  weekStartsOn: integer("week_starts_on")
+    .notNull()
+    .default(DEFAULT_WEEK_STARTS_ON),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const insertUserSettingsSchema = createInsertSchema(userSettings, {
+  weekStartsOn: z.coerce.number().int().min(0).max(1),
 });
 
 export const insertRecurringTransactionSchema = createInsertSchema(

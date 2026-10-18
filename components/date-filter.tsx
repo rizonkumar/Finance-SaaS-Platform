@@ -19,7 +19,11 @@ import {
   PopoverClose,
 } from "@/components/ui/popover";
 
-export const DateFilter = () => {
+type Props = {
+  defaultDays?: number;
+};
+
+export const DateFilter = ({ defaultDays = DEFAULT_PERIOD_DAYS }: Props) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -29,7 +33,7 @@ export const DateFilter = () => {
   const to = params.get("to") || "";
 
   const defaultTo = new Date();
-  const defaultFrom = subDays(defaultTo, DEFAULT_PERIOD_DAYS);
+  const defaultFrom = subDays(defaultTo, defaultDays);
 
   const paramState = {
     from: from ? new Date(from) : defaultFrom,

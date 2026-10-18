@@ -7,6 +7,7 @@ import {
   fillMissingDays,
   formatCadence,
   formatMonths,
+  pluralize,
   signedAmount,
   unsignedAmount,
 } from "@/lib/utils";
@@ -130,5 +131,13 @@ describe("formatCadence", () => {
     expect(formatCadence({ frequency: "weekly", interval: 2 })).toBe(
       "Every 2 weeks"
     );
+  });
+});
+
+describe("pluralize", () => {
+  it("picks the singular for one and the plural otherwise", () => {
+    expect(pluralize(1, "view")).toBe("1 view");
+    expect(pluralize(3, "view")).toBe("3 views");
+    expect(pluralize(2, "category", "categories")).toBe("2 categories");
   });
 });

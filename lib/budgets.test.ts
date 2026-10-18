@@ -5,6 +5,7 @@ import {
   budgetStatus,
   isBudgetActiveNow,
   resolveBudgetPeriod,
+  spentInWindow,
 } from "@/lib/budgets";
 
 const utc = (iso: string) => new Date(`${iso}T12:00:00.000Z`);
@@ -120,5 +121,38 @@ describe("budgetPercentage and budgetStatus", () => {
     expect(budgetStatus(budgetPercentage(75, 100))).toBe("warning");
     expect(budgetStatus(budgetPercentage(100, 100))).toBe("warning");
     expect(budgetStatus(budgetPercentage(101, 100))).toBe("over");
+  });
+});
+
+describe("resolveBudgetPeriod with a Sunday week start", () => {
+  it("runs the week from Sunday to Saturday", () => {
+    const { periodStart, periodEnd } = resolveBudgetPeriod(
+      { startDate: utc("2026-01-01"), endDate: null, period: "weekly" },
+      utc("2026-08-13"),
+      0
+    );
+    expect(iso(periodStart)).toBe("2026-08-09T00:00:00.000Z");
+    expect(iso(periodEnd)).toBe("2026-08-15T23:59:59.999Z");
+  });
+});
+
+describe("spentInWindow", () => {
+  const window = {
+    categoryId: "food",
+    periodStart: new Date("2026-08-01T00:00:00.000Z"),
+    periodEnd: new Date("2026-08-31T23:59:59.999Z"),
+  };
+  const daily = [
+    { date: utc("2026-08-02"), categoryId: "food", spent: 100 },
+    { date: utc("2026-08-03"), categoryId: "rent", spent: 900 },
+    { date: utc("2026-09-01"), categoryId: "food", spent: 50 },
+  ];
+
+  it("sums the category inside the period", () => {
+    expect(spentInWindow(window, daily)).toBe(100);
+  });
+
+  it("sums every category for an overall budget", () => {
+    expect(spentInWindow({ ...window, categoryId: null }, daily)).toBe(1000);
   });
 });

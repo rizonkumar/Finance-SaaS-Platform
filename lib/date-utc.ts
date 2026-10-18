@@ -66,3 +66,9 @@ export const eachDayUTC = (from: Date, to: Date, limit: number) => {
 
   return days;
 };
+
+export const startOfWeekUTC = (date: Date, weekStartsOn: number) =>
+  addDaysUTC(date, -((date.getUTCDay() - weekStartsOn + 7) % 7));
+
+export const shiftMinutes = (date: Date, minutes: number) =>
+  new Date(date.getTime() + minutes * 60_000);

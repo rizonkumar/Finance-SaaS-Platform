@@ -21,6 +21,10 @@ export const useGetTransaction = (id?: string) => {
       return {
         ...data,
         amount: convertAmountFromMiliunits(data.amount),
+        splits: data.splits.map((split) => ({
+          ...split,
+          amount: convertAmountFromMiliunits(split.amount),
+        })),
       };
     },
   });

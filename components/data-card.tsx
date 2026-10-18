@@ -43,6 +43,7 @@ type Props = IconBoxVariants & {
   percentageChange?: number;
   subtitle?: string;
   trend?: number[];
+  formatValue?: (value: number) => string;
 };
 
 export const DataCard = ({
@@ -53,6 +54,7 @@ export const DataCard = ({
   percentageChange = 0,
   subtitle,
   trend,
+  formatValue = formatCurrency,
 }: Props) => {
   const TrendIcon = percentageChange < 0 ? TrendingDown : TrendingUp;
 
@@ -76,7 +78,7 @@ export const DataCard = ({
             end={value}
             decimals={2}
             decimalPlaces={2}
-            formattingFn={formatCurrency}
+            formattingFn={formatValue}
           />
         </p>
         {trend && (

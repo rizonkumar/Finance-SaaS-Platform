@@ -1,18 +1,23 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
+  Bookmark,
+  CalendarDays,
+  ChartColumn,
   LineChart,
   CreditCard,
   Landmark,
   LayoutDashboard,
   PiggyBank,
   Repeat,
+  Settings,
   Shapes,
   Target,
   TrendingUp,
+  WandSparkles,
 } from "lucide-react";
 
-type NavRoute = {
+export type NavRoute = {
   href: string;
   label: string;
   icon: LucideIcon;
@@ -32,6 +37,14 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     ],
   },
   {
+    label: "Insights",
+    items: [
+      { href: "/reports", label: "Reports", icon: ChartColumn },
+      { href: "/calendar", label: "Calendar", icon: CalendarDays },
+      { href: "/views", label: "Saved views", icon: Bookmark },
+    ],
+  },
+  {
     label: "Planning",
     items: [
       { href: "/forecast", label: "Forecast", icon: TrendingUp },
@@ -47,6 +60,8 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     items: [
       { href: "/accounts", label: "Accounts", icon: CreditCard },
       { href: "/categories", label: "Categories", icon: Shapes },
+      { href: "/rules", label: "Rules", icon: WandSparkles },
+      { href: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
@@ -60,6 +75,20 @@ export const PAGE_META = {
   "/transactions": {
     title: "Transactions",
     description: "Every inflow and outflow, with CSV import and bulk editing.",
+  },
+  "/reports": {
+    title: "Reports",
+    description:
+      "Month by month income and spending, by category and by payee.",
+  },
+  "/calendar": {
+    title: "Calendar",
+    description:
+      "Bills and income due each day, from your recurring schedules.",
+  },
+  "/views": {
+    title: "Saved views",
+    description: "Pages and filters you come back to, one click away.",
   },
   "/forecast": {
     title: "Forecast",
@@ -98,8 +127,20 @@ export const PAGE_META = {
     title: "Categories",
     description: "Labels used to group spending across budgets and reports.",
   },
+  "/rules": {
+    title: "Rules",
+    description:
+      "Categorise new transactions automatically, based on who they are with.",
+  },
+  "/settings": {
+    title: "Settings",
+    description: "Currency, calendar preferences and your data.",
+  },
 } as const;
 
 export const pageMeta = (pathname: string) =>
   PAGE_META[pathname as keyof typeof PAGE_META] as
     { title: string; description: string } | undefined;
+
+export const isViewableRoute = (route: string) =>
+  Object.hasOwn(PAGE_META, route);

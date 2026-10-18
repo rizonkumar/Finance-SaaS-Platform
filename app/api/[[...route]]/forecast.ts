@@ -24,7 +24,7 @@ import {
   startOfDayUTC,
   toUtcNoon,
 } from "@/lib/date-utc";
-import { buildCashflowForecast } from "@/lib/forecast";
+import { buildCashflowForecast, projectRecurringEvents } from "@/lib/forecast";
 
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
@@ -40,6 +40,11 @@ const forecastQuery = z.object({
     (value) => (value === "" ? undefined : value),
     z.string().optional()
   ),
+});
+
+const eventsQuery = forecastQuery.extend({
+  from: z.string().regex(DAY_PATTERN),
+  to: z.string().regex(DAY_PATTERN),
 });
 
 function resolveRange(from?: string, to?: string) {
@@ -139,6 +144,19 @@ const app = new Hono<AuthedEnv>()
       templates,
       accountId,
     });
+
+    return c.json({ data });
+  })
+  .get("/events", zValidator("query", eventsQuery), async (c) => {
+    const { from, to, accountId } = c.req.valid("query");
+    const templates = await listTemplates(c.get("userId"), accountId);
+
+    const data = projectRecurringEvents(
+      templates,
+      parseDayUTC(from),
+      parseDayUTC(to),
+      accountId
+    );
 
     return c.json({ data });
   });

@@ -21,6 +21,7 @@ export type ForecastEvent = {
 
 type Props = {
   events: ForecastEvent[];
+  title?: string;
 };
 
 const groupedEvents = (events: ForecastEvent[]) => {
@@ -40,13 +41,16 @@ const groupedEvents = (events: ForecastEvent[]) => {
   return [...groups.entries()].map(([date, rows]) => ({ date, rows }));
 };
 
-export const ForecastEventsCard = ({ events }: Props) => {
+export const ForecastEventsCard = ({
+  events,
+  title = "Upcoming Events",
+}: Props) => {
   const groups = groupedEvents(events);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Upcoming Events</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {events.length === 0 ? (

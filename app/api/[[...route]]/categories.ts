@@ -5,12 +5,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "@/db/drizzle";
-import {
-  budgets,
-  categories,
-  insertCategorySchema,
-  transactions,
-} from "@/db/schema";
+import { budgets, categories, insertCategorySchema } from "@/db/schema";
 
 import {
   bulkBody,
@@ -20,6 +15,7 @@ import {
   requireId,
   requireRow,
 } from "./_helpers";
+import { expensesOf, incomeOf, spendingLines } from "./_ledger";
 import { requireAuth, type AuthedEnv } from "./_middleware";
 
 const categoryBody = insertCategorySchema.pick({
@@ -32,16 +28,18 @@ const writeColumns = {
 };
 
 async function selectCategories(userId: string, id?: string) {
+  const lines = spendingLines(userId);
+
   const baseCategories = await db
     .select({
       id: categories.id,
       name: categories.name,
-      transactionCount: sql<number>`COALESCE(COUNT(DISTINCT ${transactions.id}), 0)::int`,
-      totalExpenses: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END), 0)::int`,
-      totalIncome: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END), 0)::int`,
+      transactionCount: sql<number>`COALESCE(COUNT(DISTINCT ${lines.transactionId}), 0)::int`,
+      totalExpenses: expensesOf(lines),
+      totalIncome: incomeOf(lines),
     })
     .from(categories)
-    .leftJoin(transactions, eq(transactions.categoryId, categories.id))
+    .leftJoin(lines, eq(lines.categoryId, categories.id))
     .where(
       and(eq(categories.userId, userId), id ? eq(categories.id, id) : undefined)
     )

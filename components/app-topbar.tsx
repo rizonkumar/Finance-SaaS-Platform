@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { ClerkLoaded, ClerkLoading, UserButton } from "@clerk/nextjs";
 import { Loader2, PanelLeftOpen, Plus, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -19,7 +20,9 @@ import { useNewDebt } from "@/features/debts/hooks/use-new-debt";
 import { useNewGoal } from "@/features/goals/hooks/use-new-goal";
 import { useNewHolding } from "@/features/holdings/hooks/use-new-holding";
 import { useNewRecurring } from "@/features/recurring/hooks/use-new-recurring";
+import { useNewRule } from "@/features/rules/hooks/use-new-rule";
 import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
+import { SaveViewButton } from "@/features/views/components/save-view-button";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { pageMeta } from "@/lib/routes";
@@ -37,6 +40,7 @@ export const AppTopbar = () => {
   const newGoal = useNewGoal();
   const newHolding = useNewHolding();
   const newRecurring = useNewRecurring();
+  const newRule = useNewRule();
 
   const title = pageMeta(pathname)?.title ?? "Fintrack";
 
@@ -57,7 +61,10 @@ export const AppTopbar = () => {
       case "/categories":
         return { label: "Add category", run: newCategory.onOpen };
       case "/forecast":
+      case "/calendar":
         return { label: "Add schedule", run: () => newRecurring.onOpen() };
+      case "/rules":
+        return { label: "Add rule", run: newRule.onOpen };
       case "/transactions":
       case "/":
       default:
@@ -123,6 +130,10 @@ export const AppTopbar = () => {
         >
           <Search className="size-4" />
         </Button>
+
+        <Suspense fallback={null}>
+          <SaveViewButton />
+        </Suspense>
 
         {/* Dynamic Route Action Button */}
         <Button

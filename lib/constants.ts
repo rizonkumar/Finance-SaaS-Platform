@@ -51,8 +51,3 @@ export const CHART_CATEGORY_COLORS = [
   "var(--chart-5)",
   "var(--chart-6)",
 ] as const;
-
-export const CURRENCY_LOCALE = "en-IN";
-export const CURRENCY_CODE = "INR";
-
-export const CURRENCY_SYMBOL = "\u20B9";

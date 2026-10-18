@@ -18,10 +18,13 @@ import { EditCategorySheet } from "@/features/categories/components/edit-categor
 import { NewCategorySheet } from "@/features/categories/components/new-category-sheet";
 import { EditRecurringSheet } from "@/features/recurring/components/edit-recurring-sheet";
 import { NewRecurringSheet } from "@/features/recurring/components/new-recurring-sheet";
+import { EditRuleSheet } from "@/features/rules/components/edit-rule-sheet";
+import { NewRuleSheet } from "@/features/rules/components/new-rule-sheet";
 import { EditTransactionSheet } from "@/features/transactions/components/edit-transaction-sheet";
 import { NewTransactionSheet } from "@/features/transactions/components/new-transaction-sheet";
 import { EditTransferSheet } from "@/features/transfers/components/edit-transfer-sheet";
 import { NewTransferSheet } from "@/features/transfers/components/new-transfer-sheet";
+import { ViewDialog } from "@/features/views/components/view-dialog";
 
 export const SheetProvider = () => {
   const isMounted = useIsMounted();
@@ -59,6 +62,11 @@ export const SheetProvider = () => {
       <NewDebtSheet />
       <EditDebtSheet />
       <PayDebtSheet />
+
+      <NewRuleSheet />
+      <EditRuleSheet />
+
+      <ViewDialog />
     </>
   );
 };

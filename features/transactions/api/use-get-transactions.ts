@@ -3,7 +3,7 @@ import { useSearchParams } from "next/navigation";
 
 import { client } from "@/lib/hono";
 import { queryKeys } from "@/lib/query-keys";
-import { convertAmountFromMiliunits } from "@/lib/utils";
+import { convertAmountFromMiliunits, timezoneOffset } from "@/lib/utils";
 
 export const useGetTransactions = () => {
   const params = useSearchParams();
@@ -19,6 +19,7 @@ export const useGetTransactions = () => {
           from,
           to,
           accountId,
+          tzOffset: timezoneOffset(),
         },
       });
 

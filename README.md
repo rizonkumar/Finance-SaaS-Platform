@@ -18,8 +18,14 @@ enforces SonarQube-style rules.
 | **Accounts** | Savings, cash, wallets, investments, fixed deposits, PPF, EPF, cards and loans — each with an opening balance, so every account carries a live balance |
 | **Net worth** | Assets, liabilities and net worth as of any date, plus a daily trend built from real balances rather than cash flow |
 | **Categories** | Group spending and see where the money actually goes |
-| **Transactions** | Full CRUD, bulk delete, sorting, filtering, pagination |
-| **CSV import** | Map arbitrary columns onto amount/date/payee, then bulk-create |
+| **Transactions** | Full CRUD, bulk delete, sorting, filtering, pagination, and CSV export of whatever the filters show |
+| **Split transactions** | One payment across several categories, with every split counted in budgets, categories and reports |
+| **CSV import** | Map arbitrary columns onto amount/date/payee, then bulk-create — rows already in the account are flagged so a re-import does not double count |
+| **Rules** | "Payee contains *swiggy* → Food": new and imported transactions are categorised automatically, and any rule can be run over past uncategorised ones |
+| **Reports** | Month-by-month income vs spending, savings rate, spending per category per month and top payees, exportable to CSV |
+| **Calendar** | Every bill and income from your recurring schedules laid out on a month grid |
+| **Saved views** | Bookmark any page with its filters, pin it to the sidebar, and reopen recent ones; rolling periods like "last 7 days" stay current |
+| **Settings** | Display currency, the first day of the week for weekly budgets and the calendar, and a delete-everything switch |
 | **Dashboard** | A balance sheet on top of income / expenses / remaining with period-over-period change, plus seven chart types |
 | **Budget goals** | Per-category or overall limits on weekly, monthly, yearly or custom periods, with live progress and on-track / warning / over states |
 | **Savings goals** | A target, a deadline and a contribution ledger, with pace measured against the time elapsed |
@@ -106,6 +112,9 @@ erDiagram
     HOLDINGS ||--o{ TRADES : "built from"
     TRANSACTIONS ||--o| DEBT_PAYMENTS : "is the cash movement for"
     TRANSACTIONS ||--o| TRADES : "is the cash movement for"
+    TRANSACTIONS ||--o{ TRANSACTION_SPLITS : "divided into"
+    CATEGORIES ||--o{ TRANSACTION_SPLITS : "classifies"
+    CATEGORIES ||--o{ CATEGORY_RULES : "assigned by"
 
     ACCOUNTS {
         text id PK
@@ -209,7 +218,41 @@ erDiagram
         integer amount "miliunits, + clears, - borrows"
         timestamp date
     }
+    TRANSACTION_SPLITS {
+        text id PK
+        text transaction_id FK "cascade"
+        text category_id FK "set null"
+        bigint amount "miliunits, same sign as the transaction"
+    }
+    CATEGORY_RULES {
+        text id PK
+        text user_id
+        text pattern
+        enum match "contains starts_with equals"
+        text category_id FK "cascade"
+        integer priority
+    }
+    SAVED_VIEWS {
+        text id PK
+        text user_id
+        text name
+        text emoji
+        text route
+        text query "filters, or period=Nd for a rolling range"
+        boolean is_pinned
+        timestamp last_opened_at
+    }
+    USER_SETTINGS {
+        text user_id PK
+        text currency
+        integer week_starts_on "0 Sunday, 1 Monday"
+    }
 ```
+
+A split transaction keeps its own amount and moves its category onto
+`transaction_splits`, whose amounts must add up to it. Everything that groups
+spending by category reads one **spending line** per split, or one per
+transaction when it is not split, so a split counts the same everywhere.
 
 An account balance is `opening_balance` plus every transaction on it. Transfer
 legs are deliberately counted here — moving your own money changes two balances

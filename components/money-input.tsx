@@ -1,7 +1,7 @@
 import CurrencyInput from "react-currency-input-field";
 
 import { FIELD_BASE } from "@/components/ui/field-styles";
-import { CURRENCY_SYMBOL } from "@/lib/constants";
+import { currencySymbol } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -21,7 +21,7 @@ export const MoneyInput = ({
 }: Props) => {
   return (
     <CurrencyInput
-      prefix={CURRENCY_SYMBOL}
+      prefix={currencySymbol()}
       className={cn(FIELD_BASE, "numeric h-10", className)}
       placeholder={placeholder}
       value={value}

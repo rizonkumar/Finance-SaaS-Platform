@@ -3,8 +3,11 @@ import {
   daysInMonthUTC,
   endOfDayUTC,
   startOfDayUTC,
+  startOfWeekUTC,
   utcNoon,
 } from "@/lib/date-utc";
+
+export const DEFAULT_WEEK_STARTS_ON = 1;
 
 export type BudgetPeriod = "weekly" | "monthly" | "yearly" | "custom";
 
@@ -24,14 +27,12 @@ type PeriodInput = {
   endDate: Date | null;
 };
 
-function isoWeekWindow(today: Date): BudgetWindow {
-  const dayOfWeek = today.getUTCDay();
-  const offsetToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  const monday = addDaysUTC(today, offsetToMonday);
+function weekWindow(today: Date, weekStartsOn: number): BudgetWindow {
+  const firstDay = startOfWeekUTC(today, weekStartsOn);
 
   return {
-    periodStart: startOfDayUTC(monday),
-    periodEnd: endOfDayUTC(addDaysUTC(monday, 6)),
+    periodStart: startOfDayUTC(firstDay),
+    periodEnd: endOfDayUTC(addDaysUTC(firstDay, 6)),
   };
 }
 
@@ -56,11 +57,12 @@ function yearWindow(today: Date): BudgetWindow {
 
 export function resolveBudgetPeriod(
   budget: PeriodInput,
-  today: Date = new Date()
+  today: Date = new Date(),
+  weekStartsOn: number = DEFAULT_WEEK_STARTS_ON
 ): BudgetWindow {
   switch (budget.period) {
     case "weekly":
-      return isoWeekWindow(today);
+      return weekWindow(today, weekStartsOn);
     case "monthly":
       return monthWindow(today);
     case "yearly":
@@ -98,4 +100,26 @@ export function budgetStatus(percentage: number): BudgetStatus {
   if (percentage >= WARNING_THRESHOLD) return "warning";
 
   return "on-track";
+}
+
+export type DailySpend = {
+  date: Date;
+  categoryId: string | null;
+  spent: number;
+};
+
+type SpendWindow = BudgetWindow & { categoryId: string | null };
+
+export function spentInWindow(window: SpendWindow, daily: DailySpend[]) {
+  const start = window.periodStart.getTime();
+  const end = window.periodEnd.getTime();
+
+  return daily.reduce((total, day) => {
+    const time = day.date.getTime();
+    const inPeriod = time >= start && time <= end;
+    const inCategory =
+      window.categoryId === null || day.categoryId === window.categoryId;
+
+    return inPeriod && inCategory ? total + day.spent : total;
+  }, 0);
 }

@@ -2,6 +2,8 @@ import { twMerge } from "tailwind-merge";
 import { type ClassValue, clsx } from "clsx";
 import { eachDayOfInterval, format, isSameDay, subDays } from "date-fns";
 
+import { formatMoney } from "@/lib/currency";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -15,11 +17,7 @@ export function convertAmountToMiliunits(amount: number) {
 }
 
 export function formatCurrency(value: number) {
-  return Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-  }).format(value);
+  return formatMoney(value);
 }
 
 export function calculatePercentageChange(current: number, previous: number) {
@@ -149,3 +147,8 @@ export function formatPercentage(
 
   return result;
 }
+
+export const pluralize = (count: number, singular: string, plural?: string) =>
+  `${count} ${count === 1 ? singular : (plural ?? `${singular}s`)}`;
+
+export const timezoneOffset = () => String(new Date().getTimezoneOffset());

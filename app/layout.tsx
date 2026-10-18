@@ -6,6 +6,7 @@ import { GeistSans } from "geist/font/sans";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/providers/query-provider";
+import { SettingsProvider } from "@/providers/settings-provider";
 import { SheetProvider } from "@/providers/sheet-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 
@@ -38,9 +39,11 @@ export default function RootLayout({
           >
             <TooltipProvider delayDuration={150}>
               <QueryProvider>
-                <SheetProvider />
-                <Toaster />
-                {children}
+                <SettingsProvider>
+                  <SheetProvider />
+                  <Toaster />
+                  {children}
+                </SettingsProvider>
               </QueryProvider>
             </TooltipProvider>
           </ThemeProvider>

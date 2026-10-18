@@ -23,22 +23,15 @@ export const AccountFilter = () => {
 
   const params = useSearchParams();
   const accountId = params.get("accountId") || "all";
-  const from = params.get("from") || "";
-  const to = params.get("to") || "";
 
   const { isLoading: isLoadingSummary } = useGetSummary();
   const { data: accounts, isLoading: isLoadingAccounts } = useGetAccounts();
 
   const onChange = (newValue: string) => {
     const query = {
-      accountId: newValue,
-      from,
-      to,
+      ...Object.fromEntries(params.entries()),
+      accountId: newValue === "all" ? "" : newValue,
     };
-
-    if (newValue === "all") {
-      query.accountId = "";
-    }
 
     const url = qs.stringifyUrl(
       {

@@ -14,9 +14,13 @@ import goals from "./goals";
 import holdings from "./holdings";
 import netWorth from "./net-worth";
 import recurring from "./recurring";
+import reports from "./reports";
+import rules from "./rules";
+import settings from "./settings";
 import summary from "./summary";
 import transactions from "./transactions";
 import transfers from "./transfers";
+import views from "./views";
 
 export const runtime = "nodejs";
 
@@ -44,7 +48,11 @@ const _routes = app
   .route("/goals", goals)
   .route("/debts", debts)
   .route("/transfers", transfers)
-  .route("/holdings", holdings);
+  .route("/holdings", holdings)
+  .route("/reports", reports)
+  .route("/rules", rules)
+  .route("/views", views)
+  .route("/settings", settings);
 
 export const GET = handle(app);
 export const POST = handle(app);

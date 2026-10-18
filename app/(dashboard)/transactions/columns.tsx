@@ -62,6 +62,7 @@ export const columns: ColumnDef<typeof tableFeatureSet, ResponseType>[] = [
           category={row.original.category}
           categoryId={row.original.categoryId}
           transferId={row.original.transferId}
+          splits={row.original.splits}
         />
       );
     },
